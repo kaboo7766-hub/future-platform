@@ -18,7 +18,7 @@ export default async function handler(req: any, res: any) {
     const quizId = typeof req.body?.quizId === "string" ? req.body.quizId.trim() : "";
     const answers = req.body?.answers;
     if (!quizId || quizId.length > 150 || !Array.isArray(answers) || answers.length > 50 ||
-        !answers.every((n: unknown) => Number.isInteger(n) && n >= 0 && n <= 20)) {
+        !answers.every((n: unknown) => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 20)) {
       return res.status(400).json({ error: "بيانات الإجابة غير صحيحة" });
     }
 

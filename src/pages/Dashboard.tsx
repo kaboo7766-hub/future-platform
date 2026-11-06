@@ -15,16 +15,17 @@ import Notifications from "./Notifications";
 import Assignments from "./Assignments";
 import Onboarding from "./Onboarding";
 import SiteContent from "./SiteContent";
+import AdminOverview from "./AdminOverview";
 import { useSite, contactLinks } from "./HomeExtras";
 
-type View = "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site";
 const ALL: Record<View, [string, string]> = {
-  home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "شهاداتي"],
+  admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "شهاداتي"],
   manage: ["🧩", "الدروس والصفوف"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home"],
-  teacher: ["home", "manage", "quizzes", "assignments"], admin: ["home", "manage", "quizzes", "assignments", "users", "site"],
+  teacher: ["home", "manage", "quizzes", "assignments"], admin: ["admin", "home", "manage", "quizzes", "assignments", "users", "site"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -71,6 +72,7 @@ export default function Dashboard() {
   return (<>
     {!profile.onboarded && <Onboarding />}
     <Shell name={profile.name} roleLabel={ROLE[role]} nav={nav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
+      {view === "admin" && role === "admin" && <AdminOverview onNavigate={id => setView(id as View)} />}
       {view === "home" && <div className="cols">
         <div><h3>اختصارات</h3>{nav.filter(n => n.id !== "home").map((n, i) => (
           <button key={n.id} className={`tile ${TILE[i % 4]}`} onClick={() => setView(n.id as View)}><span>{n.icon}</span>{n.label}</button>))}

@@ -59,7 +59,7 @@ function useStats(role: Role, uid: string): [string, number][] {
 
 export default function Dashboard() {
   const { profile, logout } = useAuth();
-  const [view, setView] = useState<View>("home");
+  const [view, setView] = useState<View>(profile?.role === "admin" ? "admin" : "home");
   const { c } = useSite();
   const role = profile?.role ?? "pending", stats = useStats(role, profile?.uid ?? "");
   if (!profile) return null;

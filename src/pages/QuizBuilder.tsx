@@ -15,11 +15,16 @@ export default function QuizBuilder() {
   const [busy, setBusy] = useState(false);
   useEffect(() => onSnapshot(collection(db, "lessons"), s => setLessons(s.docs.map(d => ({ id: d.id, title: d.data().title })))), []);
   const upd = (i: number, p: Partial<Question>) => setQs(a => a.map((q, k) => (k === i ? { ...q, ...p } : q)));
-  const setType = (i: number, type: "mcq" | "tf") => upd(i, type === "tf" ? { type, options: ["صح", "خطأ"], answer: 0 } : { type, options: ["", "", "", ""], answer: 0 });
+  const setType = (i: number, type: Question["type"]) => upd(i,
+    type === "tf" ? { type, options: ["صح", "خطأ"], answer: 0 } :
+    type === "fill" ? { type, options: [], answer: "" } :
+    { type, options: ["", "", "", ""], answer: 0 });
   const save = async () => {
     setMsg(null);
-    const bad = qs.some(q => !q.text.trim() || q.options.some(o => !o.trim()) || !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length);
-    if (!lessonId || !title.trim() || bad) return setMsg({ ok: false, t: "أكمل الدرس والعنوان ونص كل سؤال وخياراته وحدد الإجابة الصحيحة" });
+    const bad = qs.some(q => !q.text.trim() || (q.type === "fill"
+      ? typeof q.answer !== "string" || !q.answer.trim()
+      : q.options.some(o => !o.trim()) || typeof q.answer !== "number" || !Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length));
+    if (!lessonId || !title.trim() || bad) return setMsg({ ok: false, t: "أكمل الدرس والعنوان ونص كل سؤال، واكتب الإجابة الصحيحة أو حددها" });
     setBusy(true);
     try {
       const quizRef = doc(collection(db, "quizzes"));
@@ -41,11 +46,15 @@ export default function QuizBuilder() {
     <select value={lessonId} onChange={e => setLessonId(e.target.value)}><option value="">اختر الدرس</option>{lessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}</select>
     <input placeholder="عنوان الاختبار" value={title} onChange={e => setTitle(e.target.value)} />
     {qs.map((q, i) => (<fieldset key={i} className="q"><legend>سؤال {i + 1}</legend>
-      <select value={q.type} onChange={e => setType(i, e.target.value as "mcq" | "tf")}><option value="mcq">اختيار من متعدد</option><option value="tf">صح أو خطأ</option></select>
-      <input placeholder="نص السؤال" value={q.text} onChange={e => upd(i, { text: e.target.value })} />
-      {q.options.map((o, j) => (<label key={j}><input type="radio" name={`a${i}`} checked={q.answer === j} onChange={() => upd(i, { answer: j })} />
-        {q.type === "tf" ? o : <input placeholder={`الخيار ${j + 1}`} value={o} onChange={e => upd(i, { options: q.options.map((x, k) => (k === j ? e.target.value : x)) })} />}</label>))}
-      <small>حدّد الدائرة بجوار الإجابة الصحيحة</small>
+      <select value={q.type} onChange={e => setType(i, e.target.value as Question["type"])}>
+        <option value="mcq">اختيار من متعدد</option><option value="tf">صح أو خطأ</option><option value="fill">أكمل العبارات</option>
+      </select>
+      <input placeholder="نص السؤال (مثال: عاصمة مصر هي ____)" value={q.text} onChange={e => upd(i, { text: e.target.value })} />
+      {q.type === "fill"
+        ? <label>الإجابة الصحيحة<input placeholder="اكتب الكلمة أو العبارة الصحيحة" value={String(q.answer)} onChange={e => upd(i, { answer: e.target.value })} /></label>
+        : q.options.map((o, j) => (<label key={j}><input type="radio" name={`a${i}`} checked={q.answer === j} onChange={() => upd(i, { answer: j })} />
+            {q.type === "tf" ? o : <input placeholder={`الخيار ${j + 1}`} value={o} onChange={e => upd(i, { options: q.options.map((x, k) => (k === j ? e.target.value : x)) })} />}</label>))}
+      {q.type !== "fill" && <small>حدّد الدائرة بجوار الإجابة الصحيحة</small>}
       {qs.length > 1 && <button type="button" className="link" onClick={() => setQs(a => a.filter((_, k) => k !== i))}>حذف السؤال</button>}
     </fieldset>))}
     <button type="button" className="link" onClick={() => setQs(a => [...a, blank()])}>+ إضافة سؤال</button>

@@ -43,8 +43,23 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /progress/{id} {
+      function validStudentProgress() {
+        let lesson = get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data;
+        let student = get(/databases/$(db)/documents/users/$(request.auth.uid)).data;
+        return signedIn()
+          && student.role == 'student'
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.lessonId is string
+          && id == request.auth.uid + '_' + request.resource.data.lessonId
+          && request.resource.data.keys().hasOnly(['uid','lessonId','subjectId','completed','openedAtMs','updatedAt'])
+          && lesson.published == true
+          && lesson.classId == student.classId
+          && request.resource.data.subjectId == lesson.subjectId
+          && (!('completed' in request.resource.data) || request.resource.data.completed is bool)
+          && (!('openedAtMs' in request.resource.data) || request.resource.data.openedAtMs is number);
+      }
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid && id.matches(request.auth.uid + '_.*');
+      allow create, update: if validStudentProgress();
       allow delete: if false;
     }
     match /assignments/{id} {
@@ -93,7 +108,18 @@ service cloud.firestore {
     match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /activityLogs/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      function validLogShape() {
+        return request.resource.data.keys().hasOnly(['uid','action','target','at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.action is string
+          && request.resource.data.action.size() <= 40
+          && request.resource.data.target is string
+          && request.resource.data.target.size() <= 150
+          && request.resource.data.at == request.time;
+      }
+      allow create: if signedIn() && validLogShape()
+        && ((request.resource.data.action == 'lesson.create' && isStaff())
+          || (request.resource.data.action in ['teacher.approve','user.role','parent.link','parent.unlink'] && isAdmin()));
       allow read: if isAdmin();
       allow update, delete: if false;
     }

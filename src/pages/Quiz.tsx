@@ -3,13 +3,13 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
-export interface Question { type: "mcq" | "tf"; text: string; options: string[]; answer: number }
+export interface Question { type: "mcq" | "tf" | "fill"; text: string; options: string[]; answer: number | string }
 export interface QuizDoc { id: string; lessonId: string; title: string; questions: Omit<Question, "answer">[]; allowRetake: boolean; published: boolean }
 
 export default function Quiz({ quiz, onClose }: { quiz: QuizDoc; onClose: () => void }) {
   const { profile } = useAuth();
   const total = quiz.questions.length;
-  const [ans, setAns] = useState<number[]>(Array(total).fill(-1));
+  const [ans, setAns] = useState<(number | string)[]>(quiz.questions.map(q => q.type === "fill" ? "" : -1));
   const [score, setScore] = useState<number | null>(null);
   const [prev, setPrev] = useState<number | null | undefined>(undefined);
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
@@ -19,7 +19,8 @@ export default function Quiz({ quiz, onClose }: { quiz: QuizDoc; onClose: () => 
       .catch(() => setPrev(null));
   }, [quiz.id, profile]);
   const submit = async () => {
-    if (ans.includes(-1)) return setErr("أجب عن كل الأسئلة أولًا");
+    if (ans.some((a, i) => quiz.questions[i].type === "fill" ? typeof a !== "string" || !a.trim() : typeof a !== "number" || a < 0))
+      return setErr("أجب عن كل الأسئلة أولًا");
     const user = auth.currentUser;
     if (!user) return setErr("انتهت جلسة الدخول، سجّل الدخول مرة أخرى");
     setErr(""); setBusy(true);
@@ -42,8 +43,11 @@ export default function Quiz({ quiz, onClose }: { quiz: QuizDoc; onClose: () => 
     return <section className="panel"><h3>{quiz.title}</h3><p>أنهيت هذا الاختبار. درجتك: {prev} من {total}</p><button className="btn" onClick={onClose}>إغلاق</button></section>;
   return (<section className="panel"><h3>{quiz.title}</h3>
     {quiz.questions.map((q, i) => (<fieldset key={i} className="q"><legend>{i + 1}. {q.text}</legend>
-      {q.options.map((o, j) => <label key={j}><input type="radio" name={`q${i}`} disabled={score !== null}
-        checked={ans[i] === j} onChange={() => setAns(a => a.map((v, k) => (k === i ? j : v)))} /> {o}</label>)}
+      {q.type === "fill"
+        ? <input aria-label={`إجابة السؤال ${i + 1}`} placeholder="اكتب الإجابة هنا" value={String(ans[i])} disabled={score !== null}
+            onChange={e => setAns(a => a.map((v, k) => k === i ? e.target.value : v))} />
+        : q.options.map((o, j) => <label key={j}><input type="radio" name={`q${i}`} disabled={score !== null}
+            checked={ans[i] === j} onChange={() => setAns(a => a.map((v, k) => (k === i ? j : v)))} /> {o}</label>)}
     </fieldset>))}
     {err && <p className="err" role="alert">{err}</p>}
     {score === null

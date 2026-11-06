@@ -1,6 +1,12 @@
 import { FieldValue } from "firebase-admin/firestore";
 import { bearerToken, getAdminServices } from "../_lib/firebaseAdmin";
 
+function normalizeText(value: string): string {
+  return value.normalize("NFKC").trim().toLocaleLowerCase("ar")
+    .replace(/[\u064B-\u065F\u0670\u0640]/g, "")
+    .replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/\s+/g, " ");
+}
+
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "no-store, max-age=0");
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
@@ -18,7 +24,7 @@ export default async function handler(req: any, res: any) {
     const quizId = typeof req.body?.quizId === "string" ? req.body.quizId.trim() : "";
     const answers = req.body?.answers;
     if (!quizId || quizId.length > 150 || !Array.isArray(answers) || answers.length > 50 ||
-        !answers.every((n: unknown) => typeof n === "number" && Number.isInteger(n) && n >= 0 && n <= 20)) {
+        !answers.every((value: unknown) => typeof value === "string" || (typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 20))) {
       return res.status(400).json({ error: "بيانات الإجابة غير صحيحة" });
     }
 
@@ -38,14 +44,29 @@ export default async function handler(req: any, res: any) {
       return res.status(400).json({ error: "عدد الإجابات لا يطابق عدد أسئلة الاختبار" });
     }
     for (let i = 0; i < questions.length; i++) {
-      if (!Array.isArray(questions[i]?.options) || !Number.isInteger(correct[i]) ||
-          correct[i] < 0 || correct[i] >= questions[i].options.length ||
-          answers[i] >= questions[i].options.length) {
-        return res.status(409).json({ error: "بيانات الاختبار تحتاج مراجعة من الإدارة" });
+      const question = questions[i];
+      if (question?.type === "fill") {
+        if (typeof correct[i] !== "string" || typeof answers[i] !== "string" || !correct[i].trim() || !answers[i].trim()) {
+          return res.status(409).json({ error: "بيانات سؤال أكمل العبارات تحتاج مراجعة من الإدارة" });
+        }
+      } else if (question?.type === "mcq" || question?.type === "tf") {
+        if (!Array.isArray(question.options) || !Number.isInteger(correct[i]) ||
+            correct[i] < 0 || correct[i] >= question.options.length ||
+            typeof answers[i] !== "number" || answers[i] >= question.options.length) {
+          return res.status(409).json({ error: "بيانات الاختبار تحتاج مراجعة من الإدارة" });
+        }
+      } else {
+        return res.status(409).json({ error: "نوع سؤال غير مدعوم في هذا الاختبار" });
       }
     }
 
-    const score = answers.reduce((sum: number, answer: number, i: number) => sum + (answer === correct[i] ? 1 : 0), 0);
+    const score = answers.reduce((sum: number, answer: number | string, i: number) => {
+      const question = questions[i];
+      const isCorrect = question.type === "fill"
+        ? normalizeText(answer as string) === normalizeText(correct[i] as string)
+        : answer === correct[i];
+      return sum + (isCorrect ? 1 : 0);
+    }, 0);
     const resultRef = db.collection("quizResults").doc(`${quizId}_${decoded.uid}`);
     // Account for results created by the older client version, which used random document IDs.
     const legacyResults = await db.collection("quizResults")

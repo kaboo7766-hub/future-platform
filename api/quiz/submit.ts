@@ -53,7 +53,7 @@ export default async function handler(req: any, res: any) {
     if (!legacyResults.empty && quiz.allowRetake !== true) {
       return res.status(409).json({ error: "لقد أديت هذا الاختبار من قبل ولا يسمح بإعادته" });
     }
-    const legacyBest = legacyResults.docs.reduce((best, d) => Math.max(best, Number(d.data().score ?? 0)), 0);
+    const legacyBest = legacyResults.docs.reduce<number>((best, d) => Math.max(best, Number(d.data().score ?? 0)), 0);
     const result = await db.runTransaction(async (tx) => {
       const old = await tx.get(resultRef);
       if (old.exists && quiz.allowRetake !== true) {

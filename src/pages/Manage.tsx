@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from "react";
-import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 interface Item { id: string; name: string }
@@ -31,6 +31,23 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
       setMsg({ ok: false, t: "تعذّرت الإضافة. تحقق من صلاحيات المدير واتصال الإنترنت." });
     }
   };
+  const removeCatalogItem = async (kind: "classes" | "subjects", id: string, name: string) => {
+    if (!window.confirm(`هل تريد حذف ${kind === "classes" ? "الصف" : "المادة"} «${name}»؟`)) return;
+    setMsg(null);
+    try {
+      const field = kind === "classes" ? "classId" : "subjectId";
+      const used = await getDocs(query(collection(db, "lessons"), where(field, "==", id)));
+      if (!used.empty) {
+        setMsg({ ok: false, t: "لا يمكن حذف هذا العنصر لأنه مرتبط بدروس موجودة. انقل الدروس أو عالج ارتباطها أولًا." });
+        return;
+      }
+      await deleteDoc(doc(db, kind, id));
+      setMsg({ ok: true, t: "تم الحذف بعد التأكد من عدم ارتباطه بدروس." });
+    } catch {
+      setMsg({ ok: false, t: "تعذّر الحذف. تحقق من صلاحيات المدير واتصال الإنترنت." });
+    }
+  };
+
   const save = async (e: FormEvent) => {
     e.preventDefault(); setMsg(null);
     if (!okUrl(f.url)) return setMsg({ ok: false, t: "الرابط غير مسموح. استخدم رابط https من خدمة مدعومة (YouTube، Drive، Cloudinary، Vimeo)." });
@@ -73,8 +90,8 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
     {isAdmin && <><h3>الصفوف والمواد</h3>
       <div className="row"><input placeholder="صف جديد" value={nc} onChange={e => setNc(e.target.value)} /><button className="btn" onClick={() => addName("classes", nc, () => setNc(""))}>إضافة</button></div>
       <div className="row"><input placeholder="مادة جديدة" value={ns} onChange={e => setNs(e.target.value)} /><button className="btn" onClick={() => addName("subjects", ns, () => setNs(""))}>إضافة</button></div>
-      <p>{classes.map(c => <span key={c.id} className="chip">{c.name}<button onClick={() => deleteDoc(doc(db, "classes", c.id))} aria-label="حذف">×</button></span>)}</p>
-      <p>{subjects.map(c => <span key={c.id} className="chip">{c.name}<button onClick={() => deleteDoc(doc(db, "subjects", c.id))} aria-label="حذف">×</button></span>)}</p>
+      <p>{classes.map(c => <span key={c.id} className="chip">{c.name}<button onClick={() => void removeCatalogItem("classes", c.id, c.name)} aria-label="حذف">×</button></span>)}</p>
+      <p>{subjects.map(c => <span key={c.id} className="chip">{c.name}<button onClick={() => void removeCatalogItem("subjects", c.id, c.name)} aria-label="حذف">×</button></span>)}</p>
       <button className="link" onClick={() => setDoc(doc(db, "settings", "app"), { subscriptionsEnabled: false }, { merge: true })}>تهيئة إعدادات المنصة (اشتراكات معطّلة)</button></>}
   </section>);
 }

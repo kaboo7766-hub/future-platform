@@ -47,13 +47,20 @@ export default async function handler(req: any, res: any) {
 
     const score = answers.reduce((sum: number, answer: number, i: number) => sum + (answer === correct[i] ? 1 : 0), 0);
     const resultRef = db.collection("quizResults").doc(`${quizId}_${decoded.uid}`);
+    // Account for results created by the older client version, which used random document IDs.
+    const legacyResults = await db.collection("quizResults")
+      .where("uid", "==", decoded.uid).where("quizId", "==", quizId).get();
+    if (!legacyResults.empty && quiz.allowRetake !== true) {
+      return res.status(409).json({ error: "لقد أديت هذا الاختبار من قبل ولا يسمح بإعادته" });
+    }
+    const legacyBest = legacyResults.docs.reduce((best, d) => Math.max(best, Number(d.data().score ?? 0)), 0);
     const result = await db.runTransaction(async (tx) => {
       const old = await tx.get(resultRef);
       if (old.exists && quiz.allowRetake !== true) {
         const error = new Error("ALREADY_SUBMITTED");
         throw error;
       }
-      const bestScore = old.exists ? Math.max(Number(old.data()?.score ?? 0), score) : score;
+      const bestScore = Math.max(legacyBest, old.exists ? Number(old.data()?.score ?? 0) : 0, score);
       const attempts = Number(old.data()?.attempts ?? 0) + 1;
       tx.set(resultRef, {
         uid: decoded.uid,

@@ -8,7 +8,6 @@ type UserRow = { uid: string; name?: string; email?: string; role?: Role };
 type Activity = { id: string; uid?: string; action?: string; target?: string; at?: { toDate?: () => Date } };
 
 const ZERO: Counts = { users: 0, students: 0, teachers: 0, parents: 0, pending: 0, lessons: 0, classes: 0, subjects: 0, quizzes: 0, assignments: 0, submissions: 0 };
-const ROLE_NAME: Record<string, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "بانتظار الاعتماد" };
 
 export default function AdminOverview({ onNavigate }: { onNavigate: (view: string) => void }) {
   const { profile } = useAuth();
@@ -53,24 +52,35 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
     { label: "إجمالي المستخدمين", value: counts.users, icon: "👥", color: "admin-stat-blue" },
     { label: "الطلاب", value: counts.students, icon: "🎓", color: "admin-stat-green" },
     { label: "المعلمون", value: counts.teachers, icon: "👩‍🏫", color: "admin-stat-purple" },
+    { label: "أولياء الأمور", value: counts.parents, icon: "👨‍👩‍👧", color: "admin-stat-indigo" },
     { label: "طلبات اعتماد المعلمين", value: counts.pending, icon: "⏳", color: "admin-stat-orange" },
+    { label: "الصفوف الدراسية", value: counts.classes, icon: "🏫", color: "admin-stat-blue" },
+    { label: "المواد التعليمية", value: counts.subjects, icon: "📖", color: "admin-stat-green" },
     { label: "الدروس", value: counts.lessons, icon: "📚", color: "admin-stat-cyan" },
     { label: "الاختبارات", value: counts.quizzes, icon: "📝", color: "admin-stat-pink" },
     { label: "الواجبات", value: counts.assignments, icon: "📋", color: "admin-stat-yellow" },
-    { label: "التسليمات", value: counts.submissions, icon: "📨", color: "admin-stat-indigo" }
+    { label: "التسليمات", value: counts.submissions, icon: "📨", color: "admin-stat-purple" }
   ], [counts]);
 
   const approve = async (user: UserRow) => {
     if (!user.uid || busy) return;
+    if (!profile?.uid) {
+      setMessage({ ok: false, text: "تعذّر تحديد حساب المدير الحالي. أعد تسجيل الدخول." });
+      return;
+    }
     setBusy(user.uid); setMessage(null);
     try {
       await updateDoc(doc(db, "users", user.uid), { role: "teacher" });
-      await addDoc(collection(db, "activityLogs"), {
-        uid: profile!.uid, action: "teacher.approve", target: user.uid, at: serverTimestamp()
-      });
       setMessage({ ok: true, text: "تم اعتماد المعلم بنجاح." });
+      try {
+        await addDoc(collection(db, "activityLogs"), {
+          uid: profile.uid, action: "teacher.approve", target: user.uid, at: serverTimestamp()
+        });
+      } catch {
+        setMessage({ ok: true, text: "تم اعتماد المعلم، لكن تعذّر تسجيل العملية في سجل الأنشطة." });
+      }
     } catch {
-      setMessage({ ok: false, text: "لم يتم الاعتماد. تحقق من صلاحيات المدير واتصال الإنترنت." });
+      setMessage({ ok: false, text: "لم يتم اعتماد المعلم. تحقق من صلاحيات المدير واتصال الإنترنت." });
     } finally { setBusy(null); }
   };
 
@@ -120,7 +130,7 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
       {activity.length === 0 ? <p className="admin-muted">لا توجد أنشطة مسجلة حتى الآن.</p> : <div className="admin-activity-list">
         {activity.map(item => <div className="admin-activity-row" key={item.id}>
           <span className="admin-activity-dot" />
-          <div><b>{item.action || "عملية إدارية"}</b><small>{names[item.uid || ""] || "مستخدم"}{item.target ? ` · ${item.target}` : ""}</small></div>
+          <div><b>{item.action === "teacher.approve" ? "اعتماد معلم جديد" : item.action || "عملية إدارية"}</b><small>{names[item.uid || ""] || "مستخدم"}{item.target ? ` · ${names[item.target] || item.target}` : ""}</small></div>
           <time>{item.at?.toDate ? item.at.toDate().toLocaleString("ar-EG") : "—"}</time>
         </div>)}
       </div>}

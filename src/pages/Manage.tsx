@@ -18,16 +18,44 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
   const [f, setF] = useState({ title: "", description: "", classId: "", subjectId: "", order: 1, type: "video", url: "", published: false });
   const [nc, setNc] = useState(""), [ns, setNs] = useState("");
   const addName = async (col: string, v: string, reset: () => void) => {
-    if (!v.trim()) return; await addDoc(collection(db, col), { name: v.trim() }); reset();
+    const name = v.trim();
+    if (!name) {
+      setMsg({ ok: false, t: "اكتب الاسم قبل الإضافة." });
+      return;
+    }
+    try {
+      await addDoc(collection(db, col), { name });
+      reset();
+      setMsg({ ok: true, t: "تمت الإضافة بنجاح." });
+    } catch {
+      setMsg({ ok: false, t: "تعذّرت الإضافة. تحقق من صلاحيات المدير واتصال الإنترنت." });
+    }
   };
   const save = async (e: FormEvent) => {
     e.preventDefault(); setMsg(null);
     if (!okUrl(f.url)) return setMsg({ ok: false, t: "الرابط غير مسموح. استخدم رابط https من خدمة مدعومة (YouTube، Drive، Cloudinary، Vimeo)." });
+    if (!f.title.trim() || !f.classId || !f.subjectId) {
+      setMsg({ ok: false, t: "أكمل اسم الدرس والصف والمادة." });
+      return;
+    }
     try {
-      const ref = await addDoc(collection(db, "lessons"), { ...f, createdBy: profile!.uid, createdAt: serverTimestamp() });
-      await addDoc(collection(db, "activityLogs"), { uid: profile!.uid, action: "lesson.create", target: ref.id, at: serverTimestamp() });
-      setMsg({ ok: true, t: "تم حفظ الدرس" }); setF({ ...f, title: "", description: "", url: "" });
-    } catch { setMsg({ ok: false, t: "تعذّر الحفظ، تحقق من الصلاحيات" }); }
+      const ref = await addDoc(collection(db, "lessons"), {
+        ...f, title: f.title.trim(), description: f.description.trim(),
+        createdBy: profile!.uid, createdAt: serverTimestamp()
+      });
+      let warning = "";
+      try {
+        await addDoc(collection(db, "activityLogs"), {
+          uid: profile!.uid, action: "lesson.create", target: ref.id, at: serverTimestamp()
+        });
+      } catch {
+        warning = " (تعذّر تسجيل العملية في سجل الأنشطة)";
+      }
+      setMsg({ ok: true, t: `تم حفظ الدرس بنجاح.${warning}` });
+      setF({ ...f, title: "", description: "", url: "" });
+    } catch {
+      setMsg({ ok: false, t: "لم يتم حفظ الدرس. تحقق من صلاحيات Firestore واتصال الإنترنت." });
+    }
   };
   return (<section className="panel"><h3>إضافة درس</h3>
     <form onSubmit={save}>

@@ -1,21 +1,21 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 import Shell from "./Shell";
-import Lessons from "./Lessons";
-import Manage from "./Manage";
-import QuizBuilder from "./QuizBuilder";
-import Users from "./Users";
-import Parent from "./Parent";
-import ClassPicker from "./ClassPicker";
-import Games from "./Games";
-import Certificates from "./Certificates";
-import Notifications from "./Notifications";
-import Assignments from "./Assignments";
-import Onboarding from "./Onboarding";
-import SiteContent from "./SiteContent";
-import AdminOverview from "./AdminOverview";
+const Lessons = lazy(() => import("./Lessons"));
+const Manage = lazy(() => import("./Manage"));
+const QuizBuilder = lazy(() => import("./QuizBuilder"));
+const Users = lazy(() => import("./Users"));
+const Parent = lazy(() => import("./Parent"));
+const ClassPicker = lazy(() => import("./ClassPicker"));
+const Games = lazy(() => import("./Games"));
+const Certificates = lazy(() => import("./Certificates"));
+const Notifications = lazy(() => import("./Notifications"));
+const Assignments = lazy(() => import("./Assignments"));
+const Onboarding = lazy(() => import("./Onboarding"));
+const SiteContent = lazy(() => import("./SiteContent"));
+const AdminOverview = lazy(() => import("./AdminOverview"));
 import { useSite, contactLinks } from "./HomeExtras";
 
 type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site";
@@ -70,6 +70,7 @@ export default function Dashboard() {
   const nav = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: ALL[id][1] }));
   const links = contactLinks(c);
   return (<>
+    <Suspense fallback={<section className="panel" role="status">جارٍ تحميل القسم…</section>}>
     {!profile.onboarded && <Onboarding />}
     <Shell name={profile.name} roleLabel={ROLE[role]} nav={nav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
       {view === "admin" && role === "admin" && <AdminOverview onNavigate={id => setView(id as View)} />}
@@ -90,5 +91,6 @@ export default function Dashboard() {
       {view === "users" && <Users />}
       {view === "site" && <SiteContent />}
     </Shell>
+    </Suspense>
   </>);
 }

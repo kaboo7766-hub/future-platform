@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 interface U { uid: string; name: string; email: string; role: Role }
 interface L { id: string; parentUid: string; studentUid: string }
-const roles: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر" };
+const roles: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 
 export default function Users() {
   const { profile } = useAuth();
@@ -28,6 +28,8 @@ export default function Users() {
     catch { setMsg({ ok: false, t: "تعذّر الربط" }); }
   };
   return (<section className="panel"><h3>المستخدمون</h3>
+    {users.filter(u => u.role === "pending").map(u => (<div className="row ok" key={"p" + u.uid}><span style={{ flex: 1 }}>طلب معلم: {u.name} <small dir="ltr">{u.email}</small></span>
+      <button className="btn" onClick={() => setRole(u, "teacher")}>اعتماد كمعلم</button></div>))}
     {users.map(u => (<div className="row" key={u.uid}><span style={{ flex: 1 }}>{u.name} <small dir="ltr">{u.email}</small></span>
       <select value={u.role} disabled={u.uid === profile!.uid} onChange={e => setRole(u, e.target.value as Role)}>
         {(Object.keys(roles) as Role[]).map(r => <option key={r} value={r}>{roles[r]}</option>)}</select></div>))}

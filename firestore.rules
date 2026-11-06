@@ -15,12 +15,12 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid));
       allow create: if signedIn() && request.auth.uid == uid
-        && request.resource.data.role in ['student','parent']
+        && request.resource.data.role in ['student','parent','pending']
         && request.resource.data.keys().hasOnly(['uid','name','email','role','createdAt'])
         && request.resource.data.name is string && request.resource.data.name.size() < 80;
       allow delete: if isAdmin();
       allow update: if isAdmin() || (signedIn() && request.auth.uid == uid
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classId']));
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['classId','onboarded']));
     }
     match /classes/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
     match /subjects/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
@@ -89,6 +89,9 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if isAdmin();
     }
+    match /siteTeachers/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /activityLogs/{id} {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
       allow read: if isAdmin();

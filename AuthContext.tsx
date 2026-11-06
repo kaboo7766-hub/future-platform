@@ -3,14 +3,15 @@ import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndP
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
-export type Role = "admin" | "teacher" | "student" | "parent";
-export interface Profile { uid: string; name: string; email: string; role: Role; classId?: string }
+export type Role = "admin" | "teacher" | "student" | "parent" | "pending";
+export interface Profile { uid: string; name: string; email: string; role: Role; classId?: string; onboarded?: boolean }
 interface Ctx {
   profile: Profile | null; loading: boolean;
   login(email: string, pass: string): Promise<void>;
-  register(name: string, email: string, pass: string, role: "student" | "parent"): Promise<void>;
+  register(name: string, email: string, pass: string, role: "student" | "parent" | "pending"): Promise<void>;
   logout(): Promise<void>;
   setClass(classId: string): Promise<void>;
+  setOnboarded(): Promise<void>;
 }
 const AuthCtx = createContext<Ctx>(null!);
 export const useAuth = () => useContext(AuthCtx);
@@ -35,5 +36,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await updateDoc(doc(db, "users", auth.currentUser!.uid), { classId });
     setProfile(p => (p ? { ...p, classId } : p));
   };
-  return <AuthCtx.Provider value={{ profile, loading, login, register, logout: () => signOut(auth), setClass }}>{children}</AuthCtx.Provider>;
+  const setOnboarded = async () => {
+    await updateDoc(doc(db, "users", auth.currentUser!.uid), { onboarded: true });
+    setProfile(p => (p ? { ...p, onboarded: true } : p));
+  };
+  return <AuthCtx.Provider value={{ profile, loading, login, register, logout: () => signOut(auth), setClass, setOnboarded }}>{children}</AuthCtx.Provider>;
 }

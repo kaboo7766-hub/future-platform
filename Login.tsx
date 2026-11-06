@@ -4,7 +4,7 @@ const msg = (e: any) => ({ "auth/invalid-credential": "البريد أو كلم�
 export default function Login() {
   const { login, register } = useAuth();
   const [mode, setMode] = useState<"in" | "up">("in");
-  const [f, setF] = useState({ name: "", email: "", pass: "", role: "student" as "student" | "parent" });
+  const [f, setF] = useState({ name: "", email: "", pass: "", role: "student" as "student" | "parent" | "pending" });
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
   const submit = async (ev: FormEvent) => {
     ev.preventDefault(); setErr(""); setBusy(true);
@@ -14,7 +14,7 @@ export default function Login() {
   return (<main className="wrap narrow"><form onSubmit={submit} className="panel">
     <h2>{mode === "in" ? "تسجيل الدخول" : "إنشاء حساب"}</h2>
     {mode === "up" && <><input required placeholder="الاسم" value={f.name} onChange={e => setF({ ...f, name: e.target.value })} />
-      <select value={f.role} onChange={e => setF({ ...f, role: e.target.value as any })}><option value="student">طالب</option><option value="parent">ولي أمر</option></select></>}
+      <select value={f.role} onChange={e => setF({ ...f, role: e.target.value as any })}><option value="student">طالب</option><option value="parent">ولي أمر</option><option value="pending">معلم (يحتاج اعتماد الإدارة)</option></select></>}
     <input required type="email" placeholder="البريد الإلكتروني" value={f.email} onChange={e => setF({ ...f, email: e.target.value })} />
     <input required type="password" minLength={6} placeholder="كلمة المرور" value={f.pass} onChange={e => setF({ ...f, pass: e.target.value })} />
     {err && <p className="err" role="alert">{err}</p>}

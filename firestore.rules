@@ -37,10 +37,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /quizResults/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && request.resource.data.score is int && request.resource.data.score <= request.resource.data.total;
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      allow update, delete: if false;
+      // Results are written only by the trusted Vercel API using Firebase Admin.
+      allow create, update, delete: if false;
+    }
+    match /quizAnswerKeys/{quizId} {
+      // Correct answers must never be readable by students.
+      allow read, write: if isStaff();
     }
     match /progress/{id} {
       function validStudentProgress() {

@@ -127,7 +127,7 @@ service cloud.firestore {
         return get(/databases/$(db)/documents/assignments/$(resource.data.assignmentId)).data.classId;
       }
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
-        || linked(resource.data.uid) || teacherHasClass(assignmentClass()));
+        || linked(resource.data.uid) || teacherHasClass(resource.data.classId));
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && get(/databases/$(db)/documents/assignments/$(request.resource.data.assignmentId)).data.classId == me().classId
         && id == request.resource.data.assignmentId + '_' + request.auth.uid

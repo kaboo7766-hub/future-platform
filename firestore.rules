@@ -165,7 +165,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /certificates/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid) || teacherHasClass(resource.data.classId));
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid) || teacherHasClass(get(/databases/$(db)/documents/users/$(resource.data.uid)).data.classId));
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + '_' + request.resource.data.subjectId
         && request.resource.data.keys().hasOnly(['uid','studentName','subjectId','subjectName','number','issuedAt'])

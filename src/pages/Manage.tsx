@@ -53,11 +53,19 @@ function fileAsImage(file: File): Promise<string> {
 export default function Manage({ isAdmin }: { isAdmin: boolean }) {
   const { profile } = useAuth();
   const classes = useList("classes"), subjects = useList("subjects");
+  const availableClasses = isAdmin ? classes : classes.filter(c => (profile?.classIds ?? []).includes(c.id));
   const [lessons, setLessons] = useState<LessonItem[]>([]);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const [f, setF] = useState(blank());
   const [nc, setNc] = useState(""), [ns, setNs] = useState("");
-  useEffect(() => onSnapshot(collection(db, "lessons"), s => setLessons(s.docs.map(d => ({ id: d.id, ...d.data() } as LessonItem)).sort((a,b)=>a.title.localeCompare(b.title,"ar"))), () => setMsg({ ok:false, t:"تعذّر تحميل قائمة الدروس." })), []);
+  useEffect(() => {
+    const ids = profile?.classIds ?? [];
+    const lessonQuery = isAdmin ? collection(db, "lessons")
+      : ids.length ? query(collection(db, "lessons"), where("classId", "in", ids.slice(0, 30)))
+      : query(collection(db, "lessons"), where("classId", "==", "__none__"));
+    return onSnapshot(lessonQuery, s => setLessons(s.docs.map(d => ({ id: d.id, ...d.data() } as LessonItem)).sort((a,b)=>a.title.localeCompare(b.title,"ar"))),
+      () => setMsg({ ok:false, t:"تعذّر تحميل قائمة دروس الصفوف المخصصة." }));
+  }, [isAdmin, profile?.classIds]);
   const addName = async (col: string, v: string, reset: () => void) => {
     const name = v.trim();
     if (!name) return setMsg({ ok: false, t: "اكتب الاسم قبل الإضافة." });
@@ -77,6 +85,7 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
   const save = async (e: FormEvent) => {
     e.preventDefault(); setMsg(null);
     if (!f.title.trim() || !f.classId || !f.subjectId) return setMsg({ ok: false, t: "أكمل اسم الدرس والصف والمادة." });
+    if (!isAdmin && !(profile?.classIds ?? []).includes(f.classId)) return setMsg({ ok: false, t: "هذا الصف غير مخصص لحسابك من المدير." });
     if (f.type === "image") {
       if (!f.imageData && !okUrl(f.url)) return setMsg({ ok: false, t: "اختر صورة من جهازك أو أدخل رابط صورة https." });
     } else if (!okUrl(f.url)) return setMsg({ ok: false, t: "الرابط غير مسموح. استخدم رابط https من خدمة مدعومة." });
@@ -105,7 +114,7 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
     <form onSubmit={save}>
       <input required placeholder="اسم الدرس" value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <input placeholder="وصف مختصر" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
-      <select required value={f.classId} onChange={e => setF({ ...f, classId: e.target.value })}><option value="">الصف</option>{classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
+      <select required value={f.classId} onChange={e => setF({ ...f, classId: e.target.value })}><option value="">الصف</option>{availableClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       <select required value={f.subjectId} onChange={e => setF({ ...f, subjectId: e.target.value })}><option value="">المادة</option>{subjects.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       <select value={f.type} onChange={e => setF({ ...f, type: e.target.value, url: "", imageData: "" })}><option value="video">فيديو</option><option value="pdf">PDF</option><option value="audio">صوت</option><option value="image">صورة</option></select>
       {f.type === "image" ? <>

@@ -25,8 +25,8 @@ const ALL: Record<View, [string, string]> = {
   manage: ["🧩", "الدروس والصفوف"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home"],
-  teacher: ["home", "manage", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "manage", "quizzes", "assignments", "users", "site", "attendance"],
+  student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home", "games"],
+  teacher: ["home", "games", "manage", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "games", "manage", "quizzes", "assignments", "users", "site", "attendance"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];

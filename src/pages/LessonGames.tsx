@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
@@ -33,8 +33,6 @@ export default function LessonGames() {
     return onSnapshot(q, snap => setLessons(snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0)), () => setLessons([]));
   }, [profile?.uid, profile?.role, profile?.classId, profile?.classIds]);
 
-  const words = useMemo(() => (selected?.gameWords ?? []).map(w => w.trim()).filter(Boolean).slice(0, 100), [selected]);
-  const currentWord = words.length ? words[((stage - 1) * 10 + question) % words.length] : "";
   const makeQuestion = (lesson: LessonGame, level: number, index: number) => {
     const bank = (lesson.gameWords ?? []).map(w => w.trim()).filter(Boolean).slice(0, 100);
     if (!bank.length) return;

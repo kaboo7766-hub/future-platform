@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firest
 import { auth, db } from "../firebase";
 
 export type Role = "admin" | "teacher" | "student" | "parent" | "pending";
-export interface Profile { uid: string; name: string; email: string; role: Role; classId?: string; onboarded?: boolean }
+export interface Profile { uid: string; name: string; email: string; role: Role; classId?: string; classIds?: string[]; onboarded?: boolean }
 interface Ctx {
   profile: Profile | null; loading: boolean;
   login(email: string, pass: string): Promise<void>;
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: typeof data.name === "string" ? data.name : "",
           email: typeof data.email === "string" ? data.email : (user.email ?? ""),
           role: data.role as Role,
-          ...(typeof data.classId === "string" ? { classId: data.classId } : {}),
+          ...(typeof data.classId === "string" ? { classId: data.classId } : {}),\n          ...(Array.isArray(data.classIds) ? { classIds: data.classIds.filter((id: unknown): id is string => typeof id === "string") } : {}),
           ...(typeof data.onboarded === "boolean" ? { onboarded: data.onboarded } : {}),
         });
       } catch (error) {

@@ -136,7 +136,7 @@ export default function Certificates() {
           <span><b>{c.recipientName}</b> — {c.title}<small style={{display:"block"}}>{c.status === "pending" ? "قيد اعتماد المدير" : "معتمدة"} · {c.number}</small></span>
           {c.status === "approved" && <button className="mini" onClick={() => setView(c)}>عرض / PDF / طباعة</button>}
         </div>)}
-    </section>}
+    </section>
     {message && <p className={message.startsWith("لم") || message.startsWith("تعذر") ? "err" : "ok"} role="status">{message}</p>}
   </section>;
 }

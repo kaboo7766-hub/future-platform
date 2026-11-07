@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
-import { collection, limit, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, limit, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useAuth } from "../auth/AuthContext";
 import { db } from "../firebase";
 interface AttendanceRow { id: string; uid: string; userName: string; role: string; lessonTitle: string; classId?: string; dateKey: string; enteredAt?: { toDate?: () => Date } }
 export default function Attendance() {
+  const { profile } = useAuth();
   const [rows, setRows] = useState<AttendanceRow[]>([]);
   const [error, setError] = useState("");
-  useEffect(() => onSnapshot(query(collection(db, "attendance"), orderBy("enteredAt", "desc"), limit(200)),
-    s => { setRows(s.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRow))); setError(""); },
-    () => setError("تعذّر تحميل سجل الحضور. تأكد من نشر قواعد Firestore الجديدة.")), []);
+  useEffect(() => {
+    const ids = profile?.classIds ?? [];
+    const attendanceQuery = profile?.role === "admin"
+      ? query(collection(db, "attendance"), orderBy("enteredAt", "desc"), limit(200))
+      : ids.length
+        ? query(collection(db, "attendance"), where("classId", "in", ids.slice(0, 30)), orderBy("enteredAt", "desc"), limit(200))
+        : query(collection(db, "attendance"), where("classId", "==", "__none__"), orderBy("enteredAt", "desc"), limit(200));
+    return onSnapshot(attendanceQuery,
+      s => { setRows(s.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRow))); setError(""); },
+      () => setError("تعذّر تحميل سجل حضور الصفوف المخصصة. تأكد من نشر قواعد Firestore الجديدة."));
+  }, [profile?.role, profile?.classIds]);
   const roleName = (role: string) => role === "student" ? "طالب" : role === "teacher" ? "معلم" : "مدير";
   return <section className="panel">
     <h2>سجل حضور المعلمين والطلاب</h2>

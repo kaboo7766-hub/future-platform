@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 type Kind = "letters-ar" | "letters-en" | "multiply" | "divide" | "add" | "subtract" | "count";
 type Question = { prompt: string; options: string[]; answer: string };
@@ -20,7 +20,7 @@ function makeQuestion(kind:Kind, grade:number, stage:number):Question {
   const limit = Math.min(12, Math.max(2, grade + stage + 1));
   let a=1+Math.floor(Math.random()*limit), b=1+Math.floor(Math.random()*limit), answerNum=0, symbol="";
   if(kind==="multiply"){symbol="×";answerNum=a*b;}
-  else if(kind==="divide"){symbol="÷";answerNum=b;a=b*(1+Math.floor(Math.random()*limit));}
+  else if(kind==="divide"){symbol="÷";const divisor=b, quotient=1+Math.floor(Math.random()*limit);a=divisor*quotient;b=divisor;answerNum=quotient;}
   else if(kind==="subtract"){symbol="−";if(a<b)[a,b]=[b,a];answerNum=a-b;}
   else {symbol="+";answerNum=a+b;}
   const answer=String(answerNum),set=new Set([answerNum]);while(set.size<4)set.add(Math.max(0,answerNum+Math.floor(Math.random()*9)-4));

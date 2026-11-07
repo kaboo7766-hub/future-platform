@@ -17,7 +17,7 @@ export function useSite() {
     const b = onSnapshot(collection(db, "siteTestimonials"), s => setR(s.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial))), e);
     const k = onSnapshot(doc(db, "siteSettings", "contact"), s => setC((s.data() as Contact | undefined) ?? null), e);
     const settings = onSnapshot(collection(db, "siteSettings"), s => {
-      const docs = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      const docs: Array<{ id: string; type?: string; imageData?: unknown; title?: unknown; order?: unknown; [key: string]: unknown }> = s.docs.map(d => ({ id: d.id, ...d.data() }));
       const saved = docs.find(d => d.id === "theme");
       if (saved) setTheme({ ...DEFAULT_THEME, ...saved } as SiteTheme);
       setBanners(docs.filter(d => d.type === "banner" && typeof d.imageData === "string")

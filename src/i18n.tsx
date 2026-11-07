@@ -120,7 +120,7 @@ const arToEn: Record<string, string> = Object.fromEntries([
   ["العربية", "Arabic"],
   ["الإنجليزية", "English"],
   ["en", "ar"],
-  ["rtl", "ltr"]
+  ["rtl", "ltr"],
   ["تعليم تفاعلي بجودة عالية", "High-quality interactive learning"],
   ["تقارير دورية لولي الأمر", "Regular parent reports"],
   ["أنشطة واختبارات ذكية", "Smart activities and quizzes"],

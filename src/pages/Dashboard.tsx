@@ -16,16 +16,17 @@ const Assignments = lazy(() => import("./Assignments"));
 const Onboarding = lazy(() => import("./Onboarding"));
 const SiteContent = lazy(() => import("./SiteContent"));
 const AdminOverview = lazy(() => import("./AdminOverview"));
+const Attendance = lazy(() => import("./Attendance"));
 import { useSite, contactLinks } from "./HomeExtras";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site" | "attendance";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "شهاداتي"],
-  manage: ["🧩", "الدروس والصفوف"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"],
+  manage: ["🧩", "الدروس والصفوف"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home"],
-  teacher: ["home", "manage", "quizzes", "assignments"], admin: ["admin", "home", "manage", "quizzes", "assignments", "users", "site"],
+  teacher: ["home", "manage", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "manage", "quizzes", "assignments", "users", "site", "attendance"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -90,6 +91,7 @@ export default function Dashboard() {
       {view === "quizzes" && <QuizBuilder />}
       {view === "users" && <Users />}
       {view === "site" && <SiteContent />}
+      {view === "attendance" && staff && <Attendance />}
     </Shell>
     </Suspense>
   </>);

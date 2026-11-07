@@ -3,7 +3,7 @@ import { doc, increment, onSnapshot, serverTimestamp, setDoc } from "firebase/fi
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
-interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string } }
+interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string }; visual?: string }
 type GameKey = "arLetters" | "enLetters" | "arNumbers" | "enNumbers" | "count" | "math" | "memory";
 const AR = "أبتثجحخدذرزسشصضطظعغفقكلمنهوي".split(""), EN = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 const EMOJI = ["🍎","🐱","🚗","⭐","🌙","🐟","🌳","⚽","🦋","🍓"];
@@ -22,7 +22,7 @@ const numberQ = (grade:number, ar:boolean):Q => {
     say:canSpeak?{text:String(n),lang:ar?"ar-SA":"en-US"}:undefined};
 };
 const letterQ = (ar:boolean):Q => { const set=ar?AR:EN,t=set[Math.floor(Math.random()*set.length)]; return {prompt:ar?"اختر الحرف الذي تسمعه":"Choose the letter you hear",options:shuffle([t,...shuffle(set.filter(x=>x!==t)).slice(0,3)]),answer:t,say:canSpeak?{text:t,lang:ar?"ar-SA":"en-US"}:undefined}; };
-const countQ = (grade:number):Q => { const max=grade===1?5:grade===2?10:grade===3?15:grade===4?20:grade===5?30:50,n=1+Math.floor(Math.random()*max),emoji=EMOJI[Math.floor(Math.random()*EMOJI.length)],s=new Set([n]);while(s.size<4)s.add(Math.max(0,n+Math.floor(Math.random()*7)-3));return {prompt:"عدّ الصور واختر العدد الصحيح",options:shuffle([...s].map(String)),answer:String(n),say:canSpeak?{text:String(n),lang:"ar-SA"}:undefined,}; };
+const countQ = (grade:number):Q => { const max=grade===1?5:grade===2?10:grade===3?15:grade===4?20:grade===5?30:50,n=1+Math.floor(Math.random()*max),emoji=EMOJI[Math.floor(Math.random()*EMOJI.length)],s=new Set([n]);while(s.size<4)s.add(Math.max(0,n+Math.floor(Math.random()*7)-3));return {prompt:"عدّ الصور واختر العدد الصحيح",options:shuffle([...s].map(String)),answer:String(n),visual:emoji,say:canSpeak?{text:String(n),lang:"ar-SA"}:undefined,}; };
 const mathQ = (grade:number):Q => {
   const max=grade===1?5:grade===2?10:grade===3?20:grade===4?50:grade===5?100:500;
   const subtract=grade>=2&&Math.random()<.35; let a=1+Math.floor(Math.random()*max),b=1+Math.floor(Math.random()*(grade===1?5:max));
@@ -40,7 +40,7 @@ function ChoiceGame({make,onDone,grade}:{make:()=>Q;onDone:(n:number)=>void;grad
 function CountingGame({grade,onDone}:{grade:number;onDone:(n:number)=>void}) {
  const [round,setRound]=useState(0),[score,setScore]=useState(0),[q,setQ]=useState(()=>countQ(grade)),[picked,setPicked]=useState("");
  const pick=(v:string)=>{if(picked)return;setPicked(v);const next=score+(v===q.answer?1:0);setScore(next);tone(v===q.answer?[700,900]:[220]);window.setTimeout(()=>{if(round===9)onDone(next*5);else{setRound(x=>x+1);setQ(countQ(grade));setPicked("");}},800);};
- const count=Number(q.answer);return <div><p>عدّ الأشياء الظاهرة أمامك:</p><div className="counting-pictures" aria-label={`عدد الصور ${count}`}>{Array.from({length:count},(_,i)=><span key={i}>{q.prompt==="عدّ الصور واختر العدد الصحيح"?"⭐":"⭐"}</span>)}</div><div className="opts">{q.options.map(o=><button key={o} className={`opt ${picked?(o===q.answer?"good":o===picked?"bad":""):""}`} onClick={()=>pick(o)}>{o}</button>)}</div><p>السؤال {round+1} من 10 · النتيجة {score}</p></div>;
+ const count=Number(q.answer);return <div><p>عدّ الأشياء الظاهرة أمامك:</p><div className="counting-pictures" aria-label={`عدد الصور ${count}`}>{Array.from({length:count},(_,i)=><span key={i}>{q.visual ?? "⭐"}</span>)}</div><div className="opts">{q.options.map(o=><button key={o} className={`opt ${picked?(o===q.answer?"good":o===picked?"bad":""):""}`} onClick={()=>pick(o)}>{o}</button>)}</div><p>السؤال {round+1} من 10 · النتيجة {score}</p></div>;
 }
 const games:{id:GameKey;icon:string;title:string;desc:string}[]=[
  {id:"arLetters",icon:"🔤",title:"الحروف العربية",desc:"اسمع الحرف واختره من بين الحروف"},

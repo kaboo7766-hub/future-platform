@@ -195,3 +195,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .multiplication-table th,.multiplication-table td{padding:7px 4px;border-radius:7px;background:#f0f6ff;font-weight:700}
 .multiplication-table th{background:#dceaff;color:#17467d}
 @media(max-width:600px){.foundation-games{padding:12px}.foundation-tables{padding:10px}.alphabet-table{grid-template-columns:repeat(5,minmax(0,1fr))}.multiplication-table{min-width:570px}}
+
+
+/* Separate multiplication tables */
+.multiplication-intro{text-align:center;opacity:.78;margin:.25rem 0 .9rem}
+.multiplication-selector{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.55rem;margin:1rem 0}
+.multiplication-selector button{font:inherit;font-weight:800;border:2px solid var(--line);border-radius:13px;padding:.65rem .3rem;background:var(--panel);color:var(--ink);cursor:pointer;transition:transform .18s,background .18s}
+.multiplication-selector button:hover{transform:translateY(-2px)}
+.multiplication-selector button.active{background:var(--navy2);border-color:var(--navy2);color:#fff;box-shadow:0 5px 14px #2446c833}
+.single-multiplication-table{max-width:520px;margin:1rem auto;padding:1rem;border:2px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 8px 22px #17255410}
+.single-multiplication-table h5{text-align:center;font-size:1.35rem;margin:0 0 .7rem;color:var(--navy2)}
+.single-multiplication-table ol{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.single-multiplication-table li{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.6rem .8rem;border-radius:12px;background:var(--bg);border:1px solid var(--line);font-size:1.05rem}
+.single-multiplication-table li b{min-width:42px;text-align:center;background:var(--c1);color:#14213d;border-radius:9px;padding:.15rem .4rem}
+@media(max-width:420px){.multiplication-selector{grid-template-columns:repeat(3,minmax(0,1fr))}.single-multiplication-table{padding:.65rem}.single-multiplication-table ol{gap:.35rem}.single-multiplication-table li{padding:.5rem;font-size:.94rem}}

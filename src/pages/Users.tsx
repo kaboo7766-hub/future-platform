@@ -3,14 +3,16 @@ import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc
 import { db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 
-interface U { uid: string; name?: string; email?: string; role: Role; classIds?: string[] }\ninterface C { id: string; name: string }
+interface U { uid: string; name?: string; email?: string; role: Role; classIds?: string[] }
+interface C { id: string; name: string }
 interface L { id: string; parentUid: string; studentUid: string }
 const roles: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const roleOptions: Role[] = ["student", "teacher", "parent", "pending", "admin"];
 
 export default function Users() {
   const { profile } = useAuth();
-  const [users, setUsers] = useState<U[]>([]);\n  const [classes, setClasses] = useState<C[]>([]);
+  const [users, setUsers] = useState<U[]>([]);
+  const [classes, setClasses] = useState<C[]>([]);
   const [links, setLinks] = useState<L[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -25,7 +27,10 @@ export default function Users() {
       setUsers(snap.docs.map(d => d.data() as U));
       setLoading(false);
     }, () => { setLoading(false); setMsg({ ok: false, t: "تعذّر تحميل المستخدمين. تحقق من صلاحيات Firestore." }); });
-    const stopClasses = onSnapshot(collection(db, "classes"), snap => {\n      setClasses(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })));\n    }, () => setMsg({ ok: false, t: "تعذّر تحميل الصفوف الدراسية." }));\n    const stopLinks = onSnapshot(collection(db, "parentLinks"), snap => {
+    const stopClasses = onSnapshot(collection(db, "classes"), snap => {
+      setClasses(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })));
+    }, () => setMsg({ ok: false, t: "تعذّر تحميل الصفوف الدراسية." }));
+    const stopLinks = onSnapshot(collection(db, "parentLinks"), snap => {
       setLinks(snap.docs.map(d => ({ id: d.id, ...d.data() } as L)));
     }, () => setMsg({ ok: false, t: "تعذّر تحميل روابط أولياء الأمور." }));
     return () => { stopUsers(); stopLinks(); stopClasses(); };
@@ -134,6 +139,12 @@ export default function Users() {
           onChange={e => setRole(u, e.target.value as Role)}>
           {roleOptions.map(role => <option key={role} value={role}>{roles[role]}</option>)}
         </select>
+        {u.role === "teacher" && <details style={{ width: "100%" }}>
+          <summary>الصفوف المخصصة للمعلم ({(u.classIds ?? []).length})</summary>
+          {classes.length === 0 ? <small>أضف الصفوف أولًا من إدارة المحتوى.</small> : <div className="row" style={{ flexWrap: "wrap" }}>{classes.map(c => <label key={c.id} className="chip">
+            <input type="checkbox" checked={(u.classIds ?? []).includes(c.id)} disabled={busy !== null} onChange={() => void toggleTeacherClass(u, c.id)} /> {c.name}
+          </label>)}</div>}
+        </details>}
       </div>)}
     </>}
     <section className="admin-box">

@@ -50,7 +50,7 @@ service cloud.firestore {
           && request.resource.data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
           && id == request.auth.uid + '_' + request.resource.data.lessonId + '_' + request.resource.data.dateKey
           && request.resource.data.keys().hasOnly(['uid','userName','role','lessonId','lessonTitle','classId','subjectId','dateKey','enteredAt'])
-          && lesson.published == true;
+          && (lesson.published == true || isStaff());
       }
       allow read: if signedIn() && (isStaff() || resource.data.uid == request.auth.uid || linked(resource.data.uid));
       allow create: if validAttendance();

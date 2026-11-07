@@ -125,13 +125,6 @@ export default function Users() {
           {roleOptions.map(role => <option key={role} value={role}>{roles[role]}</option>)}
         </select>
       </div>
-      {users.filter(u => u.role === "pending").length > 0 && <section className="admin-box">
-        <h3>طلبات اعتماد المعلمين ({count("pending")})</h3>
-        {users.filter(u => u.role === "pending").map(u => <div className="row" key={u.uid}>
-          <span style={{ flex: 1 }}>{u.name || "معلم جديد"} <small dir="ltr">{u.email}</small></span>
-          <button className="btn" disabled={busy !== null} onClick={() => setRole(u, "teacher")}>{busy === u.uid ? "جارٍ الاعتماد…" : "اعتماد كمعلم"}</button>
-        </div>)}
-      </section>}
       <h3>كل الحسابات ({visibleUsers.length})</h3>
       {visibleUsers.length === 0 ? <p className="note">لا توجد حسابات تطابق البحث.</p> : visibleUsers.map(u => <div className="row" key={u.uid}>
         <span style={{ flex: 1, minWidth: 150 }}>{u.name || "بدون اسم"}<small dir="ltr" style={{ display: "block" }}>{u.email || u.uid}</small></span>
@@ -139,12 +132,7 @@ export default function Users() {
           onChange={e => setRole(u, e.target.value as Role)}>
           {roleOptions.map(role => <option key={role} value={role}>{roles[role]}</option>)}
         </select>
-        {u.role === "teacher" && <details style={{ width: "100%" }}>
-          <summary>الصفوف المخصصة للمعلم ({(u.classIds ?? []).length})</summary>
-          {classes.length === 0 ? <small>أضف الصفوف أولًا من إدارة المحتوى.</small> : <div className="row" style={{ flexWrap: "wrap" }}>{classes.map(c => <label key={c.id} className="chip">
-            <input type="checkbox" checked={(u.classIds ?? []).includes(c.id)} disabled={busy !== null} onChange={() => void toggleTeacherClass(u, c.id)} /> {c.name}
-          </label>)}</div>}
-        </details>}
+
       </div>)}
     </>}
     <section className="admin-box">

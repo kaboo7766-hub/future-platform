@@ -150,3 +150,23 @@ html[dir="ltr"] .quote{border-right:1px solid var(--line);border-left:6px solid 
 .home-banner{overflow:hidden;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 24px #14213d12}
 .home-banner img{display:block;width:100%;height:220px;object-fit:cover}
 .home-banner h3{margin:0;padding:.65rem 1rem;text-align:center;color:var(--ink)}
+
+/* Professional live classroom and consistent interactive controls */
+.live-hub{display:grid;gap:1rem;color:var(--ink)}
+.live-hero{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1.35rem 1.5rem;border-radius:22px;background:linear-gradient(120deg,#e0f2fe,#eef2ff 58%,#fdf2f8);border:1px solid #dbeafe;color:#172554}
+.live-hero h2{margin:.25rem 0;font-size:clamp(1.4rem,4vw,2rem)}.live-hero p{margin:.25rem 0;color:#475569;max-width:680px;line-height:1.8}
+.live-kicker{font-size:.82rem;font-weight:800;color:#2563eb}.live-hero-icon{width:68px;height:68px;flex:none;border-radius:20px;background:#fff;display:grid;place-items:center;font-size:2.25rem;box-shadow:0 8px 22px #1d4ed81c}
+.live-form{padding:1.15rem;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 8px 26px #0f172a0a}
+.live-form-head{display:flex;justify-content:space-between;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:.9rem}.live-form-head h3{margin:0}.live-form-head p{margin:.2rem 0;opacity:.68;font-size:.85rem}
+.live-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem}.live-form-grid label{display:grid;gap:.35rem;font-weight:700;font-size:.88rem;min-width:0}.live-form-grid input,.live-form-grid select,.live-form-grid textarea{width:100%;min-width:0}
+.live-full{grid-column:1/-1}.live-publish{display:flex;align-items:center;gap:.5rem;margin:1rem 0;font-weight:700}.live-publish input{width:auto}
+.live-actions{display:flex;gap:.6rem;flex-wrap:wrap}.live-section-title{display:flex;align-items:center;justify-content:space-between;gap:.5rem}.live-section-title h3{margin:.25rem 0}.live-section-title span{padding:.25rem .7rem;border-radius:99px;background:#e0f2fe;color:#075985;font-size:.8rem;font-weight:800}
+.live-empty{display:grid;justify-items:center;gap:.35rem;padding:1.6rem;border:1px dashed #94a3b8;border-radius:18px;background:var(--panel);text-align:center}.live-empty>span{font-size:2rem}.live-empty small{opacity:.65}
+.live-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:.8rem}.live-card{display:flex;flex-direction:column;align-items:flex-start;gap:.45rem;padding:1rem;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:0 6px 20px #0f172a0a;min-width:0}
+.live-card h3{margin:.2rem 0;font-size:1.05rem}.live-provider{padding:.28rem .65rem;border-radius:99px;background:#e0e7ff;color:#3730a3;font-size:.78rem;font-weight:800}.live-provider.zoom{background:#dbeafe;color:#1d4ed8}.live-provider.meet{background:#dcfce7;color:#166534}
+.live-class-name,.live-description{margin:0;line-height:1.7}.live-meta{display:flex;flex-direction:column;gap:.25rem;font-size:.83rem;opacity:.78}.live-description{font-size:.86rem;opacity:.78}.live-join{width:100%;text-align:center;margin-top:.3rem}
+.live-manage-actions{display:flex;gap:.5rem;width:100%;padding-top:.55rem;border-top:1px solid var(--line)}.live-manage-actions button{flex:1}.live-draft{font-size:.8rem;color:#a16207;font-weight:800}.live-card.past{opacity:.78}.live-past{padding:.8rem;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.live-past summary{font-weight:800;cursor:pointer;padding:.3rem}
+.btn,.mini,.link,.auth-action,.top-logout,.language-switch,.menu-toggle,.side button,.tile,.opt,.game-card,.games-float{transition:transform .16s ease,box-shadow .16s ease,background-color .16s ease,border-color .16s ease,opacity .16s ease}
+.btn:hover,.mini:hover,.game-card:hover,.tile:hover{transform:translateY(-2px);box-shadow:0 7px 18px #0f172a16}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}button:disabled{opacity:.55;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+@media(max-width:620px){.live-hero{padding:1rem}.live-hero-icon{width:50px;height:50px;font-size:1.7rem}.live-form-grid{grid-template-columns:1fr}.live-full{grid-column:auto}.live-cards{grid-template-columns:1fr}}

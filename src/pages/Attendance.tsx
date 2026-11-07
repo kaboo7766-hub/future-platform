@@ -16,12 +16,12 @@ export default function Attendance() {
     const attendanceQuery = profile?.role === "admin"
       ? query(collection(db, "attendance"), orderBy("enteredAt", "desc"), limit(200))
       : ids.length
-        ? query(collection(db, "attendance"), where("classId", "in", ids.slice(0, 30)), orderBy("enteredAt", "desc"), limit(200))
+        ? query(collection(db, "attendance"), where("classId", "in", ids.slice(0, 30)), limit(200))
         : query(collection(db, "attendance"), where("classId", "==", "__none__"), orderBy("enteredAt", "desc"), limit(200));
     const studentsQuery = profile?.role === "admin"
       ? query(collection(db, "users"), where("role", "==", "student"))
       : ids.length
-        ? query(collection(db, "users"), where("classId", "in", ids.slice(0, 30)), where("role", "==", "student"))
+        ? query(collection(db, "users"), where("classId", "in", ids.slice(0, 30)))
         : query(collection(db, "users"), where("classId", "==", "__none__"), where("role", "==", "student"));
     const progressQuery = profile?.role === "admin" ? collection(db, "progress")
       : ids.length ? query(collection(db, "progress"), where("classId", "in", ids.slice(0, 30)))
@@ -30,7 +30,7 @@ export default function Attendance() {
       snap => { setRows(snap.docs.map(d => ({ id: d.id, ...d.data() } as AttendanceRow))); setError(""); },
       () => setError("تعذّر تحميل سجل حضور الصفوف المخصصة. تأكد من نشر قواعد Firestore الجديدة."));
     const stopStudents = onSnapshot(studentsQuery,
-      snap => setStudents(snap.docs.map(d => ({ uid: d.id, ...d.data() } as StudentRow))),
+      snap => setStudents(snap.docs.map(d => ({ uid: d.id, ...d.data() } as StudentRow & { role?: string })).filter(u => (u as any).role === "student")),
       () => setError("تعذّر تحميل قائمة طلاب الصفوف المخصصة."));
     const stopProgress = onSnapshot(progressQuery,
       snap => setProgress(snap.docs.map(d => d.data() as ProgressRow)),

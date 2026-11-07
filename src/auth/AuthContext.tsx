@@ -47,7 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           name: typeof data.name === "string" ? data.name : "",
           email: typeof data.email === "string" ? data.email : (user.email ?? ""),
           role: data.role as Role,
-          ...(typeof data.classId === "string" ? { classId: data.classId } : {}),\n          ...(Array.isArray(data.classIds) ? { classIds: data.classIds.filter((id: unknown): id is string => typeof id === "string") } : {}),
+          ...(typeof data.classId === "string" ? { classId: data.classId } : {}),
+          ...(Array.isArray(data.classIds) ? { classIds: data.classIds.filter((id: unknown): id is string => typeof id === "string") } : {}),
           ...(typeof data.onboarded === "boolean" ? { onboarded: data.onboarded } : {}),
         });
       } catch (error) {

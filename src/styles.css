@@ -134,3 +134,19 @@ html[dir="ltr"] .quote{border-right:1px solid var(--line);border-left:6px solid 
 .games-float span{font-size:.78rem}
 .games-float:hover{background:#e5f8fc;transform:translateY(-50%) scale(1.03)}
 @media(max-width:480px){.topbar{gap:.4rem;padding:.5rem .65rem}.topbar-actions{gap:0}.topbar-actions .top-logout,.topbar-actions .language-switch{min-height:31px;padding:.2rem .42rem!important;font-size:.7rem}.games-float{right:6px;min-height:33px;padding:.3rem .45rem;font-size:.72rem}.games-float span{font-size:.72rem}}
+
+/* Admin-managed theme and child-friendly homepage banners */
+.theme-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.7rem;margin:1rem 0}
+.theme-color{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.7rem;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-weight:700}
+.theme-color input[type=color]{width:48px;height:38px;padding:2px;border:1px solid var(--line);border-radius:8px;background:var(--panel);cursor:pointer}
+.theme-color code{font-size:.78rem;direction:ltr}
+.banner-preview{display:block;max-width:100%;max-height:220px;object-fit:contain;border-radius:14px;margin:.7rem 0}
+.site-banner-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.8rem;margin:1rem 0}
+.site-banner-item{display:flex;flex-direction:column;gap:.5rem;padding:.65rem;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.site-banner-item img{width:100%;height:130px;object-fit:cover;border-radius:10px}
+.site-banner-item>div{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}
+.home-banners{padding-top:1rem;padding-bottom:1rem}
+.home-banner-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}
+.home-banner{overflow:hidden;border-radius:20px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 24px #14213d12}
+.home-banner img{display:block;width:100%;height:220px;object-fit:cover}
+.home-banner h3{margin:0;padding:.65rem 1rem;text-align:center;color:var(--ink)}

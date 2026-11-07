@@ -22,12 +22,12 @@ import { useSite, contactLinks } from "./HomeExtras";
 
 type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance";
 const ALL: Record<View, [string, string]> = {
-  admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "شهاداتي"],
+  admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
   manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home", "games"],
-  teacher: ["home", "games", "manage", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "games", "manage", "teachers", "quizzes", "assignments", "users", "site", "attendance"],
+  teacher: ["home", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -87,7 +87,7 @@ export default function Dashboard() {
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}
-      {view === "certs" && <><Certificates /><p className="note">عند إكمال كل دروس مادة تظهر لك شهادتها هنا.</p></>}
+      {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}
       {view === "quizzes" && <QuizBuilder />}
       {view === "users" && <Users />}

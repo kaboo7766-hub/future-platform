@@ -3,6 +3,7 @@ import { doc, increment, onSnapshot, serverTimestamp, setDoc } from "firebase/fi
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import LessonGames from "./LessonGames";
+import FoundationGames from "./FoundationGames";
 
 interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string }; visual?: string }
 type GameKey = "arLetters" | "enLetters" | "arNumbers" | "enNumbers" | "count" | "math" | "memory";
@@ -62,6 +63,7 @@ export default function Games() {
  return <section className="panel games-hub"><div className="games-heading"><div><span className="games-kicker">نتعلّم ونلعب</span><h2>🎮 ألعاب التأسيس التفاعلية</h2><p>اختار صفّك وابدأ مغامرة الحروف والأرقام والحساب</p></div><div className="games-score">⭐ <b>{pts}</b><small>نقاطك</small></div></div>
  <label className="grade-picker">اختر الصف الدراسي<select value={grade} onChange={e=>{setGrade(Number(e.target.value));setGame(null);setRes("");}}>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>الصف {n} الابتدائي</option>)}</select></label>
  <div className="badge-row">{badges.filter(b=>pts>=b.min).map(b=><span className="chip" key={b.min}>{b.t}</span>)}</div>
+ <FoundationGames grade={grade} />
  <LessonGames />
  {!game&&<div className="games-grid">{games.map(g=><button key={g.id} className="game-card" onClick={()=>{setRes("");setErr("");setGame(g.id);}}><span className="game-icon">{g.icon}</span><b>{g.title}</b><small>{g.desc}</small><span className="game-start">ابدأ اللعب ←</span></button>)}</div>}
  {game&&<div className="active-game"><div className="active-game-head"><h3>{games.find(g=>g.id===game)?.title} · الصف {grade}</h3><button className="link" onClick={()=>setGame(null)}>رجوع للألعاب</button></div>

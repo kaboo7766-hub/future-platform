@@ -44,17 +44,26 @@ export default function Lessons({ staff }: { staff: boolean }) {
   const [openQuiz, setOpenQuiz] = useState<QuizDoc | null>(null);
   const [err, setErr] = useState("");
   useEffect(() => {
-    const q = staff ? collection(db, "lessons")
-      : cid ? query(collection(db, "lessons"), where("published", "==", true), where("classId", "==", cid))
-      : query(collection(db, "lessons"), where("published", "==", true));
+    const classIds = profile?.classIds ?? [];
+    const q = profile?.role === "admin" ? collection(db, "lessons")
+      : profile?.role === "teacher"
+        ? (classIds.length ? query(collection(db, "lessons"), where("classId", "in", classIds.slice(0, 30))) : query(collection(db, "lessons"), where("classId", "==", "__none__")))
+        : cid ? query(collection(db, "lessons"), where("published", "==", true), where("classId", "==", cid))
+        : query(collection(db, "lessons"), where("published", "==", true), where("classId", "==", "__none__"));
     return onSnapshot(q, s => setItems(s.docs.map(d => ({ id: d.id, ...d.data() } as Lesson)).sort((a, b) => a.order - b.order)), () => setErr("تعذّر تحميل الدروس"));
-  }, [staff, cid]);
+  }, [staff, cid, profile?.role, profile?.classIds]);
   useEffect(() => {
     const u1 = onSnapshot(query(collection(db, "progress"), where("uid", "==", uid)), s => { const m: Record<string, Prog> = {}; s.docs.forEach(d => { const x = d.data() as Prog; m[x.lessonId] = x; }); setProg(m); });
-    const u2 = onSnapshot(query(collection(db, "quizzes"), where("published", "==", true)), s => setQuizzes(s.docs.map(d => ({ id: d.id, ...d.data() } as QuizDoc))));
+    const classIds = profile?.classIds ?? [];
+    const quizQuery = profile?.role === "admin" ? collection(db, "quizzes")
+      : profile?.role === "teacher"
+        ? (classIds.length ? query(collection(db, "quizzes"), where("classId", "in", classIds.slice(0, 30))) : query(collection(db, "quizzes"), where("classId", "==", "__none__")))
+        : cid ? query(collection(db, "quizzes"), where("published", "==", true), where("classId", "==", cid))
+        : query(collection(db, "quizzes"), where("published", "==", true), where("classId", "==", "__none__"));
+    const u2 = onSnapshot(quizQuery, s => setQuizzes(s.docs.map(d => ({ id: d.id, ...d.data() } as QuizDoc))));
     const u3 = onSnapshot(collection(db, "subjects"), s => { const m: Record<string, string> = {}; s.docs.forEach(d => { m[d.id] = d.data().name; }); setSubjects(m); });
     return () => { u1(); u2(); u3(); };
-  }, [uid]);
+  }, [uid, profile?.role, profile?.classIds, cid]);
 
   const mark = async (l: Lesson, patch: Partial<Prog>) => {
     await setDoc(doc(db, "progress", `${uid}_${l.id}`), { uid, lessonId: l.id, subjectId: l.subjectId, ...patch, updatedAt: serverTimestamp() }, { merge: true });

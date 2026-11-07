@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, doc, onSnapshot, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, serverTimestamp, where, writeBatch } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import type { Question } from "./Quiz";
@@ -13,7 +13,13 @@ export default function QuizBuilder() {
   const [qs, setQs] = useState<Question[]>([blank()]);
   const [msg, setMsg] = useState<{ ok: boolean; t: string } | null>(null);
   const [busy, setBusy] = useState(false);
-  useEffect(() => onSnapshot(collection(db, "lessons"), s => setLessons(s.docs.map(d => ({ id: d.id, title: d.data().title })))), []);
+  useEffect(() => {
+    const ids = profile?.classIds ?? [];
+    const lessonQuery = profile?.role === "admin" ? collection(db, "lessons")
+      : ids.length ? query(collection(db, "lessons"), where("classId", "in", ids.slice(0, 30)))
+      : query(collection(db, "lessons"), where("classId", "==", "__none__"));
+    return onSnapshot(lessonQuery, s => setLessons(s.docs.map(d => ({ id: d.id, title: d.data().title, classId: d.data().classId }))));
+  }, [profile?.role, profile?.classIds]);
   const upd = (i: number, p: Partial<Question>) => setQs(a => a.map((q, k) => (k === i ? { ...q, ...p } : q)));
   const setType = (i: number, type: Question["type"]) => upd(i,
     type === "tf" ? { type, options: ["صح", "خطأ"], answer: 0 } :
@@ -29,8 +35,10 @@ export default function QuizBuilder() {
     try {
       const quizRef = doc(collection(db, "quizzes"));
       const batch = writeBatch(db);
+      const selectedLesson = lessons.find(l => l.id === lessonId);
+      if (!selectedLesson) throw new Error("الدرس غير متاح لحسابك.");
       batch.set(quizRef, {
-        lessonId, title: title.trim(),
+        lessonId, classId: selectedLesson.classId, title: title.trim(),
         questions: qs.map(({ answer: _answer, ...question }) => question),
         allowRetake, published, createdBy: profile!.uid, createdAt: serverTimestamp()
       });

@@ -7,6 +7,7 @@ service cloud.firestore {
     function isStaff() { return signedIn() && me().role in ['admin','teacher']; }
     function teacherHasClass(classId) {
       return signedIn() && me().role == 'teacher'
+        && classId is string && ('classIds' in me())
         && me().classIds is list && classId in me().classIds;
     }
     function canManageClass(classId) { return isAdmin() || teacherHasClass(classId); }

@@ -5,7 +5,6 @@ service cloud.firestore {
     function me() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
     function isAdmin() { return signedIn() && me().role == 'admin'; }
     function isStaff() { return signedIn() && me().role in ['admin','teacher']; }
-
     function linked(owner) { return signedIn() && exists(/databases/$(db)/documents/parentLinks/$(request.auth.uid + '_' + owner)); }
 
     match /parentLinks/{id} {
@@ -27,8 +26,35 @@ service cloud.firestore {
     match /settings/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
     match /lessons/{id} {
       allow read: if signedIn() && (resource.data.published == true || isStaff());
-      allow create, update: if isStaff() && request.resource.data.url.matches('https://.*')
-        && request.resource.data.title is string && request.resource.data.title.size() < 150;
+      allow create, update: if isStaff() && request.resource.data.title is string
+        && request.resource.data.title.size() < 150
+        && ((('url' in request.resource.data) && request.resource.data.url is string && request.resource.data.url.matches('https://.*'))
+          || (request.resource.data.type == 'image' && ('imageData' in request.resource.data)
+            && request.resource.data.imageData is string
+            && request.resource.data.imageData.size() < 650000
+            && request.resource.data.imageData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')));
+      allow delete: if isAdmin();
+    }
+    match /attendance/{id} {
+      function validAttendance() {
+        let lesson = get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data;
+        return signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == me().role
+          && request.resource.data.role in ['student','teacher','admin']
+          && request.resource.data.userName is string
+          && request.resource.data.userName.size() <= 100
+          && request.resource.data.lessonId is string
+          && request.resource.data.lessonTitle is string
+          && request.resource.data.lessonTitle.size() <= 150
+          && request.resource.data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && id == request.auth.uid + '_' + request.resource.data.lessonId + '_' + request.resource.data.dateKey
+          && request.resource.data.keys().hasOnly(['uid','userName','role','lessonId','lessonTitle','classId','subjectId','dateKey','enteredAt'])
+          && lesson.published == true;
+      }
+      allow read: if signedIn() && (isStaff() || resource.data.uid == request.auth.uid || linked(resource.data.uid));
+      allow create: if validAttendance();
+      allow update: if false;
       allow delete: if isAdmin();
     }
     match /quizzes/{id} {
@@ -38,25 +64,18 @@ service cloud.firestore {
     }
     match /quizResults/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      // Results are written only by the trusted Vercel API using Firebase Admin.
       allow create, update, delete: if false;
     }
-    match /quizAnswerKeys/{quizId} {
-      // Correct answers must never be readable by students.
-      allow read, write: if isStaff();
-    }
+    match /quizAnswerKeys/{quizId} { allow read, write: if isStaff(); }
     match /progress/{id} {
       function validStudentProgress() {
         let lesson = get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data;
         let student = get(/databases/$(db)/documents/users/$(request.auth.uid)).data;
-        return signedIn()
-          && student.role == 'student'
-          && request.resource.data.uid == request.auth.uid
+        return signedIn() && student.role == 'student' && request.resource.data.uid == request.auth.uid
           && request.resource.data.lessonId is string
           && id == request.auth.uid + '_' + request.resource.data.lessonId
           && request.resource.data.keys().hasOnly(['uid','lessonId','subjectId','completed','openedAtMs','updatedAt'])
-          && lesson.published == true
-          && lesson.classId == student.classId
+          && lesson.published == true && lesson.classId == student.classId
           && request.resource.data.subjectId == lesson.subjectId
           && (!('completed' in request.resource.data) || request.resource.data.completed is bool)
           && (!('openedAtMs' in request.resource.data) || request.resource.data.openedAtMs is number);
@@ -114,10 +133,8 @@ service cloud.firestore {
       function validLogShape() {
         return request.resource.data.keys().hasOnly(['uid','action','target','at'])
           && request.resource.data.uid == request.auth.uid
-          && request.resource.data.action is string
-          && request.resource.data.action.size() <= 40
-          && request.resource.data.target is string
-          && request.resource.data.target.size() <= 150
+          && request.resource.data.action is string && request.resource.data.action.size() <= 40
+          && request.resource.data.target is string && request.resource.data.target.size() <= 150
           && request.resource.data.at == request.time;
       }
       allow create: if signedIn() && validLogShape()

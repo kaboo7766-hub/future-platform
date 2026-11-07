@@ -79,13 +79,15 @@ service cloud.firestore {
       function lessonClass() {
         return get(/databases/$(db)/documents/lessons/$(resource.data.lessonId)).data.classId;
       }
-      allow read: if signedIn() && (isAdmin() || teacherHasClass(lessonClass())
+      allow read: if signedIn() && (isAdmin() || teacherHasClass(resource.data.classId)
         || (resource.data.published == true
           && me().role == 'student'
-          && lessonClass() == me().classId));
+          && resource.data.classId == me().classId));
       allow create, update: if canManageClass(
         get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data.classId
-      ) && request.resource.data.questions.size() > 0 && request.resource.data.questions.size() <= 50;
+      ) && request.resource.data.classId ==
+        get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data.classId
+        && request.resource.data.questions.size() > 0 && request.resource.data.questions.size() <= 50;
       allow delete: if isAdmin();
     }
     match /quizResults/{id} {

@@ -28,6 +28,7 @@ function makeQuestion(kind:Kind, grade:number, stage:number):Question {
 }
 export default function FoundationGames({grade}:{grade:number}) {
   const [kind,setKind]=useState<Kind|null>(null),[stage,setStage]=useState(1),[unlocked,setUnlocked]=useState<Record<string,number>>({}),[q,setQ]=useState<Question|null>(null),[index,setIndex]=useState(0),[score,setScore]=useState(0),[picked,setPicked]=useState(""),[result,setResult]=useState("");
+  const [selectedTable,setSelectedTable]=useState(1);
   const key = kind ? `${grade}-${kind}` : "";
   const open = kind ? (unlocked[key]??1) : 1;
   const start=(k:Kind,s:number)=>{setKind(k);setStage(s);setIndex(0);setScore(0);setPicked("");setResult("");setQ(makeQuestion(k,grade,s));};
@@ -47,7 +48,13 @@ export default function FoundationGames({grade}:{grade:number}) {
       <h3>📚 جداول التعلّم والحفظ</h3>
       <h4>جدول الحروف العربية</h4><div className="alphabet-table" dir="rtl">{AR.map((letter,i)=><span key={letter}><b>{letter}</b><small>{i+1}</small></span>)}</div>
       <h4>English Alphabet Table</h4><div className="alphabet-table" dir="ltr">{EN.map((letter,i)=><span key={letter}><b>{letter}</b><small>{i+1}</small></span>)}</div>
-      <h4>جدول الضرب الكامل من 1 × 1 إلى 12 × 12</h4><div className="multiplication-scroll"><table className="multiplication-table" dir="ltr"><thead><tr><th>×</th>{Array.from({length:12},(_,i)=><th key={i}>{i+1}</th>)}</tr></thead><tbody>{Array.from({length:12},(_,r)=><tr key={r}><th>{r+1}</th>{Array.from({length:12},(_,c)=><td key={c}>{(r+1)*(c+1)}</td>)}</tr>)}</tbody></table></div>
+      <h4>جداول الضرب من جدول 1 إلى جدول 12</h4>
+      <p className="multiplication-intro">اختر جدولًا واحدًا لعرضه وحفظه، وكل جدول مستقل ومرتب من × 1 إلى × 12.</p>
+      <div className="multiplication-selector" dir="rtl">{Array.from({length:12},(_,i)=>i+1).map(n=><button type="button" key={n} className={selectedTable===n?"active":""} aria-pressed={selectedTable===n} onClick={()=>setSelectedTable(n)}>جدول {n}</button>)}</div>
+      <div className="single-multiplication-table" dir="rtl">
+        <h5>⭐ جدول ضرب {selectedTable}</h5>
+        <ol>{Array.from({length:12},(_,i)=>i+1).map(n=><li key={n}><span>{selectedTable} × {n}</span><b>{selectedTable*n}</b></li>)}</ol>
+      </div>
     </div>
   </section>;
 }

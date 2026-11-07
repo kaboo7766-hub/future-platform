@@ -13,6 +13,7 @@ export default function Shell({ name, roleLabel, nav, view, onView, stats, onLog
       <div className="topbar-actions">
         <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
         <button className="top-logout" onClick={onLogout}>{language === "ar" ? "تسجيل الخروج" : "Log out"}</button>
+        {nav.some(n => n.id === "games") && <button className="games-direct" type="button" onClick={() => choose("games")}>🎮 {language === "ar" ? "الألعاب" : "Games"}</button>}
         <button className={`menu-toggle ${menuOpen ? "is-open" : ""}`} type="button" aria-label={language === "ar" ? "فتح القائمة" : "Open menu"} aria-expanded={menuOpen} aria-controls="dashboard-navigation" onClick={() => setMenuOpen(v => !v)}>
           <span></span><span></span><span></span>
         </button>

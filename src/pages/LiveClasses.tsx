@@ -67,7 +67,7 @@ export default function LiveClasses() {
         <label>منصة الاجتماع<select value={form.provider} onChange={e=>setForm({...form,provider:e.target.value as "zoom"|"meet",meetingUrl:""})}><option value="meet">Google Meet</option><option value="zoom">Zoom</option></select></label>
         <label>رابط الحصة<input required dir="ltr" type="url" placeholder={form.provider === "zoom" ? "https://zoom.us/j/..." : "https://meet.google.com/xxx-xxxx-xxx"} value={form.meetingUrl} onChange={e=>setForm({...form,meetingUrl:e.target.value})}/></label>
         <label>موعد الحصة<input required type="datetime-local" value={form.startsAt} onChange={e=>setForm({...form,startsAt:e.target.value})}/></label>
-        <label>مدة الحصة بالدقائق<input type="number" min={10} max={240} value={form.durationMinutes} onChange={e=>setForm({...form,durationMinutes:Math.max(10,Math.min(240,Number(e.target.value)||45))})}/></label>
+        <label>مدة الحصة بالدقائق<input type="number" min={10} max={240} value={form.durationMinutes} onChange={e=>setForm({...form,durationMinutes:Math.max(10,Math.min(240,Math.round(Number(e.target.value)||45)))})}/></label>
         <label className="live-full">وصف أو تعليمات للطلاب<textarea rows={2} maxLength={400} placeholder="جهّز الكتاب والكراسة قبل بدء الحصة..." value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></label>
       </div>
       <label className="live-publish"><input type="checkbox" checked={form.published} onChange={e=>setForm({...form,published:e.target.checked})}/> إظهار الحصة للطلاب الآن</label>

@@ -66,7 +66,7 @@ export default function Lessons({ staff }: { staff: boolean }) {
   }, [uid, profile?.role, profile?.classIds, cid]);
 
   const mark = async (l: Lesson, patch: Partial<Prog>) => {
-    await setDoc(doc(db, "progress", `${uid}_${l.id}`), { uid, lessonId: l.id, subjectId: l.subjectId, ...patch, updatedAt: serverTimestamp() }, { merge: true });
+    await setDoc(doc(db, "progress", `${uid}_${l.id}`), { uid, lessonId: l.id, subjectId: l.subjectId, classId: l.classId, ...patch, updatedAt: serverTimestamp() }, { merge: true });
   };
   const recordAttendance = async (l: Lesson) => {
     const user = auth.currentUser;
@@ -78,7 +78,7 @@ export default function Lessons({ staff }: { staff: boolean }) {
     if (!existing.exists()) {
       await setDoc(ref, {
         uid, userName: profile.name, role: profile.role, lessonId: l.id,
-        lessonTitle: l.title, classId: profile.classId ?? "", subjectId: l.subjectId,
+        lessonTitle: l.title, classId: l.classId, subjectId: l.subjectId,
         dateKey, enteredAt: serverTimestamp()
       });
     }

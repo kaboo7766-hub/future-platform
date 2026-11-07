@@ -22,7 +22,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /users/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid));
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid) || teacherHasClass(resource.data.classId));
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.role in ['student','parent','pending']
         && request.resource.data.keys().hasOnly(['uid','name','email','role','createdAt'])
@@ -155,7 +155,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /points/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isStaff() || linked(uid));
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid) || teacherHasClass(get(/databases/$(db)/documents/users/$(uid)).data.classId));
       allow create: if signedIn() && request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','total','updatedAt'])
         && request.resource.data.uid == uid && request.resource.data.total is int
         && request.resource.data.total >= 0 && request.resource.data.total <= 50;
@@ -165,7 +165,7 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /certificates/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid) || teacherHasClass(resource.data.classId));
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
         && id == request.auth.uid + '_' + request.resource.data.subjectId
         && request.resource.data.keys().hasOnly(['uid','studentName','subjectId','subjectName','number','issuedAt'])

@@ -7,7 +7,7 @@ const blank = (): Question => ({ type: "mcq", text: "", options: ["", "", "", ""
 
 export default function QuizBuilder() {
   const { profile } = useAuth();
-  const [lessons, setLessons] = useState<{ id: string; title: string }[]>([]);
+  const [lessons, setLessons] = useState<{ id: string; title: string; classId: string }[]>([]);
   const [lessonId, setLessonId] = useState(""), [title, setTitle] = useState("");
   const [allowRetake, setRetake] = useState(true), [published, setPub] = useState(false);
   const [qs, setQs] = useState<Question[]>([blank()]);

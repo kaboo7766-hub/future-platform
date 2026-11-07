@@ -211,6 +211,7 @@ service cloud.firestore {
           && request.resource.data.classId == resource.data.classId && request.resource.data.createdBy == resource.data.createdBy));
       allow delete: if isAdmin() || (signedIn() && teacherHasClass(resource.data.classId) && resource.data.createdBy == request.auth.uid);
     }
+    match /themeSettings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteTeachers/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }

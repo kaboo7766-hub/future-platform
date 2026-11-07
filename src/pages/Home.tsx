@@ -15,7 +15,7 @@ const faqs = [
   ["على أي أجهزة تعمل؟", "على الهاتف والجهاز اللوحي والكمبيوتر من المتصفح."],
 ];
 export default function Home() {
-  const { t, r, c } = useSite();
+  const { t, r, c, banners } = useSite();
   return (<main>
     <section className="hero2"><div className="hero2-in">
       <div>
@@ -33,6 +33,13 @@ export default function Home() {
         <div className="chips">{chips.map(([i, t]) => <div key={t}><span>{i}</span>{t}</div>)}</div>
       </div>
     </div></section>
+      {banners.length > 0 && <section className="home-banners wrap" aria-label="صور المنصة للأطفال">
+        <h2 className="sec">عالم من المرح والتعلّم</h2>
+        <div className="home-banner-grid">{banners.map((banner) => <article className="home-banner" key={banner.id}>
+          <img src={banner.imageData} alt={banner.title || "صورة تعليمية للأطفال"} />
+          {banner.title && <h3>{banner.title}</h3>}
+        </article>)}</div>
+      </section>}
     <section className="wrap"><h2 className="sec">منصة تعليمية عربية متكاملة</h2>
       <div className="grid">{features.map(([i, t, d]) => <div className="feat" key={t}><div className="ic">{i}</div><b>{t}</b><p>{d}</p></div>)}</div></section>
     <Characters />

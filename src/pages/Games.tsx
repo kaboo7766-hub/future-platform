@@ -13,7 +13,7 @@ const canSpeak = typeof window !== "undefined" && "speechSynthesis" in window;
 const speak = (text: string, lang: string) => { try { const u = new SpeechSynthesisUtterance(text); u.lang = lang; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch {} };
 let actx: AudioContext | null = null;
 const tone = (freqs: number[]) => { try { if (!actx) actx = new AudioContext(); const c = actx; freqs.forEach((f,i) => { const t=c.currentTime+i*.12,o=c.createOscillator(),g=c.createGain();o.frequency.value=f;o.connect(g);g.connect(c.destination);g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.11);o.start(t);o.stop(t+.12); }); } catch {} };
-const fmt = (n:number, ar:boolean) => ar ? String(n).replace(/\\d/g, d => DIGITS[Number(d)]) : String(n);
+const fmt = (n:number, ar:boolean) => ar ? String(n).replace(/\d/g, d => DIGITS[Number(d)]) : String(n);
 const numberQ = (grade:number, ar:boolean):Q => {
   const max = grade === 1 ? 10 : grade === 2 ? 20 : grade === 3 ? 50 : grade === 4 ? 100 : grade === 5 ? 500 : 1000;
   const n = 1 + Math.floor(Math.random()*max), answer = fmt(n,ar);

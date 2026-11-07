@@ -39,7 +39,8 @@ service cloud.firestore {
       allow read: if signedIn() && (
         isAdmin() || teacherHasClass(resource.data.classId)
         || (resource.data.published == true
-          && (me().role != 'student' || resource.data.classId == me().classId))
+          && me().role == 'student'
+          && resource.data.classId == me().classId)
       );
       allow create, update: if canManageClass(request.resource.data.classId)
         && request.resource.data.title is string

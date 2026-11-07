@@ -34,6 +34,10 @@ export default async function handler(req: any, res: any) {
     if (!quizSnap.exists || quizSnap.data()?.published !== true) {
       return res.status(404).json({ error: "الاختبار غير متاح حاليًا" });
     }
+    if (typeof quizSnap.data()?.classId !== "string" ||
+        quizSnap.data()?.classId !== userSnap.data()?.classId) {
+      return res.status(403).json({ error: "هذا الاختبار غير مخصص لصفك الدراسي" });
+    }
     if (!keySnap.exists) return res.status(409).json({ error: "لم يتم تجهيز مفتاح إجابات هذا الاختبار بعد. تواصل مع الإدارة." });
 
     const quiz = quizSnap.data()!;

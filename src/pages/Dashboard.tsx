@@ -18,16 +18,17 @@ const Onboarding = lazy(() => import("./Onboarding"));
 const SiteContent = lazy(() => import("./SiteContent"));
 const AdminOverview = lazy(() => import("./AdminOverview"));
 const Attendance = lazy(() => import("./Attendance"));
+const LiveClasses = lazy(() => import("./LiveClasses"));
 import { useSite, contactLinks } from "./HomeExtras";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
-  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home", "games"],
-  teacher: ["home", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance"],
+  student: ["home", "lessons", "live", "assignments", "games", "certs"], parent: ["home", "games"],
+  teacher: ["home", "live", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -94,6 +95,7 @@ export default function Dashboard() {
       {view === "teachers" && role === "admin" && <Teachers />}
       {view === "site" && <SiteContent />}
       {view === "attendance" && staff && <Attendance />}
+      {view === "live" && <LiveClasses />}
     </Shell>
     </Suspense>
   </>);

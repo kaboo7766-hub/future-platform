@@ -17,12 +17,14 @@ export default function App() {
   const { language, toggleLanguage } = useLanguage();
   if (loading) return <PageLoader />;
   return (<>
-    <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} <span aria-hidden="true">🌐</span></button>
     {pathname !== "/dashboard" && <header className="bar">
       <Link to="/" className="brand">🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
-      <nav>{profile
-        ? (<><Link to="/dashboard">{language === "ar" ? "لوحتي" : "Dashboard"}</Link><button onClick={() => void logout()}>{language === "ar" ? "تسجيل الخروج" : "Log out"}</button></>)
-        : <Link to="/login" className="btn">{language === "ar" ? "تسجيل الدخول" : "Log in"}</Link>}</nav>
+      <nav className="bar-actions">
+        <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
+        {profile
+          ? <><Link to="/dashboard">{language === "ar" ? "لوحتي" : "Dashboard"}</Link><button className="auth-action" onClick={() => void logout()}>{language === "ar" ? "تسجيل الخروج" : "Log out"}</button></>
+          : <Link to="/login" className="btn">{language === "ar" ? "تسجيل الدخول" : "Log in"}</Link>}
+      </nav>
     </header>}
     <Suspense fallback={<PageLoader />}>
       <Routes>

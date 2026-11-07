@@ -167,12 +167,57 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /certificates/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid) || teacherHasClass(get(/databases/$(db)/documents/users/$(resource.data.uid)).data.classId));
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && id == request.auth.uid + '_' + request.resource.data.subjectId
-        && request.resource.data.keys().hasOnly(['uid','studentName','subjectId','subjectName','number','issuedAt'])
-        && request.resource.data.number.matches('FM-[0-9A-F]{12}');
-      allow update: if false;
+      allow read: if signedIn() && (
+        isAdmin()
+        || (resource.data.status == 'approved' && resource.data.recipientUid == request.auth.uid)
+        || (me().role == 'teacher' && resource.data.createdBy == request.auth.uid)
+      );
+      allow create: if signedIn() && (
+        (isAdmin()
+          && request.resource.data.recipientRole == 'teacher'
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.role == 'teacher'
+          && request.resource.data.status == 'approved'
+          && request.resource.data.createdBy == request.auth.uid)
+        ||
+        (me().role == 'teacher'
+          && request.resource.data.recipientRole == 'student'
+          && request.resource.data.createdBy == request.auth.uid
+          && request.resource.data.status == 'pending'
+          && request.resource.data.classId is string
+          && teacherHasClass(request.resource.data.classId)
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.role == 'student'
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.classId == request.resource.data.classId)
+      )
+      && request.resource.data.recipientUid is string
+      && request.resource.data.recipientName is string
+      && request.resource.data.title is string && request.resource.data.title.size() <= 80
+      && request.resource.data.reason is string && request.resource.data.reason.size() <= 500
+      && request.resource.data.number.matches('^FUT-[0-9A-F]{10}/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /activityLogs/{id} {
+      function validLogShape() {
+        return request.resource.data.keys().hasOnly(['uid','action','target','at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.action is string && request.resource.data.action.size() <= 40
+          && request.resource.data.target is string && request.resource.data.target.size() <= 150
+          && request.resource.data.at == request.time;
+      }
+      allow create: if signedIn() && validLogShape()
+        && ((request.resource.data.action == 'lesson.create' && isStaff())
+          || (request.resource.data.action in ['teacher.approve','user.role','parent.link','parent.unlink'] && isAdmin()));
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+})
+      && request.resource.data.keys().hasOnly(['recipientUid','recipientName','recipientRole','classId','title','reason','number','status','createdBy','createdByName','createdAt','approvedBy','approvedAt']);
+      allow update: if isAdmin()
+        && resource.data.recipientRole == 'student'
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approvedBy','approvedAt'])
+        && request.resource.data.status in ['approved','rejected']
+        && request.resource.data.approvedBy == request.auth.uid;
       allow delete: if isAdmin();
     }
     match /siteTeachers/{id} { allow read: if true; allow write: if isAdmin(); }

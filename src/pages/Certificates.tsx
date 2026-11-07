@@ -7,7 +7,11 @@ type Role = "student" | "teacher";
 type Cert = {
   id: string; recipientUid: string; recipientName: string; recipientRole: Role;
   classId?: string; title: string; reason: string; number: string; status: "pending" | "approved" | "rejected";
-  createdBy: string; createdByName: string; createdAt?: any; approvedAt?: any;
+  createdBy: string; createdByName: string; createdAt?: any; approvedAt?: any; recipientGender?: "boy" | "girl";
+};
+const detectGender = (name: string): "boy" | "girl" => {
+  const n = name.trim().replace(/[ًٌٍَُِّْـ]/g, "");
+  return (/ة$|اء$|ى$/.test(n) || /^(نور|إيمان|آية|هدى|منى|سما|جنى|ملك|مريم|فاطمة|عائشة|زينب|سلمى|ليلى|رنا|دينا|هنا|هبة|رحمة|بسملة|شهد|فرح|مي|يارا|لارا|تاليا|حبيبة|جوري|روان|رؤى|سارة|ياسمين|أميرة|أسماء|دعاء|صفاء|وفاء|نهى|ضحى|شيماء|رقية|لينا|مها|سندس|حنين)$/i.test(n)) ? "girl" : "boy";
 };
 type Person = { uid: string; name?: string; email?: string; role: string; classId?: string };
 type SchoolClass = { id: string; name: string };
@@ -27,6 +31,8 @@ export default function Certificates() {
   const [selectedUid, setSelectedUid] = useState("");
   const [title, setTitle] = useState("شهادة تقدير");
   const [reason, setReason] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [genderChoice, setGenderChoice] = useState<"auto" | "boy" | "girl">("auto");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
   const [view, setView] = useState<Cert | null>(null);
@@ -63,7 +69,8 @@ export default function Certificates() {
     setBusy("create"); setMessage("");
     try {
       await addDoc(collection(db, "certificates"), {
-        recipientUid: target.uid, recipientName: target.name || target.email || "بدون اسم",
+        recipientUid: target.uid, recipientName: manualName.trim() || target.name || target.email || "بدون اسم",
+        recipientGender: genderChoice === "auto" ? detectGender(manualName.trim() || target.name || "") : genderChoice,
         recipientRole: role === "admin" ? "teacher" : "student",
         ...(role === "teacher" ? {classId: target.classId} : {}),
         title: title.trim() || "شهادة تقدير", reason: reason.trim(), number: number(),
@@ -72,7 +79,7 @@ export default function Certificates() {
         ...(role === "admin" ? {approvedBy: profile.uid, approvedAt: serverTimestamp()} : {})
       });
       setMessage(role === "admin" ? "تم إصدار شهادة التقدير للمعلم." : "تم إرسال الشهادة للمدير للمراجعة. لن تظهر للطالب قبل اعتمادها.");
-      setSelectedUid(""); setReason("");
+      setSelectedUid(""); setReason(""); setManualName(""); setGenderChoice("auto");
     } catch (e: any) { setMessage("لم يتم حفظ الشهادة: " + (e?.message || "تحقق من صلاحيات Firestore.")); }
     finally { setBusy(""); }
   };
@@ -87,23 +94,40 @@ export default function Certificates() {
   };
 
   if (!profile) return null;
-  if (view) return <section dir="rtl">
-    <style>{`@page { size: A4 landscape; margin: 10mm; } @media print { body * { visibility: hidden !important; } .certificate-print, .certificate-print * { visibility: visible !important; } .certificate-print { position: absolute; inset: 0; width: 100%; } .certificate-actions { display:none !important; } }`}</style>
-    <div className="certificate-print" style={{background:"#fff",color:"#243047",border:"12px double #c49a42",padding:"34px",minHeight:"470px",textAlign:"center",position:"relative",fontFamily:"Tahoma,Arial",boxSizing:"border-box"}}>
-      <div style={{border:"2px solid #d9bd78",padding:"26px",minHeight:"390px"}}>
-        <div style={{fontSize:30,color:"#b58b35"}}>✦ ✦ ✦</div>
-        <h2 style={{color:"#17365d",fontSize:30,margin:"8px 0"}}>منصة المستقبل التعليمية</h2>
-        <p style={{color:"#a47c2c",fontSize:25,fontWeight:700,margin:"10px 0"}}>{view.title}</p>
-        <p style={{fontSize:19,margin:"14px 0"}}>تتشرف منصة المستقبل التعليمية بمنح هذه الشهادة إلى</p>
-        <h1 style={{fontSize:38,color:"#17365d",margin:"18px 0",borderBottom:"2px solid #d9bd78",display:"inline-block",padding:"0 40px 10px"}}>{view.recipientName}</h1>
-        <p style={{fontSize:19,margin:"14px auto",maxWidth:700,lineHeight:1.9}}>{view.reason}</p>
-        <p style={{fontSize:16,marginTop:25}}>تاريخ الإصدار: {dateText(view.approvedAt || view.createdAt)}　 |　 رقم الشهادة: {view.number}</p>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:25,fontSize:15,color:"#526078"}}><span>إدارة منصة المستقبل التعليمية</span><span>مع أطيب التمنيات بدوام التفوق والنجاح</span></div>
-        <div style={{fontSize:24,color:"#b58b35",marginTop:8}}>✦ ✦ ✦</div>
+  if (view) {
+    const gender = view.recipientGender || detectGender(view.recipientName);
+    return <section dir="rtl">
+      <style>{`
+        @page { size: A4 landscape; margin: 7mm; }
+        .future-cert { min-height:520px; box-sizing:border-box; padding:18px; color:#102744; background:radial-gradient(circle at 85% 12%,#fff9e9 0,#f8f1df 42%,#fff 100%); border:10px double #bd9140; font-family:Tahoma,Arial,sans-serif; }
+        .future-cert-inner { min-height:470px; border:2px solid #d5b56f; padding:24px 30px; text-align:center; position:relative; }
+        .future-cert-ribbon { display:inline-block; background:#102744; color:#f7d98b; padding:8px 34px; border-radius:4px; font-weight:bold; }
+        .future-cert-name { display:inline-block; min-width:55%; padding:8px 28px 12px; border-bottom:3px solid #c49a49; color:#102744; font-size:34px; font-weight:900; }
+        .future-cert-character { position:absolute; left:25px; bottom:35px; font-size:76px; }
+        @media print { body * { visibility:hidden !important; } .certificate-print,.certificate-print * { visibility:visible !important; } .certificate-print { position:absolute; inset:0; width:100%; } .certificate-actions { display:none !important; } }
+      `}</style>
+      <div className="certificate-print future-cert">
+        <div className="future-cert-inner">
+          <div style={{fontSize:25,color:"#bd9140",fontWeight:900}}>✦ ★ ✦ ★ ✦</div>
+          <div style={{fontSize:17,color:"#b08737",fontWeight:700}}>منصة المستقبل التعليمية</div>
+          <div style={{position:"absolute",right:28,top:18,fontSize:38}}>🎓</div>
+          <h1 style={{fontSize:42,margin:"8px 0 4px",color:"#102744"}}>شهادة تقدير</h1>
+          <div className="future-cert-ribbon">بكل فخر وتقدير</div>
+          <p style={{fontSize:19,margin:"18px 0 8px"}}>تُمنح هذه الشهادة إلى</p>
+          <div className="future-cert-name">{view.recipientName}</div>
+          <p style={{fontSize:17,lineHeight:1.9,maxWidth:760,margin:"16px auto"}}>{view.reason}</p>
+          <div style={{fontSize:22,fontWeight:800,color:"#98702d",marginTop:12}}>استمر في التألق والنجاح</div>
+          <div style={{fontSize:16,marginTop:5}}>مستقبلك أجمل بإذن الله ⭐</div>
+          <div className="future-cert-character" aria-hidden="true">{gender === "girl" ? "👧🏻" : "👦🏻"}</div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"end",marginTop:24,fontSize:14}}>
+            <span>اسم المدرسة: ........................</span><span>التاريخ: {dateText(view.approvedAt || view.createdAt)}</span><span>رقم الشهادة: {view.number}</span>
+          </div>
+          <div style={{fontSize:22,color:"#bd9140",marginTop:12}}>❧ ✦ ❧</div>
+        </div>
       </div>
-    </div>
-    <div className="row certificate-actions" style={{marginTop:16}}><button className="btn" onClick={() => window.print()}>تنزيل PDF / طباعة</button><button className="link" onClick={() => setView(null)}>رجوع</button></div>
-  </section>;
+      <div className="row certificate-actions" style={{marginTop:16}}><button className="btn" onClick={() => window.print()}>تنزيل PDF / طباعة</button><button className="link" onClick={() => setView(null)}>رجوع</button></div>
+    </section>;
+  }
 
   return <section className="panel" dir="rtl">
     <div className="admin-box-heading"><div><h3>🏆 الشهادات والتكريم</h3><p>شهادات شخصية باسم منصة المستقبل التعليمية</p></div></div>
@@ -116,6 +140,10 @@ export default function Certificates() {
           </select>
         </label>
         <label>عنوان الشهادة<input value={title} onChange={e => setTitle(e.target.value)} maxLength={80} /></label>
+        {role === "teacher" && <>
+          <label>اسم الطالب / الطالبة (يمكنك تعديله)<input value={manualName} onChange={e => setManualName(e.target.value)} maxLength={80} placeholder="اكتب اسم الطالب أو الطالبة" /></label>
+          <label>شكل شخصية الشهادة<select value={genderChoice} onChange={e => setGenderChoice(e.target.value as "auto" | "boy" | "girl")}><option value="auto">تلقائي حسب الاسم</option><option value="boy">ولد 👦</option><option value="girl">بنت 👧</option></select></label>
+        </>}
         <label style={{gridColumn:"1 / -1"}}>سبب التكريم<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} placeholder="مثال: التفوق الدراسي والالتزام والمشاركة المتميزة" /></label>
       </div>
       <button className="btn" disabled={!!busy} onClick={() => void makeCertificate()}>{busy === "create" ? "جارٍ الحفظ…" : role === "admin" ? "إصدار شهادة للمعلم" : "إرسال الشهادة لاعتماد المدير"}</button>

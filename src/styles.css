@@ -104,3 +104,25 @@ details{margin-top:.75rem}summary{cursor:pointer}
 .admin-footer-note{font-size:.78rem;opacity:.65;text-align:center;padding:.35rem}
 @media(max-width:900px){.admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.admin-main-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.admin-welcome{padding:1rem}.admin-welcome-icon{width:52px;height:52px;font-size:1.7rem}.admin-stat-card{padding:.75rem;gap:.55rem}.admin-stat-icon{width:38px;height:38px}.admin-stat-card b{font-size:1.2rem}.admin-stat-card small{font-size:.7rem}.admin-activity-row time{max-width:90px;overflow:hidden;text-overflow:ellipsis}}
+
+
+/* Light sky-blue identity and language switch */
+:root{--navy:#087eaa;--navy2:#16a8d5;--accent:#079bc8;--bg:#f1fbff;--line:#ccecf7}
+@media(prefers-color-scheme:dark){:root{--navy:#087eaa;--navy2:#27b9e4;--accent:#48c8ed;--bg:#101f29;--line:#294b5b}}
+.hero2{background:linear-gradient(135deg,#e2f8ff,#c9effb 55%,#f4fcff)}
+.h-title{color:#087eaa}.h-title span{color:#16a8d5}.h-sub{color:#176b89}
+.badge,.chips,.foot{background:#087eaa}
+.pb i{background:#16a8d5}
+.band{background:linear-gradient(135deg,#087eaa,#16a8d5)}
+.cta{background:linear-gradient(120deg,#087eaa,#16a8d5)}
+.cover-art{background:linear-gradient(120deg,#21b6dc,#76d9ed,#b5f0f7)}
+.side button.on{background:#16a8d5}
+.stats b{color:#079bc8}
+.avatar{background:#16a8d5}
+.quote{border-right-color:#16a8d5}.quote footer{color:#087eaa}
+.language-switch{position:fixed;z-index:100;top:12px;left:14px;display:flex;align-items:center;gap:.4rem;border:1px solid #8dd9ed;border-radius:999px;padding:.45rem .85rem;background:#fff;color:#087eaa;font:700 .9rem system-ui;box-shadow:0 4px 16px #087eaa22;cursor:pointer}
+html[dir="ltr"] .language-switch{left:auto;right:14px}
+html[dir="ltr"] body{direction:ltr}
+html[dir="ltr"] .admin-shortcut{text-align:left}
+html[dir="ltr"] .quote{border-right:1px solid var(--line);border-left:6px solid #16a8d5}
+@media(max-width:600px){.language-switch{top:8px;left:8px;padding:.35rem .65rem;font-size:.8rem}html[dir="ltr"] .language-switch{left:auto;right:8px}.bar{padding-top:3rem}}

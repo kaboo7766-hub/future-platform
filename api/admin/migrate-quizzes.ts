@@ -19,14 +19,23 @@ export default async function handler(req: any, res: any) {
     for (let offset = 0; offset < snapshot.docs.length; offset += 250) {
       const docs = snapshot.docs.slice(offset, offset + 250);
       const keys = await db.getAll(...docs.map(d => db.collection("quizAnswerKeys").doc(d.id)));
+      const lessonRefs = docs.map(d => {
+        const lessonId = d.data().lessonId;
+        return db.collection("lessons").doc(typeof lessonId === "string" ? lessonId : "__missing__");
+      });
+      const lessons = await db.getAll(...lessonRefs);
       const batch = db.batch();
       let writes = 0;
 
       for (let i = 0; i < docs.length; i++) {
         const quizDoc = docs[i];
         const questions = quizDoc.data().questions;
+        const lessonClassId = lessons[i].exists ? lessons[i].data()?.classId : quizDoc.data().classId;
+        const classPatch = typeof lessonClassId === "string" && quizDoc.data().classId !== lessonClassId
+          ? { classId: lessonClassId } : {};
         if (!Array.isArray(questions) || !questions.length) {
-          skipped++;
+          if (Object.keys(classPatch).length) { batch.update(quizDoc.ref, classPatch); writes++; }
+          else skipped++;
           continue;
         }
 
@@ -37,11 +46,12 @@ export default async function handler(req: any, res: any) {
         // A prior key may already exist while old answers are still exposed in the public quiz.
         // Always remove those fields when a trusted key is present.
         if (keys[i].exists) {
-          if (containsPublicAnswers) {
+          if (containsPublicAnswers || Object.keys(classPatch).length) {
             const publicQuestions = questions.map(({ answer: _answer, ...question }: any) => question);
-            batch.update(quizDoc.ref, { questions: publicQuestions });
+            batch.update(quizDoc.ref, { ...classPatch, ...(containsPublicAnswers ? { questions: publicQuestions } : {}) });
             writes++;
-            sanitized++;
+            if (containsPublicAnswers) sanitized++;
+            else skipped++;
           } else {
             skipped++;
           }
@@ -49,12 +59,16 @@ export default async function handler(req: any, res: any) {
         }
 
         const validAnswers = questions.every((question: any) =>
-          Number.isInteger(question?.answer) &&
-          Array.isArray(question?.options) &&
-          question.answer >= 0 &&
-          question.answer < question.options.length
+          question?.type === "fill"
+            ? typeof question.answer === "string" && question.answer.trim().length > 0
+            : (question?.type === "mcq" || question?.type === "tf") &&
+              Number.isInteger(question?.answer) &&
+              Array.isArray(question?.options) &&
+              question.answer >= 0 &&
+              question.answer < question.options.length
         );
         if (!validAnswers) {
+          if (Object.keys(classPatch).length) { batch.update(quizDoc.ref, classPatch); writes++; }
           skipped++;
           continue;
         }
@@ -67,7 +81,7 @@ export default async function handler(req: any, res: any) {
           migratedAt: new Date(),
           migratedBy: decoded.uid,
         });
-        batch.update(quizDoc.ref, { questions: publicQuestions });
+        batch.update(quizDoc.ref, { ...classPatch, questions: publicQuestions });
         writes += 2;
         migrated++;
         sanitized++;

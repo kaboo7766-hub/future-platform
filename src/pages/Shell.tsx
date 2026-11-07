@@ -13,12 +13,12 @@ export default function Shell({ name, roleLabel, nav, view, onView, stats, onLog
       <div className="topbar-actions">
         <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
         <button className="top-logout" onClick={onLogout}>{language === "ar" ? "تسجيل الخروج" : "Log out"}</button>
-        {nav.some(n => n.id === "games") && <button className="games-direct" type="button" onClick={() => choose("games")}>🎮 {language === "ar" ? "الألعاب" : "Games"}</button>}
         <button className={`menu-toggle ${menuOpen ? "is-open" : ""}`} type="button" aria-label={language === "ar" ? "فتح القائمة" : "Open menu"} aria-expanded={menuOpen} aria-controls="dashboard-navigation" onClick={() => setMenuOpen(v => !v)}>
           <span></span><span></span><span></span>
         </button>
       </div>
     </header>
+    {nav.some(n => n.id === "games") && <button className="games-float" type="button" onClick={() => choose("games")} aria-label={language === "ar" ? "فتح الألعاب" : "Open games"}>🎮 <span>{language === "ar" ? "الألعاب" : "Games"}</span></button>}
     <aside id="dashboard-navigation" className={`side ${menuOpen ? "menu-open" : ""}`} aria-label={language === "ar" ? "القائمة الرئيسية" : "Main navigation"}>
       {nav.map(n => <button key={n.id} className={view === n.id ? "on" : ""} aria-current={view === n.id ? "page" : undefined} onClick={() => choose(n.id)}><span>{n.icon}</span><small>{n.label}</small></button>)}
     </aside>

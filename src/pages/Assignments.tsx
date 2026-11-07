@@ -63,7 +63,8 @@ function GradeRow({ s }: { s: S }) {
 
 export default function Assignments({ staff }: { staff: boolean }) {
   const { profile } = useAuth(); const uid = profile!.uid;
-  const [as, setAs] = useState<A[] | null>(null); const [subs, setSubs] = useState<S[]>([]);\n  const [classOptions, setClassOptions] = useState<{ id: string; name: string }[]>([]);
+  const [as, setAs] = useState<A[] | null>(null); const [subs, setSubs] = useState<S[]>([]);
+  const [classOptions, setClassOptions] = useState<{ id: string; name: string }[]>([]);
   const [f, setF] = useState({ title: "", description: "", dueDate: "", classId: profile?.classIds?.[0] ?? "" }); const [msg, setMsg] = useState<Msg>(null);
   const [creating, setCreating] = useState(false);
   useEffect(() => onSnapshot(collection(db, "classes"), snap => setClassOptions(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })))), []);

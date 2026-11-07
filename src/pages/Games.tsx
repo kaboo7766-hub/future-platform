@@ -65,7 +65,7 @@ export default function Games() {
  <div className="badge-row">{badges.filter(b=>pts>=b.min).map(b=><span className="chip" key={b.min}>{b.t}</span>)}</div>
  <FoundationGames grade={grade} />
  <LessonGames />
- {!game&&<div className="games-grid">{games.map(g=><button key={g.id} className="game-card" onClick={()=>{setRes("");setErr("");setGame(g.id);}}><span className="game-icon">{g.icon}</span><b>{g.title}</b><small>{g.desc}</small><span className="game-start">ابدأ اللعب ←</span></button>)}</div>}
+
  {game&&<div className="active-game"><div className="active-game-head"><h3>{games.find(g=>g.id===game)?.title} · الصف {grade}</h3><button className="link" onClick={()=>setGame(null)}>رجوع للألعاب</button></div>
  {game==="memory"?<MemoryGame onDone={finish}/>:game==="count"?<CountingGame grade={grade} onDone={finish}/>:<ChoiceGame key={`${game}-${grade}`} make={make} onDone={finish} grade={grade}/>}
  <button className="link" onClick={()=>setGame(null)}>إنهاء اللعبة</button></div>}

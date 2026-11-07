@@ -7,7 +7,7 @@ type Role = "student" | "teacher";
 type Cert = {
   id: string; recipientUid: string; recipientName: string; recipientRole: Role;
   classId?: string; title: string; reason: string; number: string; status: "pending" | "approved" | "rejected";
-  createdBy: string; createdByName: string; createdAt?: any; approvedAt?: any; recipientGender?: "boy" | "girl";
+  createdBy: string; createdByName: string; createdAt?: any; approvedAt?: any; recipientGender?: "boy" | "girl"; schoolName?: string;
 };
 const detectGender = (name: string): "boy" | "girl" => {
   const n = name.trim().replace(/[ًٌٍَُِّْـ]/g, "");
@@ -32,6 +32,7 @@ export default function Certificates() {
   const [title, setTitle] = useState("شهادة تقدير");
   const [reason, setReason] = useState("");
   const [manualName, setManualName] = useState("");
+  const [schoolName, setSchoolName] = useState("");
   const [genderChoice, setGenderChoice] = useState<"auto" | "boy" | "girl">("auto");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
@@ -71,6 +72,7 @@ export default function Certificates() {
       await addDoc(collection(db, "certificates"), {
         recipientUid: target.uid, recipientName: manualName.trim() || target.name || target.email || "بدون اسم",
         recipientGender: genderChoice === "auto" ? detectGender(manualName.trim() || target.name || "") : genderChoice,
+        schoolName: schoolName.trim(),
         recipientRole: role === "admin" ? "teacher" : "student",
         ...(role === "teacher" ? {classId: target.classId} : {}),
         title: title.trim() || "شهادة تقدير", reason: reason.trim(), number: number(),
@@ -79,7 +81,7 @@ export default function Certificates() {
         ...(role === "admin" ? {approvedBy: profile.uid, approvedAt: serverTimestamp()} : {})
       });
       setMessage(role === "admin" ? "تم إصدار شهادة التقدير للمعلم." : "تم إرسال الشهادة للمدير للمراجعة. لن تظهر للطالب قبل اعتمادها.");
-      setSelectedUid(""); setReason(""); setManualName(""); setGenderChoice("auto");
+      setSelectedUid(""); setReason(""); setManualName(""); setSchoolName(""); setGenderChoice("auto");
     } catch (e: any) { setMessage("لم يتم حفظ الشهادة: " + (e?.message || "تحقق من صلاحيات Firestore.")); }
     finally { setBusy(""); }
   };
@@ -98,34 +100,50 @@ export default function Certificates() {
     const gender = view.recipientGender || detectGender(view.recipientName);
     return <section dir="rtl">
       <style>{`
-        @page { size: A4 landscape; margin: 7mm; }
-        .future-cert { min-height:520px; box-sizing:border-box; padding:18px; color:#102744; background:radial-gradient(circle at 85% 12%,#fff9e9 0,#f8f1df 42%,#fff 100%); border:10px double #bd9140; font-family:Tahoma,Arial,sans-serif; }
-        .future-cert-inner { min-height:470px; border:2px solid #d5b56f; padding:24px 30px; text-align:center; position:relative; }
-        .future-cert-ribbon { display:inline-block; background:#102744; color:#f7d98b; padding:8px 34px; border-radius:4px; font-weight:bold; }
-        .future-cert-name { display:inline-block; min-width:55%; padding:8px 28px 12px; border-bottom:3px solid #c49a49; color:#102744; font-size:34px; font-weight:900; }
-        .future-cert-character { position:absolute; left:25px; bottom:35px; font-size:76px; }
-        @media print { body * { visibility:hidden !important; } .certificate-print,.certificate-print * { visibility:visible !important; } .certificate-print { position:absolute; inset:0; width:100%; } .certificate-actions { display:none !important; } }
+        @page { size: A4 portrait; margin: 8mm; }
+        .future-cert { width:100%; min-height:265mm; box-sizing:border-box; padding:13px; color:#10233f; background:radial-gradient(circle at 50% 15%,#fffdf6 0,#f6edda 58%,#fffaf0 100%); border:8px double #b78a37; font-family:Tahoma,Arial,sans-serif; position:relative; overflow:hidden; }
+        .future-cert:before,.future-cert:after { content:"✦ ❖ ✦ ❖ ✦"; position:absolute; color:#bd9348; letter-spacing:9px; font-size:18px; left:0; right:0; text-align:center; }
+        .future-cert:before{top:8px}.future-cert:after{bottom:8px}
+        .future-cert-inner { min-height:237mm; border:2px solid #d5b56f; outline:1px solid #d5b56f; outline-offset:5px; padding:22px 24px; text-align:center; position:relative; display:flex; flex-direction:column; align-items:center; }
+        .future-cert-brand{font-size:20px;font-weight:900;color:#b18432;letter-spacing:.3px;margin-top:7px}
+        .future-cert-title{font-size:clamp(34px,6vw,48px);line-height:1.3;margin:18px 0 8px;color:#102744;text-shadow:1px 2px 0 #e8d29a}
+        .future-cert-ribbon { display:inline-block; background:linear-gradient(90deg,#09182d,#18395d,#09182d); color:#f8df9e; padding:9px 38px; border:2px solid #c39a4d; border-radius:5px; font-weight:bold; box-shadow:0 4px 0 #d8bd83; }
+        .future-cert-award{font-size:20px;margin:25px 0 10px;color:#28364b}
+        .future-cert-name { display:block; width:85%; padding:12px 16px 14px; border:2px solid #bd9140; border-radius:40px; background:#fffdf8; color:#102744; font-size:clamp(25px,5vw,36px); font-weight:900; box-shadow:inset 0 0 0 4px #f4e8c9,0 4px 12px #76551b20; }
+        .future-cert-reason{font-size:17px;line-height:2;max-width:650px;margin:20px auto;color:#263448}
+        .future-cert-wish{font-size:24px;font-weight:900;color:#98702d;margin:12px 0 3px}
+        .future-cert-sub{font-size:17px;color:#263448;margin:0 0 18px}
+        .future-cert-character{font-size:86px;line-height:1.2;margin:4px auto 12px;filter:drop-shadow(0 5px 3px #0002)}
+        .future-cert-meta{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:auto;padding-top:18px;border-top:1px solid #c8aa70;color:#24334a;font-size:14px}
+        .future-cert-meta b{display:block;color:#9b742e;margin-bottom:4px}
+        .future-cert-seal{position:absolute;bottom:14px;left:16px;border:4px double #bd9140;border-radius:50%;width:76px;height:76px;display:grid;place-items:center;background:#102744;color:#f8df9e;font-size:12px;font-weight:900;transform:rotate(-12deg)}
+        .certificate-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+        @media print { html,body{background:#fff!important}.certificate-print,.certificate-print * { visibility:visible !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; } body * { visibility:hidden !important; } .certificate-print { position:absolute; inset:0; width:100%; margin:0; } .certificate-actions { display:none !important; } }
+        @media(max-width:520px){.future-cert{min-height:600px;padding:8px}.future-cert-inner{min-height:570px;padding:18px 10px}.future-cert-meta{font-size:11px;gap:3px}.future-cert-character{font-size:70px}.future-cert-seal{width:60px;height:60px;font-size:10px}}
       `}</style>
       <div className="certificate-print future-cert">
         <div className="future-cert-inner">
-          <div style={{fontSize:25,color:"#bd9140",fontWeight:900}}>✦ ★ ✦ ★ ✦</div>
-          <div style={{fontSize:17,color:"#b08737",fontWeight:700}}>منصة المستقبل التعليمية</div>
-          <div style={{position:"absolute",right:28,top:18,fontSize:38}}>🎓</div>
-          <h1 style={{fontSize:42,margin:"8px 0 4px",color:"#102744"}}>شهادة تقدير</h1>
+          <div style={{fontSize:28,color:"#bd9140",fontWeight:900}}>✦ ★ ✦ ★ ✦</div>
+          <div className="future-cert-brand">منصة المستقبل التعليمية</div>
+          <div className="future-cert-character" aria-hidden="true">{gender === "girl" ? "👩🏻‍🎓" : "👨🏻‍🎓"}</div>
+          <h1 className="future-cert-title">شهادة تكريم</h1>
           <div className="future-cert-ribbon">بكل فخر وتقدير</div>
-          <p style={{fontSize:19,margin:"18px 0 8px"}}>تُمنح هذه الشهادة إلى</p>
+          <p className="future-cert-award">تُمنح هذه الشهادة إلى</p>
           <div className="future-cert-name">{view.recipientName}</div>
-          <p style={{fontSize:17,lineHeight:1.9,maxWidth:760,margin:"16px auto"}}>{view.reason}</p>
-          <div style={{fontSize:22,fontWeight:800,color:"#98702d",marginTop:12}}>استمر في التألق والنجاح</div>
-          <div style={{fontSize:16,marginTop:5}}>مستقبلك أجمل بإذن الله ⭐</div>
-          <div className="future-cert-character" aria-hidden="true">{gender === "girl" ? "👧🏻" : "👦🏻"}</div>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"end",marginTop:24,fontSize:14}}>
-            <span>اسم المدرسة: ........................</span><span>التاريخ: {dateText(view.approvedAt || view.createdAt)}</span><span>رقم الشهادة: {view.number}</span>
+          <p className="future-cert-reason">{view.reason}</p>
+          <div className="future-cert-wish">استمر في التألق والنجاح</div>
+          <p className="future-cert-sub">مستقبلك أجمل بإذن الله ⭐</p>
+          <div className="future-cert-seal">مستقبل<br/>مشرق<br/>ينتظرك</div>
+          <div className="future-cert-meta">
+            <span><b>اسم المدرسة</b>{view.schoolName || "........................"}</span>
+            <span><b>المعلم / المعلمة</b>{view.createdByName || "........................"}</span>
+            <span><b>التاريخ</b>{dateText(view.approvedAt || view.createdAt)}</span>
           </div>
-          <div style={{fontSize:22,color:"#bd9140",marginTop:12}}>❧ ✦ ❧</div>
+          <div style={{fontSize:20,color:"#bd9140",marginTop:15}}>❧ ✦ ❧</div>
+          <small style={{color:"#98702d",fontWeight:800}}>رقم الشهادة: {view.number}</small>
         </div>
       </div>
-      <div className="row certificate-actions" style={{marginTop:16}}><button className="btn" onClick={() => window.print()}>تنزيل PDF / طباعة</button><button className="link" onClick={() => setView(null)}>رجوع</button></div>
+      <div className="row certificate-actions"><button className="btn" onClick={() => window.print()}>تنزيل PDF / طباعة</button><button className="link" onClick={() => setView(null)}>رجوع</button></div>
     </section>;
   }
 
@@ -141,7 +159,8 @@ export default function Certificates() {
         </label>
         <label>عنوان الشهادة<input value={title} onChange={e => setTitle(e.target.value)} maxLength={80} /></label>
         {role === "teacher" && <>
-          <label>اسم الطالب / الطالبة (يمكنك تعديله)<input value={manualName} onChange={e => setManualName(e.target.value)} maxLength={80} placeholder="اكتب اسم الطالب أو الطالبة" /></label>
+          <label>اسم الطالب / الطالبة (اكتب الاسم كما تريد ظهوره)<input value={manualName} onChange={e => setManualName(e.target.value)} maxLength={80} placeholder="اكتب اسم الطالب أو الطالبة" /></label>
+          <label>اسم المدرسة<input value={schoolName} onChange={e => setSchoolName(e.target.value)} maxLength={100} placeholder="اكتب اسم المدرسة" /></label>
           <label>شكل شخصية الشهادة<select value={genderChoice} onChange={e => setGenderChoice(e.target.value as "auto" | "boy" | "girl")}><option value="auto">تلقائي حسب الاسم</option><option value="boy">ولد 👦</option><option value="girl">بنت 👧</option></select></label>
         </>}
         <label style={{gridColumn:"1 / -1"}}>سبب التكريم<textarea value={reason} onChange={e => setReason(e.target.value)} rows={3} maxLength={500} placeholder="مثال: التفوق الدراسي والالتزام والمشاركة المتميزة" /></label>

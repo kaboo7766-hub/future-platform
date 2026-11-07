@@ -20,16 +20,17 @@ const AdminOverview = lazy(() => import("./AdminOverview"));
 const Attendance = lazy(() => import("./Attendance"));
 const LiveClasses = lazy(() => import("./LiveClasses"));
 const LearningTables = lazy(() => import("./LearningTables"));
+const ThemeSettings = lazy(() => import("./ThemeSettings"));
 import { useSite, contactLinks } from "./HomeExtras";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
-  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "live", "assignments", "learning", "games", "certs"], parent: ["home", "learning", "games"],
-  teacher: ["home", "live", "learning", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance"],
+  teacher: ["home", "live", "learning", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -90,6 +91,7 @@ export default function Dashboard() {
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}
       {view === "learning" && <LearningTables />}
+      {view === "theme" && role === "admin" && <ThemeSettings />}
       {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}
       {view === "quizzes" && <QuizBuilder />}

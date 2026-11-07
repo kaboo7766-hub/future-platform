@@ -3,10 +3,10 @@ import { addDoc, collection, deleteDoc, doc, getDocs, onSnapshot, query, serverT
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 interface Item { id: string; name: string }
-interface LessonItem { id: string; title: string; description?: string; type?: string; published?: boolean; classId?: string; subjectId?: string; imageData?: string }
+interface LessonItem { id: string; title: string; description?: string; type?: string; published?: boolean; classId?: string; subjectId?: string; imageData?: string; gameWords?: string[] }
 const HOSTS = ["youtube.com","www.youtube.com","youtu.be","drive.google.com","docs.google.com","res.cloudinary.com","vimeo.com","player.vimeo.com"];
 const okUrl = (u: string) => { try { const x = new URL(u); return x.protocol === "https:" && HOSTS.includes(x.hostname); } catch { return false; } };
-const blank = () => ({ title: "", description: "", classId: "", subjectId: "", order: 1, type: "video", url: "", imageData: "", published: false });
+const blank = () => ({ title: "", description: "", classId: "", subjectId: "", order: 1, type: "video", url: "", imageData: "", published: false, gameWordsText: "" });
 
 function useList(name: string) {
   const [l, setL] = useState<Item[]>([]);
@@ -86,6 +86,8 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
     e.preventDefault(); setMsg(null);
     if (!f.title.trim() || !f.classId || !f.subjectId) return setMsg({ ok: false, t: "أكمل اسم الدرس والصف والمادة." });
     if (!isAdmin && !(profile?.classIds ?? []).includes(f.classId)) return setMsg({ ok: false, t: "هذا الصف غير مخصص لحسابك من المدير." });
+    const gameWords = f.gameWordsText.split(/[،,\\n\\r]+/).map((word: string) => word.trim()).filter(Boolean).slice(0, 100);
+    if (gameWords.length > 100) return setMsg({ ok: false, t: "الحد الأقصى 100 كلمة للدرس." });
     if (f.type === "image") {
       if (!f.imageData && !okUrl(f.url)) return setMsg({ ok: false, t: "اختر صورة من جهازك أو أدخل رابط صورة https." });
     } else if (!okUrl(f.url)) return setMsg({ ok: false, t: "الرابط غير مسموح. استخدم رابط https من خدمة مدعومة." });
@@ -93,7 +95,7 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
       const payload: Record<string, unknown> = {
         title: f.title.trim(), description: f.description.trim(), classId: f.classId,
         subjectId: f.subjectId, order: f.order, type: f.type, url: f.imageData ? "" : f.url.trim(),
-        published: f.published, createdBy: profile!.uid, createdAt: serverTimestamp()
+        published: f.published, gameWords, createdBy: profile!.uid, createdAt: serverTimestamp()
       };
       if (f.imageData) payload.imageData = f.imageData;
       const ref = await addDoc(collection(db, "lessons"), payload);
@@ -114,6 +116,9 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
     <form onSubmit={save}>
       <input required placeholder="اسم الدرس" value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <input placeholder="وصف مختصر" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <label>كلمات الدرس للألعاب (حتى 100 كلمة، افصل بين الكلمات بفاصلة أو سطر جديد)</label>
+      <textarea rows={4} maxLength={12000} placeholder="مثال: شمس، قمر، نجمة، كوكب..." value={f.gameWordsText} onChange={e => setF({ ...f, gameWordsText: e.target.value })} />
+      <small>ستتحول الكلمات تلقائيًا إلى لعبة لهذا الدرس، مقسمة إلى 10 مراحل متدرجة.</small>
       <select required value={f.classId} onChange={e => setF({ ...f, classId: e.target.value })}><option value="">الصف</option>{availableClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       <select required value={f.subjectId} onChange={e => setF({ ...f, subjectId: e.target.value })}><option value="">المادة</option>{subjects.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select>
       <select value={f.type} onChange={e => setF({ ...f, type: e.target.value, url: "", imageData: "" })}><option value="video">فيديو</option><option value="pdf">PDF</option><option value="audio">صوت</option><option value="image">صورة</option></select>

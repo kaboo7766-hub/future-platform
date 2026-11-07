@@ -63,9 +63,10 @@ function GradeRow({ s }: { s: S }) {
 
 export default function Assignments({ staff }: { staff: boolean }) {
   const { profile } = useAuth(); const uid = profile!.uid;
-  const [as, setAs] = useState<A[] | null>(null); const [subs, setSubs] = useState<S[]>([]);
+  const [as, setAs] = useState<A[] | null>(null); const [subs, setSubs] = useState<S[]>([]);\n  const [classOptions, setClassOptions] = useState<{ id: string; name: string }[]>([]);
   const [f, setF] = useState({ title: "", description: "", dueDate: "", classId: profile?.classIds?.[0] ?? "" }); const [msg, setMsg] = useState<Msg>(null);
   const [creating, setCreating] = useState(false);
+  useEffect(() => onSnapshot(collection(db, "classes"), snap => setClassOptions(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })))), []);
   useEffect(() => {
     const classIds = profile?.role === "admin" ? [] : (profile?.classIds ?? []);
     const assignmentsQuery = profile?.role === "admin"
@@ -114,7 +115,7 @@ export default function Assignments({ staff }: { staff: boolean }) {
       <textarea placeholder="الوصف" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
       <select value={f.classId} onChange={e => setF({ ...f, classId: e.target.value })}>
         <option value="">اختر الصف المستهدف</option>
-        {(profile?.role === "admin" ? [] : profile?.classIds ?? []).map(id => <option key={id} value={id}>{id}</option>)}
+        {(profile?.role === "admin" ? classOptions : classOptions.filter(c => (profile?.classIds ?? []).includes(c.id))).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
       <input type="date" value={f.dueDate} onChange={e => setF({ ...f, dueDate: e.target.value })} />
       <button className="btn" disabled={creating} onClick={create}>{creating ? "جارٍ الإنشاء…" : "إنشاء الواجب"}</button>{msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</div>}

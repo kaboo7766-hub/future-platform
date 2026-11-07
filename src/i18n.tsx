@@ -558,6 +558,30 @@ const arToEn: Record<string, string> = Object.fromEntries([
   ["جارٍ الإنشاء…", "Creating…"],
   ["جارٍ التحميل…", "Loading…"],
   ["لوحة الطالب", "Student Dashboard"],
+
+  ["ألعاب التأسيس التفاعلية", "Interactive Foundation Games"],
+  ["نتعلّم ونلعب", "Learn and Play"],
+  ["اختار صفّك وابدأ مغامرة الحروف والأرقام والحساب", "Choose your grade and start a letters, numbers, and math adventure"],
+  ["اختر الصف الدراسي", "Choose your grade"],
+  ["الصف", "Grade"],
+  ["الابتدائي", "Primary"],
+  ["الأرقام العربية", "Arabic Numbers"],
+  ["الأرقام الإنجليزية", "English Numbers"],
+  ["عدّ الأشياء", "Count the Objects"],
+  ["الجمع والطرح", "Addition and Subtraction"],
+  ["تعرّف على الحروف الإنجليزية بالصوت", "Learn English letters with audio"],
+  ["تعرّف على الأرقام ٠ ١ ٢ ٣", "Learn Arabic numerals"],
+  ["تعرّف على الأرقام 1 2 3", "Learn English numbers"],
+  ["عدّ الصور واختر العدد الصحيح", "Count the pictures and choose the correct number"],
+  ["تدريبات حسابية تتدرج حسب الصف", "Math exercises tailored to each grade"],
+  ["ابدأ اللعب", "Play Now"],
+  ["اختر الرقم الصحيح", "Choose the correct number"],
+  ["اختر الحرف الذي تسمعه", "Choose the letter you hear"],
+  ["اسمع مرة أخرى", "Listen Again"],
+  ["أحسنت! إجابة صحيحة 🎉", "Well done! Correct answer 🎉"],
+  ["عدّ الأشياء الظاهرة أمامك:", "Count the objects shown:"],
+  ["رجوع للألعاب", "Back to Games"],
+  ["نقاطك", "Your Points"],
 ]);
 const enToAr = Object.fromEntries(Object.entries(arToEn).map(([ar,en]) => [en,ar])) as Record<string,string>;
 
@@ -611,40 +635,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     try { localStorage.setItem("future-platform-language", language); } catch {}
     return () => observer.disconnect();
   }, [language]);
-  const value = useMemo(() => ({ language, toggleLanguage: () => setLanguage(v => v === "ar" ? "en" : "ar") }), [language
-  ["ألعاب التأسيس التفاعلية", "Interactive Foundation Games"],
-  ["نتعلّم ونلعب", "Learn and Play"],
-  ["اختار صفّك وابدأ مغامرة الحروف والأرقام والحساب", "Choose your grade and start a letters, numbers, and math adventure"],
-  ["اختر الصف الدراسي", "Choose your grade"],
-  ["الصف", "Grade"],
-  ["الابتدائي", "Primary"],
-  ["الحروف العربية", "Arabic Letters"],
-  ["الحروف الإنجليزية", "English Letters"],
-  ["الأرقام العربية", "Arabic Numbers"],
-  ["الأرقام الإنجليزية", "English Numbers"],
-  ["عدّ الأشياء", "Count the Objects"],
-  ["الجمع والطرح", "Addition and Subtraction"],
-  ["اسمع الحرف واختره من بين الحروف", "Listen to the letter and choose it"],
-  ["تعرّف على الحروف الإنجليزية بالصوت", "Learn English letters with audio"],
-  ["تعرّف على الأرقام ٠ ١ ٢ ٣", "Learn Arabic numerals"],
-  ["تعرّف على الأرقام 1 2 3", "Learn English numbers"],
-  ["عدّ الصور واختر العدد الصحيح", "Count the pictures and choose the correct number"],
-  ["تدريبات حسابية تتدرج حسب الصف", "Math exercises tailored to each grade"],
-  ["ابدأ اللعب", "Play Now"],
-  ["اختر الرقم الصحيح", "Choose the correct number"],
-  ["اختر الحرف الذي تسمعه", "Choose the letter you hear"],
-  ["اسمع مرة أخرى", "Listen Again"],
-  ["السؤال", "Question"],
-  ["أحسنت! إجابة صحيحة 🎉", "Well done! Correct answer 🎉"],
-  ["عدّ الأشياء الظاهرة أمامك:", "Count the objects shown:"],
-  ["رجوع للألعاب", "Back to Games"],
-  ["نقاطك", "Your Points"],
-  ["نجم صاعد", "Rising Star"],
-  ["بطل صغير", "Little Champion"],
-  ["خبير المستقبل", "Future Expert"],
-  ["انتهت اللعبة! ربحت", "Game over! You earned"],
-  ["نقطة", "points"],
-]);
+  const value = useMemo(() => ({ language, toggleLanguage: () => setLanguage(v => v === "ar" ? "en" : "ar") }), [language]);
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
 }
 export function useLanguage() { return useContext(LanguageContext); }

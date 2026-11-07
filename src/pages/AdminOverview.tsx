@@ -115,7 +115,7 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
     { id: "site", icon: "🌐", title: "محتوى الموقع", detail: "بيانات التواصل والمدرسون" }
   ];
 
-  return <section className="admin-overview" dir="rtl">
+  return <section className="admin-overview">
     <div className="admin-welcome">
       <div><span className="admin-eyebrow">لوحة التحكم الرئيسية</span><h2>مرحبًا بك، {profile?.name || "مدير المنصة"} 👋</h2>
         <p>إليك ملخص مباشر لما يحدث داخل منصة المستقبل التعليمية.</p></div>

@@ -23,6 +23,7 @@ export default function Certificates() {
   const [people, setPeople] = useState<Person[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [certs, setCerts] = useState<Cert[]>([]);
+  const [teacherAwards, setTeacherAwards] = useState<Cert[]>([]);
   const [selectedUid, setSelectedUid] = useState("");
   const [title, setTitle] = useState("شهادة تقدير");
   const [reason, setReason] = useState("");
@@ -40,11 +41,7 @@ export default function Certificates() {
       stops.push(onSnapshot(collection(db, "certificates"), s => setCerts(s.docs.map(d => ({id:d.id,...d.data()} as Cert))), e => setMessage("تعذر تحميل الشهادات: " + e.message)));
     } else if (role === "teacher") {
       stops.push(onSnapshot(query(collection(db, "certificates"), where("createdBy", "==", profile.uid)), s => setCerts(s.docs.map(d => ({id:d.id,...d.data()} as Cert))), e => setMessage("تعذر تحميل طلبات الشهادات: " + e.message)));
-      stops.push(onSnapshot(query(collection(db, "certificates"), where("recipientUid", "==", profile.uid), where("status", "==", "approved")), s => setCerts(old => {
-        const own = s.docs.map(d => ({id:d.id,...d.data()} as Cert));
-        const authored = old.filter(c => c.createdBy === profile.uid);
-        return [...authored, ...own.filter(c => !authored.some(a => a.id === c.id))];
-      }), e => setMessage("تعذر تحميل شهادتك: " + e.message)));
+      stops.push(onSnapshot(query(collection(db, "certificates"), where("recipientUid", "==", profile.uid), where("status", "==", "approved")), s => setTeacherAwards(s.docs.map(d => ({id:d.id,...d.data()} as Cert))), e => setMessage("تعذر تحميل شهادتك: " + e.message)));
       classIds.forEach(classId => stops.push(onSnapshot(query(collection(db, "users"), where("classId", "==", classId)), s => {
         setPeople(old => [...old.filter(p => p.classId !== classId), ...s.docs.map(d => d.data() as Person).filter(p => p.role === "student")]);
       }, e => setMessage("تعذر تحميل طلاب الصف: " + e.message))));
@@ -58,6 +55,7 @@ export default function Certificates() {
   const visibleStudents = useMemo(() => people.filter(p => p.role === "student" && classIds.includes(p.classId || "")), [people, classIds.join("|")]);
   const teachers = useMemo(() => people.filter(p => p.role === "teacher"), [people]);
   const pending = certs.filter(c => c.status === "pending" && c.recipientRole === "student");
+  const displayCerts = role === "teacher" ? [...certs, ...teacherAwards.filter(a => !certs.some(c => c.id === a.id))] : certs;
   const makeCertificate = async () => {
     if (!profile || !selectedUid || !reason.trim()) { setMessage("اختر الشخص واكتب سبب التكريم أولًا."); return; }
     const target = role === "admin" ? teachers.find(p => p.uid === selectedUid) : visibleStudents.find(p => p.uid === selectedUid);
@@ -130,9 +128,9 @@ export default function Certificates() {
       </article>)}
     </section>}
     <section className="admin-box"><h3>{role === "student" ? "شهاداتي المعتمدة" : role === "teacher" ? "شهاداتي وطلبات الطلاب" : "الشهادات الصادرة"}</h3>
-      {certs.filter(c => c.status === "approved" || (role === "teacher" && c.createdBy === profile.uid && c.status === "pending")).length === 0
+      {displayCerts.filter(c => c.status === "approved" || (role === "teacher" && c.createdBy === profile.uid && c.status === "pending")).length === 0
         ? <p className="note">لا توجد شهادات حتى الآن.</p>
-        : certs.filter(c => c.status === "approved" || (role === "teacher" && c.createdBy === profile.uid && c.status === "pending")).map(c => <div className="row" key={c.id} style={{justifyContent:"space-between",flexWrap:"wrap"}}>
+        : displayCerts.filter(c => c.status === "approved" || (role === "teacher" && c.createdBy === profile.uid && c.status === "pending")).map(c => <div className="row" key={c.id} style={{justifyContent:"space-between",flexWrap:"wrap"}}>
           <span><b>{c.recipientName}</b> — {c.title}<small style={{display:"block"}}>{c.status === "pending" ? "قيد اعتماد المدير" : "معتمدة"} · {c.number}</small></span>
           {c.status === "approved" && <button className="mini" onClick={() => setView(c)}>عرض / PDF / طباعة</button>}
         </div>)}

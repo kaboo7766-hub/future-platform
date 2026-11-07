@@ -1,14 +1,15 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from "firebase/firestore";
-import { db } from "../firebase";
+import { collection, getDocs, query, where } from "firebase/firestore";
+import { db, auth } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
-export interface Question { type: "mcq" | "tf"; text: string; options: string[]; answer: number }
-export interface QuizDoc { id: string; lessonId: string; title: string; questions: Question[]; allowRetake: boolean; published: boolean }
+
+export interface Question { type: "mcq" | "tf" | "fill"; text: string; options: string[]; answer: number | string }
+export interface QuizDoc { id: string; lessonId: string; title: string; questions: Omit<Question, "answer">[]; allowRetake: boolean; published: boolean }
 
 export default function Quiz({ quiz, onClose }: { quiz: QuizDoc; onClose: () => void }) {
   const { profile } = useAuth();
   const total = quiz.questions.length;
-  const [ans, setAns] = useState<number[]>(Array(total).fill(-1));
+  const [ans, setAns] = useState<(number | string)[]>(quiz.questions.map(q => q.type === "fill" ? "" : -1));
   const [score, setScore] = useState<number | null>(null);
   const [prev, setPrev] = useState<number | null | undefined>(undefined);
   const [err, setErr] = useState(""); const [busy, setBusy] = useState(false);
@@ -18,29 +19,40 @@ export default function Quiz({ quiz, onClose }: { quiz: QuizDoc; onClose: () => 
       .catch(() => setPrev(null));
   }, [quiz.id, profile]);
   const submit = async () => {
-    if (ans.includes(-1)) return setErr("أجب عن كل الأسئلة أولًا");
+    if (ans.some((a, i) => quiz.questions[i].type === "fill" ? typeof a !== "string" || !a.trim() : typeof a !== "number" || a < 0))
+      return setErr("أجب عن كل الأسئلة أولًا");
+    const user = auth.currentUser;
+    if (!user) return setErr("انتهت جلسة الدخول، سجّل الدخول مرة أخرى");
     setErr(""); setBusy(true);
-    const sc = quiz.questions.filter((q, i) => ans[i] === q.answer).length;
     try {
-      await addDoc(collection(db, "quizResults"), { uid: profile!.uid, quizId: quiz.id, lessonId: quiz.lessonId, score: sc, total, at: serverTimestamp() });
-      setScore(sc);
-    } catch { setErr("تعذّر حفظ النتيجة، حاول مرة أخرى"); } finally { setBusy(false); }
+      const token = await user.getIdToken();
+      const response = await fetch("/api/quiz/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ quizId: quiz.id, answers: ans }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "تعذّر تصحيح الاختبار");
+      setScore(data.score);
+      setPrev(data.score);
+    } catch (e) { setErr(e instanceof Error ? e.message : "تعذّر حفظ النتيجة، حاول مرة أخرى"); }
+    finally { setBusy(false); }
   };
   if (prev === undefined) return <section className="panel">جارٍ التحميل…</section>;
   if (prev !== null && !quiz.allowRetake && score === null)
     return <section className="panel"><h3>{quiz.title}</h3><p>أنهيت هذا الاختبار. درجتك: {prev} من {total}</p><button className="btn" onClick={onClose}>إغلاق</button></section>;
   return (<section className="panel"><h3>{quiz.title}</h3>
     {quiz.questions.map((q, i) => (<fieldset key={i} className="q"><legend>{i + 1}. {q.text}</legend>
-      {q.options.map((o, j) => {
-        const done = score !== null;
-        const cls = done ? (j === q.answer ? "ok" : ans[i] === j ? "err" : "") : "";
-        return <label key={j} className={cls}><input type="radio" name={`q${i}`} disabled={done} checked={ans[i] === j}
-          onChange={() => setAns(a => a.map((v, k) => (k === i ? j : v)))} /> {o}</label>;
-      })}</fieldset>))}
+      {q.type === "fill"
+        ? <input aria-label={`إجابة السؤال ${i + 1}`} placeholder="اكتب الإجابة هنا" value={String(ans[i])} disabled={score !== null}
+            onChange={e => setAns(a => a.map((v, k) => k === i ? e.target.value : v))} />
+        : q.options.map((o, j) => <label key={j}><input type="radio" name={`q${i}`} disabled={score !== null}
+            checked={ans[i] === j} onChange={() => setAns(a => a.map((v, k) => (k === i ? j : v)))} /> {o}</label>)}
+    </fieldset>))}
     {err && <p className="err" role="alert">{err}</p>}
     {score === null
       ? <button className="btn" disabled={busy} onClick={submit}>{busy ? "جارٍ التصحيح…" : "تسليم الاختبار"}</button>
-      : <p className="ok"><b>درجتك: {score} من {total}</b> (الإجابة الصحيحة بالأخضر، وإجابتك الخاطئة بالأحمر)</p>}
+      : <p className="ok"><b>درجتك: {score} من {total}</b></p>}
     <button className="link" onClick={onClose}>إغلاق</button>
   </section>);
 }

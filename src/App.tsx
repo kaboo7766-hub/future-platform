@@ -1,25 +1,38 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
+import { useLanguage } from "./i18n";
+
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+
+function PageLoader() {
+  return <main className="wrap" role="status" aria-live="polite"><p className="center">جارٍ تحميل الصفحة…</p></main>;
+}
 
 export default function App() {
   const { profile, loading, logout } = useAuth();
   const { pathname } = useLocation();
-  if (loading) return <p className="center">جارٍ التحميل…</p>;
+  const { language, toggleLanguage } = useLanguage();
+  if (loading) return <PageLoader />;
   return (<>
     {pathname !== "/dashboard" && <header className="bar">
-      <Link to="/" className="brand">🌟 منصة المستقبل</Link>
-      <nav>{profile
-        ? (<><Link to="/dashboard">لوحتي</Link><button onClick={logout}>تسجيل الخروج</button></>)
-        : <Link to="/login" className="btn">تسجيل الدخول</Link>}</nav>
+      <Link to="/" className="brand">🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
+      <nav className="bar-actions">
+        <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
+        {profile
+          ? <><Link to="/dashboard">{language === "ar" ? "لوحتي" : "Dashboard"}</Link><button className="auth-action" onClick={() => void logout()}>{language === "ar" ? "تسجيل الخروج" : "Log out"}</button></>
+          : <Link to="/login" className="btn">{language === "ar" ? "تسجيل الدخول" : "Log in"}</Link>}
+      </nav>
     </header>}
-    <Routes>
-      <Route path="/" element={<Home />} />
-      <Route path="/login" element={profile ? <Navigate to="/dashboard" /> : <Login />} />
-      <Route path="/dashboard" element={profile ? <Dashboard /> : <Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to="/" />} />
-    </Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={profile ? <Navigate to="/dashboard" replace /> : <Login />} />
+        <Route path="/dashboard" element={profile ? <Dashboard /> : <Navigate to="/login" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   </>);
 }

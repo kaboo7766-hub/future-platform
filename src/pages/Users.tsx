@@ -3,7 +3,8 @@ import { addDoc, collection, deleteDoc, doc, onSnapshot, serverTimestamp, setDoc
 import { db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 
-interface U { uid: string; name?: string; email?: string; role: Role }
+interface U { uid: string; name?: string; email?: string; role: Role; classIds?: string[] }
+interface C { id: string; name: string }
 interface L { id: string; parentUid: string; studentUid: string }
 const roles: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const roleOptions: Role[] = ["student", "teacher", "parent", "pending", "admin"];
@@ -11,6 +12,7 @@ const roleOptions: Role[] = ["student", "teacher", "parent", "pending", "admin"]
 export default function Users() {
   const { profile } = useAuth();
   const [users, setUsers] = useState<U[]>([]);
+  const [classes, setClasses] = useState<C[]>([]);
   const [links, setLinks] = useState<L[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -25,10 +27,13 @@ export default function Users() {
       setUsers(snap.docs.map(d => d.data() as U));
       setLoading(false);
     }, () => { setLoading(false); setMsg({ ok: false, t: "تعذّر تحميل المستخدمين. تحقق من صلاحيات Firestore." }); });
+    const stopClasses = onSnapshot(collection(db, "classes"), snap => {
+      setClasses(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })));
+    }, () => setMsg({ ok: false, t: "تعذّر تحميل الصفوف الدراسية." }));
     const stopLinks = onSnapshot(collection(db, "parentLinks"), snap => {
       setLinks(snap.docs.map(d => ({ id: d.id, ...d.data() } as L)));
     }, () => setMsg({ ok: false, t: "تعذّر تحميل روابط أولياء الأمور." }));
-    return () => { stopUsers(); stopLinks(); };
+    return () => { stopUsers(); stopLinks(); stopClasses(); };
   }, []);
 
   const visibleUsers = useMemo(() => {
@@ -91,6 +96,20 @@ export default function Users() {
 
   const count = (role: Role) => users.filter(u => u.role === role).length;
 
+  const toggleTeacherClass = async (user: U, classId: string) => {
+    if (user.role !== "teacher" || busy) return;
+    const current = user.classIds ?? [];
+    const next = current.includes(classId) ? current.filter(id => id !== classId) : [...current, classId];
+    setBusy(user.uid); setMsg(null);
+    try {
+      await updateDoc(doc(db, "users", user.uid), { classIds: next });
+      setUsers(old => old.map(item => item.uid === user.uid ? { ...item, classIds: next } : item));
+      setMsg({ ok: true, t: "تم تحديث الصفوف المخصصة للمعلم." });
+    } catch {
+      setMsg({ ok: false, t: "تعذّر حفظ الصفوف. تحقق من قواعد Firestore." });
+    } finally { setBusy(null); }
+  };
+
   return (<section className="panel" dir="rtl">
     <div className="admin-box-heading"><div><h3>إدارة المستخدمين</h3><p>البحث في الحسابات ومراجعة الصلاحيات وطلبات المعلمين</p></div><b>{users.length.toLocaleString("ar-EG")} حساب</b></div>
     <div className="admin-stat-grid">
@@ -106,13 +125,6 @@ export default function Users() {
           {roleOptions.map(role => <option key={role} value={role}>{roles[role]}</option>)}
         </select>
       </div>
-      {users.filter(u => u.role === "pending").length > 0 && <section className="admin-box">
-        <h3>طلبات اعتماد المعلمين ({count("pending")})</h3>
-        {users.filter(u => u.role === "pending").map(u => <div className="row" key={u.uid}>
-          <span style={{ flex: 1 }}>{u.name || "معلم جديد"} <small dir="ltr">{u.email}</small></span>
-          <button className="btn" disabled={busy !== null} onClick={() => setRole(u, "teacher")}>{busy === u.uid ? "جارٍ الاعتماد…" : "اعتماد كمعلم"}</button>
-        </div>)}
-      </section>}
       <h3>كل الحسابات ({visibleUsers.length})</h3>
       {visibleUsers.length === 0 ? <p className="note">لا توجد حسابات تطابق البحث.</p> : visibleUsers.map(u => <div className="row" key={u.uid}>
         <span style={{ flex: 1, minWidth: 150 }}>{u.name || "بدون اسم"}<small dir="ltr" style={{ display: "block" }}>{u.email || u.uid}</small></span>
@@ -120,6 +132,7 @@ export default function Users() {
           onChange={e => setRole(u, e.target.value as Role)}>
           {roleOptions.map(role => <option key={role} value={role}>{roles[role]}</option>)}
         </select>
+
       </div>)}
     </>}
     <section className="admin-box">

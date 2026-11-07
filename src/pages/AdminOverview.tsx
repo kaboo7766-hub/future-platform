@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { collection, doc, limit, onSnapshot, orderBy, query, serverTimestamp, updateDoc, addDoc } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 
 type Counts = { users: number; students: number; teachers: number; parents: number; pending: number; lessons: number; classes: number; subjects: number; quizzes: number; assignments: number; submissions: number };
@@ -84,6 +84,29 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
     } finally { setBusy(null); }
   };
 
+  const migrateQuizzes = async () => {
+    if (busy) return;
+    if (!window.confirm("سيتم نقل مفاتيح إجابات الاختبارات القديمة إلى مجموعة خاصة ومنع الطلاب من قراءتها. هل تريد المتابعة؟")) return;
+    const user = auth.currentUser;
+    if (!user) {
+      setMessage({ ok: false, text: "انتهت جلسة الدخول. سجّل الدخول مرة أخرى." });
+      return;
+    }
+    setBusy("migration"); setMessage(null);
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch("/api/admin/migrate-quizzes", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "تعذّر ترحيل الاختبارات");
+      setMessage({ ok: true, text: `اكتمل ترحيل ${data.migrated} اختبارًا. تم تجاوز ${data.skipped} اختبارًا يحتاج مراجعة.` });
+    } catch (error) {
+      setMessage({ ok: false, text: error instanceof Error ? error.message : "تعذّر ترحيل الاختبارات." });
+    } finally { setBusy(null); }
+  };
+
   const shortcuts = [
     { id: "users", icon: "👥", title: "إدارة المستخدمين", detail: "اعتماد المعلمين وتحديد الأدوار" },
     { id: "manage", icon: "📚", title: "إدارة المحتوى", detail: "الصفوف والمواد والدروس" },
@@ -92,7 +115,7 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
     { id: "site", icon: "🌐", title: "محتوى الموقع", detail: "بيانات التواصل والمدرسون" }
   ];
 
-  return <section className="admin-overview" dir="rtl">
+  return <section className="admin-overview">
     <div className="admin-welcome">
       <div><span className="admin-eyebrow">لوحة التحكم الرئيسية</span><h2>مرحبًا بك، {profile?.name || "مدير المنصة"} 👋</h2>
         <p>إليك ملخص مباشر لما يحدث داخل منصة المستقبل التعليمية.</p></div>
@@ -100,6 +123,12 @@ export default function AdminOverview({ onNavigate }: { onNavigate: (view: strin
     </div>
 
     {loadError && <p className="err" role="alert">{loadError}</p>}
+    <div className="admin-box" style={{ marginBottom: 18 }}>
+      <div className="admin-box-heading"><div><h3>تأمين الاختبارات القديمة</h3><p>انقل الإجابات الصحيحة من مستندات الاختبارات إلى مساحة خاصة لا يستطيع الطلاب قراءتها.</p></div></div>
+      <button className="btn" disabled={busy !== null} onClick={migrateQuizzes}>
+        {busy === "migration" ? "جارٍ تأمين الاختبارات…" : "تأمين الاختبارات القديمة"}
+      </button>
+    </div>
     <div className="admin-section-heading"><div><h3>نظرة عامة</h3><p>الإحصائيات تتحدث تلقائيًا من قاعدة البيانات</p></div><span className="admin-live"><i /> مباشر</span></div>
     <div className="admin-stat-grid">{cards.map(card => <article className={`admin-stat-card ${card.color}`} key={card.label}>
       <span className="admin-stat-icon">{card.icon}</span><div><b>{card.value.toLocaleString("ar-EG")}</b><small>{card.label}</small></div>

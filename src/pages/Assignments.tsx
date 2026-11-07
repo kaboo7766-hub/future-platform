@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { addDoc, collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
-export interface A { id: string; title: string; description: string; dueDate: string }
-export interface S { id: string; assignmentId: string; uid: string; studentName: string; text: string; link?: string; grade?: number; feedback?: string }
+export interface A { id: string; title: string; description: string; dueDate: string; classId: string }
+export interface S { id: string; assignmentId: string; uid: string; studentName: string; text: string; link?: string; classId?: string; grade?: number; feedback?: string }
 const okLink = (u: string) => { if (!u) return true; try { return new URL(u).protocol === "https:"; } catch { return false; } };
 type Msg = { ok: boolean; t: string } | null;
 
@@ -17,7 +17,7 @@ function StudentCard({ a, sub }: { a: A; sub?: S }) {
     if (!okLink(link)) return setMsg({ ok: false, t: "الرابط يجب أن يبدأ بـ https" });
     setBusy(true);
     try {
-      await setDoc(doc(db, "submissions", `${a.id}_${profile!.uid}`), { assignmentId: a.id, uid: profile!.uid, studentName: profile!.name, text: text.trim(), link: link.trim(), submittedAt: serverTimestamp() });
+      await setDoc(doc(db, "submissions", `${a.id}_${profile!.uid}`), { assignmentId: a.id, uid: profile!.uid, studentName: profile!.name, classId: a.classId, text: text.trim(), link: link.trim(), submittedAt: serverTimestamp() });
       setMsg({ ok: true, t: "تم تسليم الواجب" });
     } catch { setMsg({ ok: false, t: "تعذّر التسليم، حاول مرة أخرى" }); } finally { setBusy(false); }
   };
@@ -31,48 +31,95 @@ function StudentCard({ a, sub }: { a: A; sub?: S }) {
 
 function GradeRow({ s }: { s: S }) {
   const [g, setG] = useState(s.grade?.toString() ?? ""), [fb, setFb] = useState(s.feedback ?? "");
-  const [msg, setMsg] = useState<Msg>(null);
+  const [msg, setMsg] = useState<Msg>(null), [busy, setBusy] = useState(false);
   const { profile } = useAuth();
   const save = async () => {
     const n = Number(g);
     if (g === "" || !Number.isFinite(n) || n < 0 || n > 100) return setMsg({ ok: false, t: "الدرجة من 0 إلى 100" });
+    setBusy(true);
     try {
       await updateDoc(doc(db, "submissions", s.id), { grade: n, feedback: fb.trim(), gradedAt: serverTimestamp() });
-      await addDoc(collection(db, "notifications"), { audience: s.uid, title: "تم تصحيح واجبك", body: `الدرجة: ${n} من 100`, at: serverTimestamp(), createdBy: profile!.uid });
-      setMsg({ ok: true, t: "تم الحفظ وإشعار الطالب" });
-    } catch { setMsg({ ok: false, t: "تعذّر الحفظ" }); }
+      try {
+        await addDoc(collection(db, "notifications"), {
+          audience: s.uid, title: "تم تصحيح واجبك", body: `الدرجة: ${n} من 100`,
+          at: serverTimestamp(), createdBy: profile!.uid
+        });
+        setMsg({ ok: true, t: "تم حفظ الدرجة وإشعار الطالب." });
+      } catch {
+        setMsg({ ok: true, t: "تم حفظ الدرجة، لكن تعذّر إرسال الإشعار للطالب." });
+      }
+    } catch {
+      setMsg({ ok: false, t: "لم يتم حفظ الدرجة. تحقق من الصلاحيات وحاول مرة أخرى." });
+    } finally {
+      setBusy(false);
+    }
   };
   return (<div className="q"><b>{s.studentName}</b><p>{s.text}</p>
     {s.link && <a href={s.link} target="_blank" rel="noopener noreferrer">المرفق</a>}
     <div className="row"><input type="number" min={0} max={100} placeholder="الدرجة" value={g} onChange={e => setG(e.target.value)} />
-      <input placeholder="ملاحظة" value={fb} onChange={e => setFb(e.target.value)} /><button className="btn" onClick={save}>حفظ</button></div>
+      <input placeholder="ملاحظة" value={fb} onChange={e => setFb(e.target.value)} /><button className="btn" disabled={busy} onClick={save}>{busy ? "جارٍ الحفظ…" : "حفظ"}</button></div>
     {msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</div>);
 }
 
 export default function Assignments({ staff }: { staff: boolean }) {
   const { profile } = useAuth(); const uid = profile!.uid;
   const [as, setAs] = useState<A[] | null>(null); const [subs, setSubs] = useState<S[]>([]);
-  const [f, setF] = useState({ title: "", description: "", dueDate: "" }); const [msg, setMsg] = useState<Msg>(null);
+  const [classOptions, setClassOptions] = useState<{ id: string; name: string }[]>([]);
+  const [f, setF] = useState({ title: "", description: "", dueDate: "", classId: profile?.classIds?.[0] ?? "" }); const [msg, setMsg] = useState<Msg>(null);
+  const [creating, setCreating] = useState(false);
+  useEffect(() => onSnapshot(collection(db, "classes"), snap => setClassOptions(snap.docs.map(d => ({ id: d.id, name: String(d.data().name || "صف") })))), []);
   useEffect(() => {
-    const a = onSnapshot(collection(db, "assignments"), s => setAs(s.docs.map(d => ({ id: d.id, ...d.data() } as A)).sort((x, y) => (x.dueDate || "9").localeCompare(y.dueDate || "9"))), () => setAs([]));
-    const q = staff ? collection(db, "submissions") : query(collection(db, "submissions"), where("uid", "==", uid));
-    const b = onSnapshot(q, s => setSubs(s.docs.map(d => ({ id: d.id, ...d.data() } as S))), () => {});
+    const classIds = profile?.role === "admin" ? [] : (profile?.classIds ?? []);
+    const assignmentsQuery = profile?.role === "admin"
+      ? collection(db, "assignments")
+      : profile?.role === "teacher"
+        ? (classIds.length ? query(collection(db, "assignments"), where("classId", "in", classIds.slice(0, 30))) : query(collection(db, "assignments"), where("classId", "==", "__none__")))
+        : query(collection(db, "assignments"), where("classId", "==", profile?.classId ?? "__none__"));
+    const a = onSnapshot(assignmentsQuery, s => setAs(s.docs.map(d => ({ id: d.id, ...d.data() } as A)).sort((x, y) => (x.dueDate || "9").localeCompare(y.dueDate || "9"))), () => setAs([]));
+    const submissionsQuery = profile?.role === "admin"
+      ? collection(db, "submissions")
+      : profile?.role === "teacher"
+        ? (classIds.length ? query(collection(db, "submissions"), where("classId", "in", classIds.slice(0, 30))) : query(collection(db, "submissions"), where("classId", "==", "__none__")))
+        : query(collection(db, "submissions"), where("uid", "==", uid));
+    const b = onSnapshot(submissionsQuery, s => setSubs(s.docs.map(d => ({ id: d.id, ...d.data() } as S))), () => {
+      setMsg({ ok: false, t: "تعذّر تحميل التسليمات. تحقق من صلاحيات Firestore." });
+    });
     return () => { a(); b(); };
-  }, [staff, uid]);
+  }, [staff, uid, profile?.role, profile?.classId, profile?.classIds]);
   const create = async () => {
-    if (!f.title.trim()) return setMsg({ ok: false, t: "اكتب عنوان الواجب" });
+    if (!f.title.trim() || !f.classId) return setMsg({ ok: false, t: "اكتب عنوان الواجب واختر الصف" });
+    setCreating(true);
     try {
-      await addDoc(collection(db, "assignments"), { ...f, title: f.title.trim(), createdBy: uid, createdAt: serverTimestamp() });
-      await addDoc(collection(db, "notifications"), { audience: "all", title: "واجب جديد", body: f.title.trim(), at: serverTimestamp(), createdBy: uid });
-      setF({ title: "", description: "", dueDate: "" }); setMsg({ ok: true, t: "تم إنشاء الواجب وإرسال إشعار" });
-    } catch { setMsg({ ok: false, t: "تعذّر إنشاء الواجب" }); }
+      const title = f.title.trim();
+      await addDoc(collection(db, "assignments"), {
+        title, description: f.description.trim(), dueDate: f.dueDate, classId: f.classId,
+        createdBy: uid, createdAt: serverTimestamp()
+      });
+      setF({ title: "", description: "", dueDate: "", classId: profile?.classIds?.[0] ?? "" });
+      try {
+        await addDoc(collection(db, "notifications"), {
+          audience: "all", title: "واجب جديد", body: title, at: serverTimestamp(), createdBy: uid
+        });
+        setMsg({ ok: true, t: "تم إنشاء الواجب وإرسال إشعار للطلاب." });
+      } catch {
+        setMsg({ ok: true, t: "تم إنشاء الواجب، لكن تعذّر إرسال الإشعار العام." });
+      }
+    } catch {
+      setMsg({ ok: false, t: "لم يتم إنشاء الواجب. تحقق من الصلاحيات وحاول مرة أخرى." });
+    } finally {
+      setCreating(false);
+    }
   };
   if (!as) return <p>جارٍ تحميل الواجبات…</p>;
   return (<section><h3>الواجبات</h3>
     {staff && <div className="panel"><input placeholder="عنوان الواجب" value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
       <textarea placeholder="الوصف" value={f.description} onChange={e => setF({ ...f, description: e.target.value })} />
+      <select value={f.classId} onChange={e => setF({ ...f, classId: e.target.value })}>
+        <option value="">اختر الصف المستهدف</option>
+        {(profile?.role === "admin" ? classOptions : classOptions.filter(c => (profile?.classIds ?? []).includes(c.id))).map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+      </select>
       <input type="date" value={f.dueDate} onChange={e => setF({ ...f, dueDate: e.target.value })} />
-      <button className="btn" onClick={create}>إنشاء الواجب</button>{msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</div>}
+      <button className="btn" disabled={creating} onClick={create}>{creating ? "جارٍ الإنشاء…" : "إنشاء الواجب"}</button>{msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</div>}
     {as.length === 0 && <p className="note">لا توجد واجبات حاليًا.</p>}
     {as.map(a => staff
       ? <div className="panel" key={a.id}><b>{a.title}</b> <small>({subs.filter(s => s.assignmentId === a.id).length} تسليم)</small>

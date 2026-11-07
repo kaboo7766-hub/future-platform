@@ -1,31 +1,36 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { collection, doc, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth, Role } from "../auth/AuthContext";
 import Shell from "./Shell";
-import Lessons from "./Lessons";
-import Manage from "./Manage";
-import QuizBuilder from "./QuizBuilder";
-import Users from "./Users";
-import Parent from "./Parent";
-import ClassPicker from "./ClassPicker";
-import Games from "./Games";
-import Certificates from "./Certificates";
-import Notifications from "./Notifications";
-import Assignments from "./Assignments";
-import Onboarding from "./Onboarding";
-import SiteContent from "./SiteContent";
-import AdminOverview from "./AdminOverview";
+const Lessons = lazy(() => import("./Lessons"));
+const Manage = lazy(() => import("./Manage"));
+const QuizBuilder = lazy(() => import("./QuizBuilder"));
+const Users = lazy(() => import("./Users"));
+const Teachers = lazy(() => import("./Teachers"));
+const Parent = lazy(() => import("./Parent"));
+const ClassPicker = lazy(() => import("./ClassPicker"));
+const Games = lazy(() => import("./Games"));
+const Certificates = lazy(() => import("./Certificates"));
+const Notifications = lazy(() => import("./Notifications"));
+const Assignments = lazy(() => import("./Assignments"));
+const Onboarding = lazy(() => import("./Onboarding"));
+const SiteContent = lazy(() => import("./SiteContent"));
+const AdminOverview = lazy(() => import("./AdminOverview"));
+const Attendance = lazy(() => import("./Attendance"));
+const LiveClasses = lazy(() => import("./LiveClasses"));
+const LearningTables = lazy(() => import("./LearningTables"));
+const ThemeSettings = lazy(() => import("./ThemeSettings"));
 import { useSite, contactLinks } from "./HomeExtras";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "quizzes" | "users" | "site";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme";
 const ALL: Record<View, [string, string]> = {
-  admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "شهاداتي"],
-  manage: ["🧩", "الدروس والصفوف"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"],
+  admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "assignments", "games", "certs"], parent: ["home"],
-  teacher: ["home", "manage", "quizzes", "assignments"], admin: ["admin", "home", "manage", "quizzes", "assignments", "users", "site"],
+  student: ["home", "lessons", "live", "assignments", "learning", "games", "certs"], parent: ["home", "learning", "games"],
+  teacher: ["home", "live", "learning", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -70,6 +75,7 @@ export default function Dashboard() {
   const nav = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: ALL[id][1] }));
   const links = contactLinks(c);
   return (<>
+    <Suspense fallback={<section className="panel" role="status">جارٍ تحميل القسم…</section>}>
     {!profile.onboarded && <Onboarding />}
     <Shell name={profile.name} roleLabel={ROLE[role]} nav={nav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
       {view === "admin" && role === "admin" && <AdminOverview onNavigate={id => setView(id as View)} />}
@@ -84,11 +90,17 @@ export default function Dashboard() {
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}
-      {view === "certs" && <><Certificates /><p className="note">عند إكمال كل دروس مادة تظهر لك شهادتها هنا.</p></>}
+      {view === "learning" && <LearningTables />}
+      {view === "theme" && role === "admin" && <ThemeSettings />}
+      {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}
       {view === "quizzes" && <QuizBuilder />}
       {view === "users" && <Users />}
+      {view === "teachers" && role === "admin" && <Teachers />}
       {view === "site" && <SiteContent />}
+      {view === "attendance" && staff && <Attendance />}
+      {view === "live" && <LiveClasses />}
     </Shell>
+    </Suspense>
   </>);
 }

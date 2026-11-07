@@ -5,16 +5,36 @@ export interface Teacher { id: string; name: string; subject: string; bio: strin
 export interface Testimonial { id: string; author: string; text: string }
 export interface Contact { email?: string; phone?: string; whatsapp?: string; facebook?: string; instagram?: string; youtube?: string }
 
+export interface SiteTheme { primary: string; secondary: string; background: string; text: string; accent: string }
+export interface SiteBanner { id: string; title?: string; imageData: string; order?: number }
+const DEFAULT_THEME: SiteTheme = {"primary":"#18267a","secondary":"#2b44c9","background":"#f3f6ff","text":"#14213d","accent":"#2446c8"};
 export function useSite() {
   const [t, setT] = useState<Teacher[]>([]), [r, setR] = useState<Testimonial[]>([]), [c, setC] = useState<Contact | null>(null);
+  const [theme, setTheme] = useState<SiteTheme>(DEFAULT_THEME), [banners, setBanners] = useState<SiteBanner[]>([]);
   useEffect(() => {
     const e = () => {};
     const a = onSnapshot(collection(db, "siteTeachers"), s => setT(s.docs.map(d => ({ id: d.id, ...d.data() } as Teacher))), e);
     const b = onSnapshot(collection(db, "siteTestimonials"), s => setR(s.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial))), e);
     const k = onSnapshot(doc(db, "siteSettings", "contact"), s => setC((s.data() as Contact | undefined) ?? null), e);
-    return () => { a(); b(); k(); };
+    const settings = onSnapshot(collection(db, "siteSettings"), s => {
+      const docs: Array<{ id: string; type?: string; imageData?: unknown; title?: unknown; order?: unknown; [key: string]: unknown }> = s.docs.map(d => ({ id: d.id, ...d.data() }));
+      const saved = docs.find(d => d.id === "theme");
+      if (saved) setTheme({ ...DEFAULT_THEME, ...saved } as SiteTheme);
+      setBanners(docs.filter(d => d.type === "banner" && typeof d.imageData === "string")
+        .map(d => ({ id: d.id, title: String(d.title ?? ""), imageData: String(d.imageData), order: Number(d.order ?? 0) } as SiteBanner))
+        .sort((x,y) => (x.order ?? 0) - (y.order ?? 0)));
+    }, e);
+    return () => { a(); b(); k(); settings(); };
   }, []);
-  return { t, r, c };
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty("--navy", theme.primary);
+    root.style.setProperty("--navy2", theme.secondary);
+    root.style.setProperty("--bg", theme.background);
+    root.style.setProperty("--ink", theme.text);
+    root.style.setProperty("--accent", theme.accent);
+  }, [theme]);
+  return { t, r, c, theme, banners };
 }
 const https = (u?: string) => (u && u.startsWith("https://") ? u : "");
 export function contactLinks(c: Contact | null) {

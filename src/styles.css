@@ -147,3 +147,11 @@ html[dir="ltr"] .quote{border-right:1px solid var(--line);border-left:6px solid 
 .games-float{position:fixed;right:12px;top:50%;transform:translateY(-50%);z-index:78;display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:48px;padding:.65rem .9rem;border:1px solid #7dd3fc;border-radius:16px;background:#fff;color:#075985;font:800 .95rem system-ui;box-shadow:0 8px 24px #0f172a30;cursor:pointer;white-space:nowrap}
 .games-float:hover{background:#e5f8fc;transform:translateY(-50%) scale(1.04)}
 @media(max-width:480px){.games-float{right:8px;min-height:44px;padding:.55rem .7rem;font-size:.9rem;border-radius:14px}}
+
+/* Compact account controls and games shortcut */
+.topbar-actions{gap:.3rem}
+.topbar-actions .language-switch{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:.22rem .55rem!important;border-radius:9px!important;font-size:.78rem!important;line-height:1.1;white-space:nowrap}
+.topbar-actions .top-logout{min-height:34px;padding:.22rem .6rem;font-size:.78rem;border-radius:9px;white-space:nowrap}
+.games-float{min-height:38px;padding:.4rem .62rem;gap:.28rem;border-radius:11px;font-size:.82rem;box-shadow:0 4px 14px #0f172a24}
+.games-float span{font-size:.82rem}
+@media(max-width:480px){.topbar-actions{gap:.22rem}.topbar-actions .language-switch,.topbar-actions .top-logout{min-height:32px;padding:.2rem .45rem!important;font-size:.72rem!important}.games-float{right:7px;min-height:35px;padding:.35rem .52rem;font-size:.78rem}.games-float span{font-size:.78rem}}

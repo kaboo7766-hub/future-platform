@@ -86,7 +86,7 @@ export default function Manage({ isAdmin }: { isAdmin: boolean }) {
     e.preventDefault(); setMsg(null);
     if (!f.title.trim() || !f.classId || !f.subjectId) return setMsg({ ok: false, t: "أكمل اسم الدرس والصف والمادة." });
     if (!isAdmin && !(profile?.classIds ?? []).includes(f.classId)) return setMsg({ ok: false, t: "هذا الصف غير مخصص لحسابك من المدير." });
-    const parsedGameWords = f.gameWordsText.split(/[،,\\n\\r]+/).map((word: string) => word.trim()).filter(Boolean);
+    const parsedGameWords = f.gameWordsText.split(/[،,\n\r]+/).map((word: string) => word.trim()).filter(Boolean);
     if (parsedGameWords.length > 100) return setMsg({ ok: false, t: "الحد الأقصى 100 كلمة للدرس." });
     const gameWords = parsedGameWords;
     if (f.type === "image") {

@@ -179,3 +179,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .lesson-game-card-icon{font-size:1.8rem}.lesson-game-card h4{font-size:1.05rem;margin:0;color:#172554}.lesson-game-card p{margin:0;color:#475569;font-size:.88rem;line-height:1.6}.lesson-game-meta{display:flex;gap:.6rem;flex-wrap:wrap;font-size:.78rem;font-weight:800;color:#0369a1}.lesson-stage-row{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.3rem;margin:.35rem 0}.lesson-stage-row span{text-align:center;padding:.35rem .1rem;border-radius:9px;font-size:.72rem;font-weight:800}.stage-open{background:#fef3c7;color:#92400e}.stage-locked{background:#e2e8f0;color:#64748b}
 .lesson-game-panel{margin:1rem 0;padding:1rem;border-radius:22px;background:linear-gradient(145deg,#eff6ff,#fff7ed);border:2px solid #bfdbfe;color:#172554;text-align:center}.lesson-game-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap}.lesson-game-mascot{font-size:3rem;animation:float 1.8s ease-in-out infinite}.lesson-game-panel h3{margin:.35rem}.lesson-game-clue{margin:1rem auto;padding:1rem;max-width:520px;border-radius:18px;background:#fff;border:2px dashed #93c5fd;font-size:clamp(1.2rem,4vw,1.8rem);font-weight:900;letter-spacing:.08em;min-height:70px;display:grid;place-items:center}.lesson-game-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem;max-width:600px;margin:1rem auto}.lesson-word-option{min-height:56px;border:2px solid #bfdbfe;border-radius:15px;background:#fff;color:#1e3a8a;font:inherit;font-size:1.05rem;font-weight:900;cursor:pointer;overflow-wrap:anywhere}.lesson-word-option:hover{transform:translateY(-2px);box-shadow:0 7px 16px #1e40af20}.lesson-word-option.correct{background:#dcfce7;border-color:#22c55e;color:#166534}.lesson-word-option.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b}.lesson-game-feedback{font-weight:900;color:#0369a1}.lesson-game-celebrate{font-size:2rem;font-weight:900}.lesson-game-actions{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin-top:1rem}
 @media(max-width:520px){.lesson-games{padding:.75rem}.lesson-games-heading h3{font-size:1.1rem}.lesson-games-character{font-size:2.4rem}.lesson-game-options{grid-template-columns:1fr}.lesson-game-top{font-size:.85rem}}
+
+
+/* Foundation games and learning tables */
+.foundation-games{margin:24px 0;padding:20px;border-radius:24px;background:linear-gradient(135deg,#f1f8ff,#fff7e9);border:1px solid #dce9f8}
+.foundation-games .games-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px}
+.foundation-games .game-card{min-width:0}
+.foundation-tables{margin-top:28px;padding:18px;background:#fff;border-radius:20px}
+.foundation-tables h3{margin:0 0 18px}.foundation-tables h4{margin:20px 0 10px}
+.alphabet-table{display:grid;grid-template-columns:repeat(auto-fit,minmax(48px,1fr));gap:8px}
+.alphabet-table span{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:58px;border:1px solid #dbe5f0;border-radius:12px;background:#f7fbff}
+.alphabet-table b{font-size:22px;color:#244c83}.alphabet-table small{font-size:10px;color:#718096}
+.multiplication-scroll{overflow-x:auto;max-width:100%}
+.multiplication-table{border-collapse:separate;border-spacing:3px;min-width:620px;width:100%;text-align:center}
+.multiplication-table th,.multiplication-table td{padding:7px 4px;border-radius:7px;background:#f0f6ff;font-weight:700}
+.multiplication-table th{background:#dceaff;color:#17467d}
+@media(max-width:600px){.foundation-games{padding:12px}.foundation-tables{padding:10px}.alphabet-table{grid-template-columns:repeat(5,minmax(0,1fr))}.multiplication-table{min-width:570px}}

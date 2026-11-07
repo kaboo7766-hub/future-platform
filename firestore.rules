@@ -183,8 +183,56 @@ service cloud.firestore {
       && request.resource.data.recipientUid is string && request.resource.data.recipientName is string
       && request.resource.data.title is string && request.resource.data.title.size() <= 80
       && request.resource.data.reason is string && request.resource.data.reason.size() <= 500
-      && request.resource.data.number.matches('^FUT-[0-9A-F]{10}$')
-      && request.resource.data.keys().hasOnly(['recipientUid','recipientName','recipientRole','classId','title','reason','number','status','createdBy','createdByName','createdAt','approvedBy','approvedAt']);
+      && request.resource.data.number.matches('^FUT-[0-9A-F]{10}
+      allow update: if isAdmin() && resource.data.recipientRole == 'student' && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approvedBy','approvedAt'])
+        && request.resource.data.status in ['approved','rejected'] && request.resource.data.approvedBy == request.auth.uid;
+      allow delete: if isAdmin();
+    }
+    match /liveClasses/{id} {
+      function validLiveClass(data) {
+        return data.title is string && data.title.size() > 0 && data.title.size() <= 100
+          && data.classId is string && data.provider in ['zoom','meet']
+          && data.meetingUrl is string && data.meetingUrl.size() <= 500
+          && ((data.provider == 'zoom' && data.meetingUrl.matches('^https://([A-Za-z0-9-]+[.])*zoom[.]us/.*'))
+            || (data.provider == 'meet' && data.meetingUrl.matches('^https://meet[.]google[.]com/.*')))
+          && data.startsAt is string && data.startsAt.size() <= 40
+          && data.durationMinutes is int && data.durationMinutes >= 10 && data.durationMinutes <= 240
+          && data.published is bool;
+      }
+      allow read: if signedIn() && (isAdmin() || teacherHasClass(resource.data.classId)
+        || (me().role == 'student' && resource.data.published == true && resource.data.classId == me().classId));
+      allow create: if signedIn() && validLiveClass(request.resource.data)
+        && (isAdmin() || teacherHasClass(request.resource.data.classId))
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if signedIn() && validLiveClass(request.resource.data)
+        && (isAdmin() || (teacherHasClass(resource.data.classId) && resource.data.createdBy == request.auth.uid
+          && request.resource.data.classId == resource.data.classId && request.resource.data.createdBy == resource.data.createdBy));
+      allow delete: if isAdmin() || (signedIn() && teacherHasClass(resource.data.classId) && resource.data.createdBy == request.auth.uid);
+    }
+    match /themeSettings/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteTeachers/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }
+    match /activityLogs/{id} {
+      function validLogShape() {
+        return request.resource.data.keys().hasOnly(['uid','action','target','at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.action is string && request.resource.data.action.size() <= 40
+          && request.resource.data.target is string && request.resource.data.target.size() <= 150
+          && request.resource.data.at == request.time;
+      }
+      allow create: if signedIn() && validLogShape()
+        && ((request.resource.data.action == 'lesson.create' && isStaff())
+          || (request.resource.data.action in ['teacher.approve','user.role','parent.link','parent.unlink'] && isAdmin()));
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+  }
+})
+      && request.resource.data.recipientGender in ['boy','girl']
+      && request.resource.data.schoolName is string && request.resource.data.schoolName.size() <= 100
+      && request.resource.data.keys().hasOnly(['recipientUid','recipientName','recipientGender','schoolName','recipientRole','classId','title','reason','number','status','createdBy','createdByName','createdAt','approvedBy','approvedAt']);
       allow update: if isAdmin() && resource.data.recipientRole == 'student' && resource.data.status == 'pending'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approvedBy','approvedAt'])
         && request.resource.data.status in ['approved','rejected'] && request.resource.data.approvedBy == request.auth.uid;

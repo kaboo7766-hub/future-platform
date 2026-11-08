@@ -78,9 +78,19 @@ export default function ArcadeGames(){
  const toggle=async(game:Arcade,active:boolean)=>{
   if(!profile||!classId)return;
   const id=classId+"_"+game.id;
-  if(!active&&!selectedStudents.length){setNotice("حدد طالبًا واحدًا على الأقل قبل فتح اللعبة.");return;}
+  const shareWithWholeClass=game.id==="billiards"||game.id==="basketball";
+  const recipients=shareWithWholeClass?students.map(s=>s.uid):selectedStudents;
+  if(!recipients.length){setNotice(shareWithWholeClass?"لا يوجد طلاب مسجلون في هذا الفصل حتى الآن.":"حدد طالبًا واحدًا على الأقل قبل فتح اللعبة.");return;}
   setBusy(id);setNotice("");
-  try{await setDoc(doc(db,"arcadeGameSessions",id),{classId,gameId:game.id,title:game.title,active:!active,selectedStudentUids:active?(sessions.find(s=>s.id===id)?.selectedStudentUids??[]):selectedStudents,openedBy:profile.uid,updatedAt:serverTimestamp(),openedAt:!active?serverTimestamp():null},{merge:true});setNotice(active?"تم إغلاق اللعبة.":"تم فتح اللعبة للطلاب المحددين.");}
+  try{
+   await setDoc(doc(db,"arcadeGameSessions",id),{
+    classId,gameId:game.id,title:game.title,
+    active:shareWithWholeClass?true:!active,
+    selectedStudentUids:shareWithWholeClass?recipients:(active?(sessions.find(s=>s.id===id)?.selectedStudentUids??[]):recipients),
+    openedBy:profile.uid,updatedAt:serverTimestamp(),openedAt:serverTimestamp()
+   },{merge:true});
+   setNotice(shareWithWholeClass?"تمت مشاركة اللعبة مع جميع طلاب الفصل، وستظهر لهم مباشرة.":(active?"تم إغلاق اللعبة.":"تم فتح اللعبة للطلاب المحددين."));
+  }
   catch{setNotice("تعذر تحديث اللعبة. تحقق من قواعد Firestore الخاصة بالألعاب.");}
   finally{setBusy("");}
  };
@@ -91,6 +101,6 @@ export default function ArcadeGames(){
  <label className="arcade-field">الفصل الدراسي<select value={classId} onChange={e=>{setClassId(e.target.value);setSelectedStudents([]);}}>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
  <div className="arcade-student-picker"><div className="arcade-picker-head"><b>الطلاب المسموح لهم</b><span>{selectedStudents.length} محدد</span></div><div className="arcade-picker-actions"><button className="link" onClick={()=>setSelectedStudents(students.map(s=>s.uid))}>تحديد الكل</button><button className="link" onClick={()=>setSelectedStudents([])}>إلغاء التحديد</button></div><div className="arcade-students">{students.map(s=><label key={s.uid}><input type="checkbox" checked={selectedStudents.includes(s.uid)} onChange={e=>setSelectedStudents(old=>e.target.checked?[...old,s.uid]:old.filter(x=>x!==s.uid))}/>{s.name}</label>)}{students.length===0&&<small>لا يوجد طلاب في هذا الفصل.</small>}</div></div>
  {notice&&<p role="status" className="note">{notice}</p>}
- <div className="arcade-cards">{ARCADES.map(g=>{const id=classId+"_"+g.id,active=sessions.some(s=>s.id===id&&s.active);return <article className="arcade-card" key={g.id}><span>{g.icon}</span><h3>{g.title}</h3><p>{g.description}</p><small>{active?"🟢 مفتوحة للطلاب المحددين":"🔒 مغلقة"}</small><button className="btn" disabled={!classId||busy===id} onClick={()=>toggle(g,active)}>{busy===id?"جارٍ الحفظ...":active?"إغلاق اللعبة":"فتح اللعبة للطلاب المحددين"}</button></article>;})}</div>
+ <div className="arcade-cards">{ARCADES.map(g=>{const id=classId+"_"+g.id,active=sessions.some(s=>s.id===id&&s.active);return <article className="arcade-card" key={g.id}><span>{g.icon}</span><h3>{g.title}</h3><p>{g.description}</p><small>{g.id==="billiards"||g.id==="basketball"?(active?"🟢 تمت مشاركتها مع طلاب الفصل":"متاحة للمشاركة مع الفصل"):(active?"🟢 مفتوحة للطلاب المحددين":"🔒 مغلقة")}</small><button className="btn" disabled={!classId||busy===id} onClick={()=>toggle(g,active)}>{busy===id?"جارٍ الحفظ...":(g.id==="billiards"||g.id==="basketball")?(active?"مشاركة اللعبة مع الفصل مرة أخرى":"مشاركة مع جميع طلاب الفصل"):(active?"إغلاق اللعبة":"فتح اللعبة للطلاب المحددين")}</button></article>;})}</div>
  </section>;
 }

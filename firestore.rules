@@ -58,7 +58,9 @@ service cloud.firestore {
         || teacherHasClass(resource.data.classId)
         || (me().role == 'student'
           && resource.data.active == true
-          && resource.data.classId == me().classId)
+          && resource.data.classId == me().classId
+          && resource.data.selectedStudentUids is list
+          && request.auth.uid in resource.data.selectedStudentUids)
       );
 
       allow create, update: if signedIn()
@@ -70,7 +72,10 @@ service cloud.firestore {
         && request.resource.data.title is string
         && request.resource.data.gameWords is list
         && request.resource.data.gameWords.size() > 0
-        && request.resource.data.gameWords.size() <= 100;
+        && request.resource.data.gameWords.size() <= 100
+        && request.resource.data.selectedStudentUids is list
+        && request.resource.data.selectedStudentUids.size() > 0
+        && request.resource.data.selectedStudentUids.size() <= 200;
 
       allow delete: if false;
     }

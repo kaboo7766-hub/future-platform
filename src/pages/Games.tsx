@@ -5,7 +5,6 @@ import { useAuth } from "../auth/AuthContext";
 import LessonGames from "./LessonGames";
 import FoundationGames from "./FoundationGames";
 import ArcadeGames from "./ArcadeGames";
-import GameAccessManager from "./GameAccessManager";
 
 interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string }; visual?: string }
 type GameKey = "arLetters" | "enLetters" | "arNumbers" | "enNumbers" | "count" | "math" | "memory";
@@ -78,7 +77,7 @@ export default function Games() {
    where("active","==",true),
    where("selectedStudentUids","array-contains",profile.uid));
   const stopArcade=onSnapshot(activeArcade,s=>{
-   const foundation=s.docs.some(d=>d.id===profile.classId+"_foundation"&&d.data().gameId==="foundation");
+   const foundation=s.docs.some(d=>d.data().gameId==="foundation"||String(d.data().gameId??"").startsWith("foundation-"));
    const arcade=s.docs.some(d=>d.data().gameId!=="foundation");
    setGameAccess(old=>({...old,loading:false,foundation,arcade}));
   },()=>setGameAccess(old=>({...old,loading:false,foundation:false,arcade:false})));
@@ -97,8 +96,7 @@ export default function Games() {
  return <section className="panel games-hub"><div className="games-heading"><div><span className="games-kicker">نتعلّم ونلعب</span><h2>🎮 ألعاب التأسيس التفاعلية</h2><p>اختار صفّك وابدأ مغامرة الحروف والأرقام والحساب</p></div><div className="games-score">⭐ <b>{pts}</b><small>نقاطك</small></div></div>
  <label className="grade-picker">اختر الصف الدراسي<select value={grade} onChange={e=>{setGrade(Number(e.target.value));setGame(null);setRes("");}}>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>الصف {n} الابتدائي</option>)}</select></label>
  <div className="badge-row">{badges.filter(b=>pts>=b.min).map(b=><span className="chip" key={b.min}>{b.t}</span>)}</div>
- {(profile?.role==="admin"||profile?.role==="teacher")&&<GameAccessManager />}
- {profile?.role!=="student"||gameAccess.foundation ? <FoundationGames grade={grade} /> : null}
+  {profile?.role!=="student"||gameAccess.foundation ? <FoundationGames grade={grade} /> : null}
  <LessonGames />
  <ArcadeGames />
 

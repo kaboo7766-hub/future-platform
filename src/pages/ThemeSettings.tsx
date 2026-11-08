@@ -15,9 +15,9 @@ const fields: [keyof Colors, string][] = [["navy","لون الشريط الرئ�
 export default function ThemeSettings() {
  const { profile } = useAuth();
  const [colors,setColors]=useState<Colors>(defaults); const [saving,setSaving]=useState(false); const [message,setMessage]=useState("");
- useEffect(()=>onSnapshot(doc(db,"themeSettings","global"),snap=>{if(snap.exists())setColors({...defaults,...snap.data()} as Colors);}),[]);
+ useEffect(()=>onSnapshot(doc(db,"siteSettings","theme"),snap=>{if(snap.exists()){const saved=snap.data();setColors({navy:String(saved.primary??defaults.navy),navy2:String(saved.secondary??defaults.navy2),bg:String(saved.background??defaults.bg),ink:String(saved.text??defaults.ink),accent:String(saved.accent??defaults.accent)});}}),[]);
  if(profile?.role!=="admin")return <section className="panel"><h2>غير مسموح</h2><p>هذا القسم متاح لمدير المنصة فقط.</p></section>;
- const save=async(next:Colors)=>{setSaving(true);setMessage("");try{await setDoc(doc(db,"themeSettings","global"),{...next,updatedAt:new Date().toISOString()});setColors(next);setMessage("تم حفظ ألوان المنصة بنجاح.");}catch{setMessage("تعذر الحفظ. تأكد من نشر قواعد Firestore الجديدة واتصال الإنترنت.");}finally{setSaving(false);}};
+ const save=async(next:Colors)=>{setSaving(true);setMessage("");try{await setDoc(doc(db,"siteSettings","theme"),{primary:next.navy,secondary:next.navy2,background:next.bg,text:next.ink,accent:next.accent,updatedAt:new Date().toISOString()});setColors(next);setMessage("تم حفظ ألوان المنصة بنجاح.");}catch{setMessage("تعذر الحفظ. تأكد من نشر قواعد Firestore الجديدة واتصال الإنترنت.");}finally{setSaving(false);}};
  return <section className="panel theme-settings">
   <h2>🎨 تخصيص ألوان المنصة</h2><p>اختر الألوان التي تظهر لجميع مستخدمي منصة المستقبل.</p>
   <h3>قوالب ألوان جاهزة</h3><div className="theme-presets">{presets.map(p=><button type="button" key={p.name} className="theme-preset" onClick={()=>setColors(p.colors)}><span>{p.name}</span><i style={{background:p.colors.navy}}/><i style={{background:p.colors.navy2}}/><i style={{background:p.colors.bg,border:"1px solid #bbb"}}/></button>)}</div>

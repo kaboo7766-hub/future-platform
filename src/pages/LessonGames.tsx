@@ -51,6 +51,7 @@ export default function LessonGames() {
   const { profile } = useAuth();
   const [lessons, setLessons] = useState<LessonGame[]>([]);
   const [activeSessionIds, setActiveSessionIds] = useState<string[]>([]);
+  const [sessionStudentUids, setSessionStudentUids] = useState<Record<string, string[]>>({});
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [studentsByClass, setStudentsByClass] = useState<Record<string, { uid: string; name: string }[]>>({});
   const [selectedStudents, setSelectedStudents] = useState<Record<string, string[]>>({});
@@ -88,6 +89,7 @@ export default function LessonGames() {
     const stopLessons = onSnapshot(lessonsQuery, snap => setLessons(snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0)), () => setLessons([]));
     const stopSessions = onSnapshot(sessionsQuery, snap => {
       setActiveSessionIds(snap.docs.filter(d => d.data().active === true).map(d => d.id));
+      setSessionStudentUids(Object.fromEntries(snap.docs.map(d => [d.id, Array.isArray(d.data().selectedStudentUids) ? d.data().selectedStudentUids : []])));
     }, () => {});
     return () => { stopLessons(); stopSessions(); };
   }, [profile?.uid, profile?.role, profile?.classId, profile?.classIds]);
@@ -119,13 +121,14 @@ export default function LessonGames() {
     if (!profile || (profile.role !== "admin" && profile.role !== "teacher")) return;
     const isActive = activeSessionIds.includes(lesson.id);
     const chosen = selectedStudents[lesson.id] ?? [];
+    const savedSelection = sessionStudentUids[lesson.id] ?? [];
     if (!isActive && chosen.length === 0) { setNotice("اختر طالبًا واحدًا على الأقل قبل فتح اللعبة."); return; }
     setBusyLesson(lesson.id);
     try {
       await setDoc(doc(db, "lessonGameSessions", lesson.id), {
         lessonId: lesson.id, classId: lesson.classId, title: lesson.title,
         description: lesson.description ?? "", gameWords: lesson.gameWords ?? [],
-        active: !isActive, selectedStudentUids: isActive ? (selectedStudents[lesson.id] ?? []) : chosen, openedBy: profile.uid,
+        active: !isActive, selectedStudentUids: isActive ? savedSelection : chosen, openedBy: profile.uid,
         openedAt: !isActive ? serverTimestamp() : null,
         updatedAt: serverTimestamp()
       }, { merge: true });

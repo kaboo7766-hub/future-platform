@@ -302,3 +302,114 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 /* Teacher-controlled arcade games */
 .arcade-hub{display:grid;gap:1rem}.arcade-heading{display:flex;justify-content:space-between;align-items:center;gap:1rem}.arcade-heading h2{margin:.2rem 0}.arcade-heading>span{font-size:3rem}.arcade-field{display:grid;gap:.35rem;max-width:420px;font-weight:700}.arcade-student-picker{border:1px solid var(--line);border-radius:15px;padding:.8rem}.arcade-picker-head,.arcade-picker-actions{display:flex;justify-content:space-between;gap:.5rem;align-items:center}.arcade-students{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.4rem;margin-top:.6rem;max-height:220px;overflow:auto}.arcade-students label{display:flex;align-items:center;gap:.4rem;background:var(--bg);padding:.4rem;border-radius:9px}.arcade-students input{width:auto}.arcade-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem}.arcade-card{display:flex;flex-direction:column;align-items:flex-start;gap:.3rem;padding:1rem;border:1px solid var(--line);border-radius:16px;background:var(--panel)}.arcade-card>span{font-size:2.5rem}.arcade-card h3,.arcade-card p{margin:0}.arcade-card p{font-size:.85rem;opacity:.75;flex:1}.arcade-card small{font-weight:700}.arcade-card .btn{margin-top:.5rem;width:100%;text-align:center}.arcade-play{border:2px solid var(--line);border-radius:18px;background:var(--panel);padding:1rem;display:grid;gap:.8rem}.arcade-play-head{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap}.arcade-instruction{text-align:center;font-weight:800}.arcade-table{height:260px;max-width:620px;width:100%;margin:auto;position:relative;border:12px solid #8b542e;border-radius:24px;background:#16734e;box-shadow:inset 0 0 0 4px #d6b477}.pool-pocket{position:absolute;width:25px;height:25px;border-radius:50%;background:#111}.p1{top:-5px;left:-5px}.p2{top:-5px;right:-5px}.p3{bottom:-5px;left:-5px}.p4{bottom:-5px;right:-5px}.p5{top:50%;left:-5px}.p6{top:50%;right:-5px}.pool-ball{position:absolute;font-size:1.7rem;filter:drop-shadow(1px 2px 2px #1118)}.pool-ball.white{font-size:1.5rem}.arcade-controls{display:flex;justify-content:center;align-items:center;gap:1rem;flex-wrap:wrap}.arcade-controls label{display:grid;gap:.2rem;min-width:180px}.arcade-memory{display:grid;grid-template-columns:repeat(4,minmax(50px,90px));justify-content:center;gap:.5rem}.arcade-memory-card{aspect-ratio:1;border:2px solid var(--line);border-radius:14px;background:var(--bg);font-size:2rem;cursor:pointer}.arcade-memory-card:disabled{opacity:.6}.basket-court{height:220px;max-width:600px;margin:auto;width:100%;position:relative;border-radius:18px;background:linear-gradient(#bde6ff 65%,#d7a66c 65%);overflow:hidden}.basket-hoop{position:absolute;right:12%;top:20%;font-size:2.3rem}.basket-hoop span{font-size:2.5rem}.basket-player{position:absolute;left:20%;bottom:8%;font-size:3rem}.basket-ball{position:absolute;left:42%;bottom:12%;font-size:2.5rem}.arcade-bubbles{text-align:center}.arcade-bubbles>div{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin-top:1rem}.arcade-bubbles button{font-size:2.3rem;border:1px solid var(--line);background:var(--bg);border-radius:50%;width:65px;height:65px;cursor:pointer}.arcade-maze{display:grid;justify-items:center;gap:.8rem}.maze-grid{display:grid;grid-template-columns:repeat(4,55px);gap:4px}.maze-grid span{height:55px;border-radius:8px;background:var(--bg);display:grid;place-items:center}.maze-grid .maze-wall{background:#64748b}.maze-grid .maze-player{background:#bfdbfe}.maze-grid .maze-goal{background:#bbf7d0}.maze-buttons{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}.maze-buttons button{padding:.6rem 1rem;border:1px solid var(--line);border-radius:10px;background:var(--bg);font:inherit;cursor:pointer}.arcade-race{max-width:380px;margin:auto;width:100%}.race-track{height:250px;position:relative;overflow:hidden;border-inline:35px dashed #d1d5db;background:#475569;border-radius:12px}.race-track span,.race-track b{position:absolute;font-size:2rem;transition:all .2s}.arcade-progress{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding-top:.6rem}.arcade-finish{text-align:center;padding:1rem;background:var(--bg);border-radius:14px}
 @media(max-width:600px){.arcade-table{height:210px}.arcade-card{min-width:0}.arcade-play{padding:.65rem}.maze-grid{grid-template-columns:repeat(4,48px)}.maze-grid span{height:48px}}
+
+
+/* Friendly lightweight 3D visual refresh */
+:root {
+  --depth-shadow: 0 10px 24px rgba(15, 57, 88, .10), 0 3px 7px rgba(15, 57, 88, .07);
+  --depth-shadow-hover: 0 18px 34px rgba(15, 57, 88, .16), 0 7px 14px rgba(15, 57, 88, .09);
+}
+.btn, .auth-action, .topbar-actions button, .language-switch {
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--navy) 72%, #07152c), 0 8px 16px rgba(15, 57, 88, .14);
+  transform: translateY(0);
+  transition: transform .18s ease, box-shadow .18s ease, filter .18s ease;
+}
+.btn:hover, .auth-action:hover, .topbar-actions button:hover, .language-switch:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--navy) 72%, #07152c), 0 13px 22px rgba(15, 57, 88, .18);
+  filter: saturate(1.08);
+}
+.btn:active, .auth-action:active, .topbar-actions button:active, .language-switch:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--navy) 72%, #07152c), 0 3px 7px rgba(15, 57, 88, .12);
+}
+.panel, .feat, .card, .stage, .faq, .quote, .social-post, .social-feed-heading,
+.arcade-card, .arcade-play, .admin-box, .admin-stat-card, .cover, .mock, .onb {
+  box-shadow: var(--depth-shadow);
+  transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease;
+}
+.feat, .card, .stage, .social-post, .arcade-card, .admin-stat-card {
+  transform: perspective(900px) translateZ(0);
+}
+.feat:hover, .card:hover, .social-post:hover, .arcade-card:hover, .admin-stat-card:hover {
+  transform: perspective(900px) translateY(-5px) rotateX(1.2deg);
+  box-shadow: var(--depth-shadow-hover);
+}
+.stage {
+  box-shadow: 0 7px 0 rgba(8, 126, 170, .18), 0 12px 20px rgba(15, 57, 88, .12);
+}
+.stage:hover {
+  transform: translateY(-5px) rotate(-3deg) scale(1.04);
+  box-shadow: 0 10px 0 rgba(8, 126, 170, .16), 0 17px 25px rgba(15, 57, 88, .16);
+}
+.hero2 {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.hero2::before, .hero2::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 190px;
+  height: 190px;
+  border-radius: 42% 58% 64% 36% / 42% 40% 60% 58%;
+  background: rgba(255,255,255,.28);
+  filter: blur(1px);
+  pointer-events: none;
+}
+.hero2::before { inset: 12% auto auto 4%; transform: rotate(24deg); }
+.hero2::after { inset: auto 5% -75px auto; width: 250px; height: 250px; transform: rotate(-18deg); }
+.mock {
+  transform: perspective(1000px) rotateY(-5deg) rotateX(3deg);
+  border-width: 7px;
+  box-shadow: 0 18px 0 rgba(8,126,170,.10), 0 25px 42px rgba(8,72,110,.20);
+}
+.mock .tile {
+  box-shadow: inset 0 -5px 0 rgba(15, 57, 88, .10), 0 5px 10px rgba(15,57,88,.10);
+}
+.chips div {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 4px 9px rgba(0,0,0,.08);
+  transition: transform .18s ease, background .18s ease;
+}
+.chips div:hover { transform: translateX(-4px); background: rgba(255,255,255,.19); }
+.bar, .topbar {
+  box-shadow: 0 5px 18px rgba(15, 57, 88, .10);
+}
+.topbar { position: relative; z-index: 82; }
+.side {
+  box-shadow: 0 20px 45px rgba(15, 35, 65, .20);
+  transform-origin: top right;
+}
+.side button {
+  transition: transform .16s ease, background .16s ease, box-shadow .16s ease;
+}
+.side button:hover { transform: translateX(-3px); box-shadow: inset -3px 0 0 var(--accent); }
+.side button.on { box-shadow: 0 4px 10px rgba(8,126,170,.22); }
+.cover { box-shadow: 0 12px 28px rgba(15,57,88,.12); }
+.cover-info-centered { position: relative; }
+.cover-kids { filter: drop-shadow(0 9px 7px rgba(15,57,88,.16)); }
+.games-float {
+  box-shadow: 0 6px 0 rgba(8, 83, 117, .65), 0 12px 22px rgba(8, 83, 117, .20);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.games-float:hover { transform: translateY(-4px) rotate(-2deg); box-shadow: 0 9px 0 rgba(8,83,117,.65), 0 17px 25px rgba(8,83,117,.22); }
+input, select, textarea {
+  box-shadow: inset 0 2px 5px rgba(15,57,88,.06);
+}
+input:focus, select:focus, textarea:focus {
+  box-shadow: 0 0 0 4px rgba(22,168,213,.13), inset 0 2px 5px rgba(15,57,88,.04);
+}
+@media (max-width: 700px) {
+  .mock { transform: perspective(900px) rotateY(-2deg); }
+  .feat:hover, .card:hover, .social-post:hover, .arcade-card:hover, .admin-stat-card:hover {
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn, .auth-action, .topbar-actions button, .language-switch, .panel, .feat, .card,
+  .stage, .faq, .quote, .social-post, .social-feed-heading, .arcade-card, .arcade-play,
+  .admin-box, .admin-stat-card, .side button, .games-float, .chips div {
+    transition: none !important;
+  }
+}

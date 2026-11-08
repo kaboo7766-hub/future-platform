@@ -268,6 +268,7 @@ service cloud.firestore {
         && canManageClass(request.resource.data.classId)
         && request.resource.data.lessonId == lessonId
         && get(/databases/$(db)/documents/lessons/$(lessonId)).data.classId == request.resource.data.classId
+        && get(/databases/$(db)/documents/lessons/$(lessonId)).data.published == true
         && request.resource.data.active is bool
         && request.resource.data.title is string
         && request.resource.data.gameWords is list

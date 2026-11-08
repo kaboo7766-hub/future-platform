@@ -61,8 +61,9 @@ export default function ArcadeGames(){
    return onSnapshot(q,s=>setSessions(s.docs.map(d=>({id:d.id,...d.data()} as Session))),()=>setSessions([]));
   }
   if(!isStaff)return;
-  const q=profile.role==="admin"?collection(db,"classes"):query(collection(db,"classes"),where("__name__","in",(profile.classIds??[]).slice(0,30)));
-  return onSnapshot(q,s=>{const list=s.docs.map(d=>({id:d.id,name:String(d.data().name??"فصل")}));setClasses(list);if(!classId&&list[0])setClassId(list[0].id);},()=>setClasses([]));
+  const q=collection(db,"classes");
+  const allowed=profile.role==="teacher"?(profile.classIds??[]):null;
+  return onSnapshot(q,s=>{const list=s.docs.filter(d=>!allowed||allowed.includes(d.id)).map(d=>({id:d.id,name:String(d.data().name??"فصل")}));setClasses(list);if(!classId&&list[0])setClassId(list[0].id);},()=>setClasses([]));
  },[profile?.uid,profile?.role,profile?.classId,(profile?.classIds??[]).join("|")]);
  useEffect(()=>{
   if(!isStaff||!classId)return;

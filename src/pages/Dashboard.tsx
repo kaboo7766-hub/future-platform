@@ -22,6 +22,7 @@ const LiveClasses = lazy(() => import("./LiveClasses"));
 const LearningTables = lazy(() => import("./LearningTables"));
 const ThemeSettings = lazy(() => import("./ThemeSettings"));
 import { useSite, contactLinks } from "./HomeExtras";
+import SocialFeed from "./SocialFeed";
 
 type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme";
 const ALL: Record<View, [string, string]> = {
@@ -79,13 +80,13 @@ export default function Dashboard() {
     {!profile.onboarded && <Onboarding />}
     <Shell name={profile.name} roleLabel={ROLE[role]} nav={nav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
       {view === "admin" && role === "admin" && <AdminOverview onNavigate={id => setView(id as View)} />}
-      {view === "home" && <div className="cols">
-        <div><h3>اختصارات</h3>{nav.filter(n => n.id !== "home").map((n, i) => (
+      {view === "home" && <div className="social-layout">
+        <aside className="social-left"><section className="panel social-shortcuts"><h3>اختصاراتك</h3>{nav.filter(n => n.id !== "home").map((n, i) => (
           <button key={n.id} className={`tile ${TILE[i % 4]}`} onClick={() => setView(n.id as View)}><span>{n.icon}</span>{n.label}</button>))}
-          {nav.length === 1 && <p className="note">لا توجد اختصارات إضافية لهذا الحساب.</p>}</div>
-        <div><Notifications />{role === "parent" && <Parent />}</div>
-        <div>{links.length > 0 && <section className="panel"><h3>كن على اطلاع</h3><div className="contact">{links.map(l => (
-          <a key={l.href} className="btn" href={l.href} {...(l.href.startsWith("https") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{l.label}</a>))}</div></section>}</div>
+          {nav.length === 1 && <p className="note">لا توجد اختصارات إضافية لهذا الحساب.</p>}</section><Notifications />{role === "parent" && <Parent />}</aside>
+        <div className="social-center"><SocialFeed /></div>
+        <aside className="social-right">{links.length > 0 && <section className="panel"><h3>تواصل مع المنصة</h3><div className="contact">{links.map(l => (
+          <a key={l.href} className="btn" href={l.href} {...(l.href.startsWith("https") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{l.label}</a>))}</div></section>}<section className="panel social-welcome"><span>✨</span><b>مساحة آمنة للتعلّم</b><p>شارك التفاعل الإيجابي، وشجّع أصدقاءك على التقدّم.</p></section></aside>
       </div>}
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}

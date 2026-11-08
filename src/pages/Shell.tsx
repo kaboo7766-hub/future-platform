@@ -23,7 +23,7 @@ export default function Shell({ name, role, roleLabel, nav, adminNav = [], view,
   const isAdmin = role === "admin";
   const points = stats.find(([label]) => label === "نقاطي")?.[1];
   const studentSections = isAdmin
-    ? nav.filter(item => ["home", "lessons", "games", "quizzes", "learning", "live", "assignments"].includes(item.id))
+    ? nav.filter(item => ["home", "lessons", "games", "quizzes", "learning", "quran", "live", "assignments"].includes(item.id))
     : nav;
   const renderItems = (items: NavItem[]) => items.map(item => (
     <button key={item.id} type="button" className={view === item.id ? "on" : ""} aria-current={view === item.id ? "page" : undefined}

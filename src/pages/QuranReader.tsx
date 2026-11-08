@@ -82,7 +82,6 @@ export default function QuranReader() {
   }, []);
 
   const allAyahs = useMemo(() => surahs.flatMap(s => s.ayahs), [surahs]);
-  const pages = useMemo(() => Array.from(new Set(allAyahs.map(a => a.page_number).filter(Boolean))).sort((a, b) => a - b), [allAyahs]);
   const pageAyahs = useMemo(() => allAyahs.filter(a => a.page_number === page), [allAyahs, page]);
   const firstSurah = surahs.find(s => s.id === pageAyahs[0]?.surah);
   const lastSurah = surahs.find(s => s.id === pageAyahs[pageAyahs.length - 1]?.surah);

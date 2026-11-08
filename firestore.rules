@@ -333,5 +333,6 @@ service cloud.firestore {
         && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
         && request.resource.data.createdAt == request.time;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-    }  }
+    }
+  }
 }

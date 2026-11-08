@@ -196,6 +196,9 @@ export default function LessonGames() {
     </section>;
   }
 
+  // Hide the entire games page from students until a teacher/admin opens a session for them.
+  if (profile?.role === "student" && lessons.length === 0 && !selected) return null;
+
   return <section className="lesson-games">
     <div className="lesson-games-heading"><div><span>🎯 ألعاب من دروسك</span><h3>{profile?.role === "student" ? "لعبة الحصة التعليمية" : "التحكم في ألعاب الحصص"}</h3><p>{profile?.role === "student" ? "اللعبة تظهر هنا فقط عندما يفتحها المعلم أو مدير المدرسة أثناء الدرس." : "افتح اللعبة وقت الحصة لطلاب الدرس، وأغلقها عندما تنتهي فقرة الترفيه."}</p></div><div className="lesson-games-character" aria-hidden="true">🦄</div></div>
     {notice && <p className="note" role="status">{notice}</p>}

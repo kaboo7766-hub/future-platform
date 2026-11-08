@@ -52,6 +52,8 @@ export default function LessonGames() {
   const [lessons, setLessons] = useState<LessonGame[]>([]);
   const [activeSessionIds, setActiveSessionIds] = useState<string[]>([]);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
+  const [studentsByClass, setStudentsByClass] = useState<Record<string, { uid: string; name: string }[]>>({});
+  const [selectedStudents, setSelectedStudents] = useState<Record<string, string[]>>({});
   const [selected, setSelected] = useState<LessonGame | null>(null);
   const [stage, setStage] = useState(1);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -69,7 +71,7 @@ export default function LessonGames() {
     if (!profile) return;
     if (profile.role === "student") {
       if (!profile.classId) { setLessons([]); return; }
-      const activeQuery = query(collection(db, "lessonGameSessions"), where("classId", "==", profile.classId), where("active", "==", true));
+      const activeQuery = query(collection(db, "lessonGameSessions"), where("classId", "==", profile.classId), where("active", "==", true), where("selectedStudentUids", "array-contains", profile.uid));
       return onSnapshot(activeQuery, snap => {
         setActiveSessionIds(snap.docs.map(d => d.id));
         setLessons(snap.docs.map(d => ({ id: d.id, ...d.data(), active: true } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0));
@@ -90,6 +92,17 @@ export default function LessonGames() {
     return () => { stopLessons(); stopSessions(); };
   }, [profile?.uid, profile?.role, profile?.classId, profile?.classIds]);
 
+  useEffect(() => {
+    const classIds = [...new Set(lessons.map(lesson => lesson.classId).filter(Boolean))];
+    if (!classIds.length) { setStudentsByClass({}); return; }
+    const stops = classIds.map(classId => onSnapshot(
+      query(collection(db, "users"), where("classId", "==", classId), where("role", "==", "student")),
+      snap => setStudentsByClass(old => ({ ...old, [classId]: snap.docs.map(d => ({ uid: d.id, name: String(d.data().name || d.data().email || "طالب") })).sort((a,b) => a.name.localeCompare(b.name, "ar")) })),
+      () => setStudentsByClass(old => ({ ...old, [classId]: [] }))
+    ));
+    return () => stops.forEach(stop => stop());
+  }, [lessons.map(lesson => lesson.classId).sort().join("|")]);
+
   useEffect(() => onSnapshot(collection(db, "classes"), snap => {
     const names: Record<string, string> = {};
     snap.docs.forEach(d => { names[d.id] = String(d.data().name ?? ""); });
@@ -105,16 +118,18 @@ export default function LessonGames() {
   const toggleGame = async (lesson: LessonGame) => {
     if (!profile || (profile.role !== "admin" && profile.role !== "teacher")) return;
     const isActive = activeSessionIds.includes(lesson.id);
+    const chosen = selectedStudents[lesson.id] ?? [];
+    if (!isActive && chosen.length === 0) { setNotice("اختر طالبًا واحدًا على الأقل قبل فتح اللعبة."); return; }
     setBusyLesson(lesson.id);
     try {
       await setDoc(doc(db, "lessonGameSessions", lesson.id), {
         lessonId: lesson.id, classId: lesson.classId, title: lesson.title,
         description: lesson.description ?? "", gameWords: lesson.gameWords ?? [],
-        active: !isActive, openedBy: profile.uid,
+        active: !isActive, selectedStudentUids: isActive ? (selectedStudents[lesson.id] ?? []) : chosen, openedBy: profile.uid,
         openedAt: !isActive ? serverTimestamp() : null,
         updatedAt: serverTimestamp()
       }, { merge: true });
-      setNotice(isActive ? "تم إغلاق اللعبة عن الطلاب." : "تم فتح اللعبة لطلاب هذا الدرس فقط.");
+      setNotice(isActive ? "تم إغلاق اللعبة عن الطلاب." : `تم فتح اللعبة لـ ${chosen.length} طالبًا محددًا.`);
     } catch (error) {
       console.error("Could not change lesson game availability", error);
       setNotice("لم نتمكن من تغيير حالة اللعبة. تأكد من نشر قواعد Firestore الجديدة.");
@@ -189,7 +204,14 @@ export default function LessonGames() {
           <div className="lesson-game-card-icon">📚🎮</div><h4>{lesson.title}</h4><p>{lesson.description || "لعبة وأسئلة تفاعلية من محتوى الدرس"}</p>
           <div className="lesson-game-meta"><span>🧩 {lesson.gameWords?.length ?? 0} كلمة</span><span>✏️ 5 أنماط أسئلة</span></div>
           {isStudent ? <button className="btn" onClick={() => start(lesson, openLevel)}>ابدأ اللعبة مع المعلم 🚀</button> :
-            <div className="lesson-game-actions"><span>{activeSessionIds.includes(lesson.id) ? "🟢 اللعبة مفتوحة للطلاب" : "🔒 اللعبة مغلقة"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : activeSessionIds.includes(lesson.id) ? "إغلاق اللعبة عن الطلاب" : "فتح اللعبة للطلاب 🎮"}</button></div>}
+            <div className="lesson-game-manager-controls">
+              <div className="lesson-game-actions"><span>{activeSessionIds.includes(lesson.id) ? "🟢 اللعبة مفتوحة للطلاب المحددين" : "🔒 اللعبة مغلقة"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : activeSessionIds.includes(lesson.id) ? "إغلاق اللعبة عن الطلاب" : "فتح اللعبة للطلاب المحددين 🎮"}</button></div>
+              {!activeSessionIds.includes(lesson.id) && <div className="lesson-game-student-picker"><div className="lesson-game-picker-heading"><b>اختر الطلاب المسموح لهم باللعب</b><span>{(selectedStudents[lesson.id] ?? []).length} محدد</span></div>
+                <div className="lesson-game-picker-actions"><button type="button" className="link" onClick={() => setSelectedStudents(old => ({ ...old, [lesson.id]: (studentsByClass[lesson.classId] ?? []).map(student => student.uid) }))}>تحديد الكل</button><button type="button" className="link" onClick={() => setSelectedStudents(old => ({ ...old, [lesson.id]: [] }))}>إلغاء التحديد</button></div>
+                <div className="lesson-game-student-list">{(studentsByClass[lesson.classId] ?? []).map(student => <label key={student.uid}><input type="checkbox" checked={(selectedStudents[lesson.id] ?? []).includes(student.uid)} onChange={e => setSelectedStudents(old => ({ ...old, [lesson.id]: e.target.checked ? [...(old[lesson.id] ?? []), student.uid] : (old[lesson.id] ?? []).filter(uid => uid !== student.uid) }))} /><span>{student.name}</span></label>)}
+                {!(studentsByClass[lesson.classId] ?? []).length && <small>لا يوجد طلاب مسجلون في هذا الفصل حتى الآن.</small>}</div>
+              </div>}
+            </div>}
         </article>;
       })}</div>}
   </section>;

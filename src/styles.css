@@ -234,3 +234,44 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .cover-title-wrap p{margin:.2rem 0 0!important;color:#526174;font-size:.84rem;font-weight:700}
 .topbar> b{font-weight:900;letter-spacing:.2px}
 @media(max-width:520px){.cover-info-centered{min-height:185px;padding:.7rem .5rem!important}.cover-kids{height:112px;width:min(100%,270px)}}
+
+
+/* Bright animated lesson adventures: fill-in and true/false */
+.lesson-adventure{position:relative;overflow:hidden;isolation:isolate;background:linear-gradient(145deg,#fff7d6 0%,#e4f7ff 42%,#fce7f3 100%);border:3px solid #b9e8fa;box-shadow:0 12px 30px #2563eb18}
+.lesson-adventure:before,.lesson-adventure:after{content:"";position:absolute;border-radius:50%;z-index:-1;pointer-events:none;filter:blur(1px)}
+.lesson-adventure:before{width:150px;height:150px;top:-65px;right:-45px;background:#fde68a88}
+.lesson-adventure:after{width:180px;height:180px;bottom:-95px;left:-55px;background:#c4b5fd66}
+.lesson-adventure-scene{height:112px;position:relative;display:flex;align-items:center;justify-content:center;margin:.2rem auto .4rem;max-width:520px;border-radius:24px;background:linear-gradient(180deg,#bae6fd,#f0f9ff 72%,#bbf7d0 73%);overflow:hidden}
+.lesson-adventure-sun{position:absolute;top:9px;right:18%;font-size:2.2rem;animation:lesson-sun-wiggle 4s ease-in-out infinite}
+.lesson-adventure-mascot{font-size:4.2rem;filter:drop-shadow(0 6px 5px #33415530);animation:lesson-mascot-bounce 1.8s ease-in-out infinite}
+.lesson-adventure-star{position:absolute;left:18%;top:20px;font-size:2rem;animation:lesson-star-twinkle 1.2s ease-in-out infinite alternate}
+.lesson-adventure-progress{height:12px;border-radius:99px;background:#dbeafe;overflow:hidden;margin:.8rem 0}
+.lesson-adventure-progress i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#22c55e,#06b6d4,#818cf8);transition:width .35s ease}
+.lesson-adventure-meta{display:flex;justify-content:space-between;gap:.5rem;flex-wrap:wrap;color:#334155;font-size:.8rem;font-weight:900}
+.lesson-adventure h3{font-size:clamp(1.15rem,4vw,1.55rem);color:#26356d;margin:.8rem 0}
+.lesson-adventure-clue{display:flex;align-items:center;justify-content:center;gap:.8rem;flex-wrap:wrap;min-height:88px;margin:.8rem auto;padding:1rem;max-width:650px;border:3px dashed #93c5fd;border-radius:22px;background:#ffffffdc;color:#243b75;box-shadow:0 5px 15px #2563eb12}
+.lesson-adventure-clue strong{font-size:clamp(1.15rem,4vw,1.65rem);line-height:1.7;overflow-wrap:anywhere}
+.lesson-adventure-emoji{font-size:2.2rem;animation:lesson-star-twinkle 1.6s ease-in-out infinite alternate}
+.lesson-fill-area{display:grid;gap:.6rem;max-width:540px;margin:1rem auto;text-align:right}
+.lesson-fill-area label{font-weight:900;color:#334155}
+.lesson-fill-area input{width:100%;min-height:54px;border:2px solid #93c5fd;background:#fff;color:#172554;text-align:center;font-size:1.2rem;font-weight:800;border-radius:16px}
+.lesson-word-choices{display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap}
+.lesson-word-choices button{font:inherit;font-weight:800;border:2px solid #c4b5fd;background:#fff;border-radius:13px;padding:.4rem .8rem;color:#4338ca;cursor:pointer}
+.lesson-true-false{grid-template-columns:repeat(2,minmax(0,1fr));max-width:500px}
+.lesson-true-false button{min-height:66px;border:2px solid #bfdbfe;border-radius:18px;background:#fff;color:#1e3a8a;font:inherit;font-size:1.15rem;font-weight:900;cursor:pointer}
+.lesson-true-false button:first-child{background:#ecfdf5;border-color:#86efac;color:#166534}
+.lesson-true-false button:last-child{background:#fff1f2;border-color:#fda4af;color:#9f1239}
+.lesson-true-false button.correct{outline:3px solid #22c55e;transform:scale(1.03)}
+.lesson-true-false button.wrong{outline:3px solid #fb7185}
+.lesson-true-false button:disabled{opacity:1}
+.lesson-submit-answer,.lesson-next-question{display:block;margin:1rem auto;min-width:190px;box-shadow:0 6px 16px #2563eb22}
+.lesson-game-feedback{margin:.8rem auto;padding:.65rem 1rem;max-width:540px;border-radius:15px;background:#fff1f2;color:#9f1239;font-weight:900;animation:pop .3s ease-out}
+.lesson-game-feedback.success{background:#dcfce7;color:#166534}
+.lesson-game-final-score{font-size:2rem;font-weight:1000;color:#7c3aed}
+.lesson-adventure-footer{font-size:1.3rem;letter-spacing:.4rem;margin-top:1rem;animation:lesson-footer-drift 5s ease-in-out infinite alternate}
+@keyframes lesson-mascot-bounce{0%,100%{transform:translateY(4px) rotate(-3deg)}50%{transform:translateY(-9px) rotate(3deg)}}
+@keyframes lesson-sun-wiggle{0%,100%{transform:rotate(-8deg) scale(1)}50%{transform:rotate(8deg) scale(1.12)}}
+@keyframes lesson-star-twinkle{from{transform:scale(.8) rotate(-12deg);opacity:.65}to{transform:scale(1.15) rotate(12deg);opacity:1}}
+@keyframes lesson-footer-drift{from{transform:translateX(-8px)}to{transform:translateX(8px)}}
+@media(max-width:520px){.lesson-adventure{padding:.75rem}.lesson-adventure-scene{height:94px}.lesson-adventure-mascot{font-size:3.5rem}.lesson-adventure-meta{font-size:.72rem}.lesson-adventure-clue{padding:.65rem;min-height:76px}.lesson-true-false{grid-template-columns:1fr}.lesson-adventure-footer{letter-spacing:.15rem;font-size:1rem}}
+@media(prefers-reduced-motion:reduce){.lesson-adventure *{animation:none!important;transition:none!important}}

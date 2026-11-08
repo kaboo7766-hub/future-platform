@@ -40,7 +40,7 @@ export default function QuranReader() {
       <span className="quran-kicker">📖 نور وهداية</span>
       <h2>القرآن الكريم والتفسير</h2>
       <p>مصحف كامل برواية حفص عن عاصم، مع إمكانية فتح تفسير كل آية على حدة.</p>
-      <div className="quran-stats"><span>114 سورة</span><span>مصحف حفص</span><span>التفسير الميسر</span></div>
+      <div className="quran-stats"><span>114 سورة</span><span>مصحف حفص</span><span>تفسير لكل آية</span></div>
     </header>
 
     <div className="quran-tools">

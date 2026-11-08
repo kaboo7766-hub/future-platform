@@ -50,6 +50,7 @@ function makeQuestion(lesson: LessonGame, stage: number, index: number): Questio
 export default function LessonGames() {
   const { profile } = useAuth();
   const [lessons, setLessons] = useState<LessonGame[]>([]);
+  const [activeSessionIds, setActiveSessionIds] = useState<string[]>([]);
   const [classNames, setClassNames] = useState<Record<string, string>>({});
   const [selected, setSelected] = useState<LessonGame | null>(null);
   const [stage, setStage] = useState(1);
@@ -70,7 +71,8 @@ export default function LessonGames() {
       if (!profile.classId) { setLessons([]); return; }
       const activeQuery = query(collection(db, "lessonGameSessions"), where("classId", "==", profile.classId), where("active", "==", true));
       return onSnapshot(activeQuery, snap => {
-        setLessons(snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0));
+        setActiveSessionIds(snap.docs.map(d => d.id));
+        setLessons(snap.docs.map(d => ({ id: d.id, ...d.data(), active: true } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0));
       }, () => setLessons([]));
     }
     if (profile.role !== "admin" && profile.role !== "teacher") { setLessons([]); return; }
@@ -83,8 +85,7 @@ export default function LessonGames() {
       : ids.length ? query(collection(db, "lessonGameSessions"), where("classId", "in", ids.slice(0, 30))) : query(collection(db, "lessonGameSessions"), where("classId", "==", "__none__"));
     const stopLessons = onSnapshot(lessonsQuery, snap => setLessons(snap.docs.map(d => ({ id: d.id, ...d.data() } as LessonGame)).filter(l => Array.isArray(l.gameWords) && l.gameWords!.length > 0)), () => setLessons([]));
     const stopSessions = onSnapshot(sessionsQuery, snap => {
-      const activeIds = new Set(snap.docs.filter(d => d.data().active === true).map(d => d.id));
-      setLessons(old => old.map(l => ({ ...l, active: activeIds.has(l.id) })));
+      setActiveSessionIds(snap.docs.filter(d => d.data().active === true).map(d => d.id));
     }, () => {});
     return () => { stopLessons(); stopSessions(); };
   }, [profile?.uid, profile?.role, profile?.classId, profile?.classIds]);
@@ -103,16 +104,17 @@ export default function LessonGames() {
 
   const toggleGame = async (lesson: LessonGame) => {
     if (!profile || (profile.role !== "admin" && profile.role !== "teacher")) return;
+    const isActive = activeSessionIds.includes(lesson.id);
     setBusyLesson(lesson.id);
     try {
       await setDoc(doc(db, "lessonGameSessions", lesson.id), {
         lessonId: lesson.id, classId: lesson.classId, title: lesson.title,
         description: lesson.description ?? "", gameWords: lesson.gameWords ?? [],
-        active: !lesson.active, openedBy: profile.uid,
-        openedAt: !lesson.active ? serverTimestamp() : null,
+        active: !isActive, openedBy: profile.uid,
+        openedAt: !isActive ? serverTimestamp() : null,
         updatedAt: serverTimestamp()
       }, { merge: true });
-      setNotice(lesson.active ? "تم إغلاق اللعبة عن الطلاب." : "تم فتح اللعبة لطلاب هذا الدرس فقط.");
+      setNotice(isActive ? "تم إغلاق اللعبة عن الطلاب." : "تم فتح اللعبة لطلاب هذا الدرس فقط.");
     } catch (error) {
       console.error("Could not change lesson game availability", error);
       setNotice("لم نتمكن من تغيير حالة اللعبة. تأكد من نشر قواعد Firestore الجديدة.");
@@ -187,7 +189,7 @@ export default function LessonGames() {
           <div className="lesson-game-card-icon">📚🎮</div><h4>{lesson.title}</h4><p>{lesson.description || "لعبة وأسئلة تفاعلية من محتوى الدرس"}</p>
           <div className="lesson-game-meta"><span>🧩 {lesson.gameWords?.length ?? 0} كلمة</span><span>✏️ 5 أنماط أسئلة</span></div>
           {isStudent ? <button className="btn" onClick={() => start(lesson, openLevel)}>ابدأ اللعبة مع المعلم 🚀</button> :
-            <div className="lesson-game-actions"><span>{lesson.active ? "🟢 اللعبة مفتوحة للطلاب" : "🔒 اللعبة مغلقة"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : lesson.active ? "إغلاق اللعبة عن الطلاب" : "فتح اللعبة للطلاب 🎮"}</button></div>}
+            <div className="lesson-game-actions"><span>{activeSessionIds.includes(lesson.id) ? "🟢 اللعبة مفتوحة للطلاب" : "🔒 اللعبة مغلقة"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : activeSessionIds.includes(lesson.id) ? "إغلاق اللعبة عن الطلاب" : "فتح اللعبة للطلاب 🎮"}</button></div>}
         </article>;
       })}</div>}
   </section>;

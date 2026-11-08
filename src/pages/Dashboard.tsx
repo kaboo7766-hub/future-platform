@@ -81,7 +81,7 @@ export default function Dashboard() {
     <p>استلمنا طلبك للانضمام كمعلم. ستظهر لك أدوات المعلم بعد اعتماد إدارة المنصة لحسابك. سجّل الدخول لاحقًا للتحقق.</p>
     <button className="btn" onClick={logout}>تسجيل الخروج</button></section></main>);
   const staff = role === "admin" || role === "teacher";
-  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? ({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي" }[id] ?? ALL[id][1]) : ALL[id][1] }));
+  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? (({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي" } as Record<string, string>)[id] ?? ALL[id][1]) : ALL[id][1] }));
   if (role === "student") nav.splice(3, 0, { id: "student-quizzes", icon: "📝", label: "الاختبارات", disabled: true, badge: "قريبًا" }, { id: "student-leaderboard", icon: "🏆", label: "لوحة المتصدرين", disabled: true, badge: "قريبًا" }, { id: "student-chat", icon: "💬", label: "محادثة المعلم", disabled: true, badge: "قريبًا" });
   const adminNav: import("./Shell").NavItem[] = [
     { id: "users", icon: "👥", label: "إدارة المستخدمين" },

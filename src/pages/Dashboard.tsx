@@ -12,7 +12,6 @@ const Parent = lazy(() => import("./Parent"));
 const ClassPicker = lazy(() => import("./ClassPicker"));
 const Games = lazy(() => import("./Games"));
 const Certificates = lazy(() => import("./Certificates"));
-const Notifications = lazy(() => import("./Notifications"));
 const Assignments = lazy(() => import("./Assignments"));
 const Onboarding = lazy(() => import("./Onboarding"));
 const SiteContent = lazy(() => import("./SiteContent"));

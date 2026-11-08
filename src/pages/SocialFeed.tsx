@@ -39,7 +39,7 @@ export default function SocialFeed() {
         const x = d.data();
         return { id: "lesson_" + d.id, kind: "lesson" as const, title: String(x.title ?? "درس جديد"), body: String(x.description ?? "درس جديد متاح الآن."), author: String(x.teacherName ?? "فريق منصة المستقبل"), subject: String(x.subjectName ?? ""), createdAt: x.createdAt };
       }));
-    }, () => setError("تعذر تحميل الدروس المنشورة. تحقق من صلاحيات قراءة الدروس.")) : (() => setLessons([]), () => {});
+    }, () => setError("تعذر تحميل الدروس المنشورة. تحقق من صلاحيات قراءة الدروس.")) : (() => { setLessons([]); return () => {}; })();
     const unsubReviews = onSnapshot(collection(db, "siteTestimonials"), snap => setReviews(snap.docs.map(d => {
       const x = d.data();
       return { id: "review_" + d.id, kind: "review" as const, title: "رأي من آراء مجتمعنا", body: String(x.text ?? ""), author: String(x.author ?? "أحد أفراد المجتمع") };

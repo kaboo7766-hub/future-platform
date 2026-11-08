@@ -46,7 +46,7 @@ function useStats(role: Role, uid: string, classIds: string[] = []): [string, nu
     if (role === "student") {
       un.push(onSnapshot(query(collection(db, "progress"), where("uid", "==", uid)), s => put("done", s.docs.filter(d => d.data().completed).length), e));
       un.push(onSnapshot(doc(db, "points", uid), s => put("pts", s.data()?.total ?? 0), e));
-      un.push(onSnapshot(query(collection(db, "certificates"), where("uid", "==", uid)), s => put("certs", s.docs.length), e));
+      un.push(onSnapshot(query(collection(db, "certificates"), where("recipientUid", "==", uid), where("status", "==", "approved")), s => put("certs", s.docs.length), e));
       un.push(onSnapshot(query(collection(db, "submissions"), where("uid", "==", uid)), s => put("subs", s.docs.length), e));
     }
     if (role === "parent") un.push(onSnapshot(query(collection(db, "parentLinks"), where("parentUid", "==", uid)), s => put("kids", s.docs.length), e));

@@ -23,9 +23,8 @@ function PlayArcade({game,onExit}:{game:Arcade;onExit:()=>void}) {
  const [power,setPower]=useState(60),[lane,setLane]=useState(1);
  const [position,setPosition]=useState(0);
  const [mazeStep,setMazeStep]=useState(0);
- const [shot,setShot]=useState(0);
  const [finished,setFinished]=useState(false);
- const reset=()=>{setScore(0);setRound(0);setMessage("جولة جديدة! بالتوفيق ⭐");setOpened([]);setMatched([]);setCards(shuffle(["🍎","🚀","🐱","⭐","🍎","🚀","🐱","⭐"]));setTarget(["🔴","🔵","🟡","🟢"][Math.floor(Math.random()*4)]);setPosition(0);setMazeStep(0);setShot(0);setFinished(false);};
+ const reset=()=>{setScore(0);setRound(0);setMessage("جولة جديدة! بالتوفيق ⭐");setOpened([]);setMatched([]);setCards(shuffle(["🍎","🚀","🐱","⭐","🍎","🚀","🐱","⭐"]));setTarget(["🔴","🔵","🟡","🟢"][Math.floor(Math.random()*4)]);setPosition(0);setMazeStep(0);setFinished(false);};
  const finishRound=(points:number,success:boolean)=>{const next=score+points;setScore(next);setRound(r=>r+1);setMessage(success?"أحسنت! حركة رائعة 🎉":"حاول مرة أخرى، أنت تستطيع 💪");if(round>=9)setFinished(true);};
  const memoryPick=(i:number)=>{if(opened.length>=2||opened.includes(i)||matched.includes(i))return;const next=[...opened,i];setOpened(next);if(next.length===2){if(cards[next[0]]===cards[next[1]]){setMatched(m=>[...m,...next]);setScore(s=>s+10);setMessage("تطابق رائع! +10 ⭐");}else setMessage("ليست متطابقة، حاول مجددًا");window.setTimeout(()=>setOpened([]),650);setRound(r=>r+1);}};
  const action=(ok:boolean,points=10)=>{finishRound(ok?points:0,ok);setTarget(["🔴","🔵","🟡","🟢"][Math.floor(Math.random()*4)]);};

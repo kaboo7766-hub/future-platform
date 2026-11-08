@@ -15,7 +15,7 @@ const fields: [keyof Colors, string][] = [["navy","لون الشريط الرئ�
 export default function ThemeSettings() {
  const { profile } = useAuth();
  const [colors,setColors]=useState<Colors>(defaults); const [saving,setSaving]=useState(false); const [message,setMessage]=useState("");
- useEffect(()=>onSnapshot(doc(db,"siteSettings","theme"),snap=>{if(snap.exists()){const saved=snap.data();setColors({navy:String(saved.primary??defaults.navy),navy2:String(saved.secondary??defaults.navy2),bg:String(saved.background??defaults.bg),ink:String(saved.text??defaults.ink),accent:String(saved.accent??defaults.accent)});}}),[]);
+ useEffect(()=>onSnapshot(doc(db,"siteSettings","theme"),snap=>{if(snap.exists()){const saved=snap.data();setColors({navy:String(saved.primary??defaults.navy),navy2:String(saved.secondary??defaults.navy2),bg:String(saved.background??defaults.bg),ink:String(saved.text??defaults.ink),panel:String(saved.panel??defaults.panel),line:String(saved.line??defaults.line),accent:String(saved.accent??defaults.accent)});}}),[]);
  if(profile?.role!=="admin")return <section className="panel"><h2>غير مسموح</h2><p>هذا القسم متاح لمدير المنصة فقط.</p></section>;
  const save=async(next:Colors)=>{setSaving(true);setMessage("");try{await setDoc(doc(db,"siteSettings","theme"),{primary:next.navy,secondary:next.navy2,background:next.bg,text:next.ink,accent:next.accent,updatedAt:new Date().toISOString()});setColors(next);setMessage("تم حفظ ألوان المنصة بنجاح.");}catch{setMessage("تعذر الحفظ. تأكد من نشر قواعد Firestore الجديدة واتصال الإنترنت.");}finally{setSaving(false);}};
  return <section className="panel theme-settings">

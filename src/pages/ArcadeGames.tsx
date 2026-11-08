@@ -48,7 +48,8 @@ function EightBallPool(){
     const pocket=pockets.some(([x,y])=>Math.hypot(b.x-x,b.y-y)<32);
     if(pocket){if(b.id!==0)pocketed++;else scratched=true;return false;}return true;
    });
-   if(scratched){remaining.push({id:0,x:205,y:250,vx:0,vy:0,color:"#fff",label:""});setMessage("⚠️ دخلت الكرة البيضاء؛ أُعيدت إلى مكان البداية.");}\n   if(pocketed){setScore(v=>v+pocketed*10);setMessage(pocketed+" كرة دخلت الجيب! أحسنت 🎉");if(remaining.some(b=>b.id===8)===false){setWon(true);setMessage("🎱 أدخلت الكرة السوداء! فزت بالجولة.");}}
+   if(scratched){remaining.push({id:0,x:205,y:250,vx:0,vy:0,color:"#fff",label:""});setMessage("⚠️ دخلت الكرة البيضاء؛ أُعيدت إلى مكان البداية.");}
+   if(pocketed){setScore(v=>v+pocketed*10);setMessage(pocketed+" كرة دخلت الجيب! أحسنت 🎉");if(remaining.some(b=>b.id===8)===false){setWon(true);setMessage("🎱 أدخلت الكرة السوداء! فزت بالجولة.");}}
    ballsRef.current=remaining;
    if(alive){setBalls(remaining);if(active){frameRef.current=requestAnimationFrame(tick);}else{setMoving(false);}}
   };

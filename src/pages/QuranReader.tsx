@@ -54,6 +54,7 @@ export default function QuranReader() {
   const [reciter, setReciter] = useState("ar.alafasy");
   const [tafsirAyah, setTafsirAyah] = useState<number | null>(null);
   const [recordingAyah, setRecordingAyah] = useState<number | null>(null);
+  const [speechTargetAyah, setSpeechTargetAyah] = useState<number | null>(null);
   const [speechText, setSpeechText] = useState("");
   const [speechScore, setSpeechScore] = useState<number | null>(null);
   const [speechError, setSpeechError] = useState("");
@@ -100,6 +101,7 @@ export default function QuranReader() {
   function startPractice(ayah: Ayah) {
     const speechWindow = window as any;
     const Recognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
+    setSpeechTargetAyah(ayah.id);
     setSpeechText("");
     setSpeechScore(null);
     setSpeechError("");
@@ -201,8 +203,8 @@ export default function QuranReader() {
               {recordingAyah === ayah.id ? "🎙️ استمع لقراءتك…" : "🎤 تدرب على القراءة"}
             </button>
           </div>
-          {speechError && recordingAyah === null && <p className="quran-speech-error">{speechError}</p>}
-          {speechText && speechScore !== null && <div className="quran-speech-result">
+          {speechTargetAyah === ayah.id && speechError && recordingAyah === null && <p className="quran-speech-error">{speechError}</p>}
+          {speechTargetAyah === ayah.id && speechText && speechScore !== null && <div className="quran-speech-result">
             <b>ما التقطه الميكروفون:</b> <span>{speechText}</span>
             <strong>تطابق الكلمات التقريبي: {speechScore.toLocaleString("ar-EG")}٪</strong>
           </div>}

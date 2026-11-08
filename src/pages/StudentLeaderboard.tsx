@@ -63,7 +63,7 @@ export default function StudentLeaderboard() {
     {error && <p className="err" role="alert">{error}</p>}
     {rows && rows.length === 0 && <p className="note">لا توجد نقاط مسجلة في صفك حتى الآن. ابدأ اللعب لتظهر في الترتيب.</p>}
     {rows && rows.length > 0 && <div className="arcade-students" role="list">
-      {rows.map(entry => <article role="listitem" key={entry.rank + "-" + entry.name} className={entry.isMe ? "chip" : "card"}>
+      {rows.map((entry, index) => <article role="listitem" key={entry.rank + "-" + entry.name + "-" + index} className={entry.isMe ? "chip" : "card"}>
         <strong>{entry.rank === 1 ? "🥇" : entry.rank === 2 ? "🥈" : entry.rank === 3 ? "🥉" : "#" + entry.rank}</strong>
         <b>{entry.name}{entry.isMe ? " (أنت)" : ""}</b>
         <span>⭐ {entry.points.toLocaleString("ar-EG")} نقطة</span>

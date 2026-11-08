@@ -4,6 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import LessonGames from "./LessonGames";
 import FoundationGames from "./FoundationGames";
+import ArcadeGames from "./ArcadeGames";
 
 interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string }; visual?: string }
 type GameKey = "arLetters" | "enLetters" | "arNumbers" | "enNumbers" | "count" | "math" | "memory";
@@ -65,6 +66,7 @@ export default function Games() {
  <div className="badge-row">{badges.filter(b=>pts>=b.min).map(b=><span className="chip" key={b.min}>{b.t}</span>)}</div>
  <FoundationGames grade={grade} />
  <LessonGames />
+ <ArcadeGames />
 
  {game&&<div className="active-game"><div className="active-game-head"><h3>{games.find(g=>g.id===game)?.title} · الصف {grade}</h3><button className="link" onClick={()=>setGame(null)}>رجوع للألعاب</button></div>
  {game==="memory"?<MemoryGame onDone={finish}/>:game==="count"?<CountingGame grade={grade} onDone={finish}/>:<ChoiceGame key={`${game}-${grade}`} make={make} onDone={finish} grade={grade}/>}

@@ -69,7 +69,7 @@ function EightBallPool(){
    <rect x="8" y="8" width="884" height="484" rx="32" fill="#633b24"/><rect x="30" y="30" width="840" height="440" rx="18" fill="#08784d" stroke="#d7b477" strokeWidth="10"/>
    {pockets.map(([x,y],i)=><circle key={i} cx={x} cy={y} r="24" fill="#101010" stroke="#b58a52" strokeWidth="5"/>)}
    {cue&&<line x1={cue.x-Math.cos(angle*Math.PI/180)*105} y1={cue.y-Math.sin(angle*Math.PI/180)*105} x2={cue.x- Math.cos(angle*Math.PI/180)*25} y2={cue.y-Math.sin(angle*Math.PI/180)*25} stroke="#e5c18b" strokeWidth="7" strokeLinecap="round"/>}
-   {balls.map(b=><g key={b.id}><circle cx={b.x} cy={b.y} r="11" fill={b.stripe?"#fff":b.color} stroke="#222" strokeWidth="1.5"/>{b.stripe&&<path d={`M ${b.x-9} ${b.y-4} Q ${b.x} ${b.y-8} ${b.x+9} ${b.y-4} L ${b.x+9} ${b.y+4} Q ${b.x} ${b.y+8} ${b.x-9} ${b.y+4} Z`} fill={b.color}/ >}{b.label&&<text x={b.x} y={b.y+3.5} textAnchor="middle" fontSize="9" fontWeight="bold" fill={b.id===8?"white":"#111"}>{b.label}</text>}</g>)}
+   {balls.map(b=><g key={b.id}><circle cx={b.x} cy={b.y} r="11" fill={b.stripe?"#fff":b.color} stroke="#222" strokeWidth="1.5"/>{b.stripe&&<path d={`M ${b.x-9} ${b.y-4} Q ${b.x} ${b.y-8} ${b.x+9} ${b.y-4} L ${b.x+9} ${b.y+4} Q ${b.x} ${b.y+8} ${b.x-9} ${b.y+4} Z`} fill={b.color}/>}{b.label&&<text x={b.x} y={b.y+3.5} textAnchor="middle" fontSize="9" fontWeight="bold" fill={b.id===8?"white":"#111"}>{b.label}</text>}</g>)}
   </svg>
   <p className="pool-message" aria-live="polite">{message}</p>
   <div className="pool-controls">

@@ -7,6 +7,7 @@ const Lessons = lazy(() => import("./Lessons"));
 const Manage = lazy(() => import("./Manage"));
 const QuizBuilder = lazy(() => import("./QuizBuilder"));
 const StudentQuizzes = lazy(() => import("./StudentQuizzes"));
+const StudentLeaderboard = lazy(() => import("./StudentLeaderboard"));
 const Users = lazy(() => import("./Users"));
 const Teachers = lazy(() => import("./Teachers"));
 const Parent = lazy(() => import("./Parent"));
@@ -25,14 +26,14 @@ const ThemeSettings = lazy(() => import("./ThemeSettings"));
 import { useSite, contactLinks } from "./HomeExtras";
 import SocialFeed from "./SocialFeed";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "student-leaderboard" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
-  "student-quizzes": ["📝", "اختبارات الصف"],
+  "student-quizzes": ["📝", "اختبارات الصف"], "student-leaderboard": ["🏆", "لوحة المتصدرين"],
   manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "games", "student-quizzes", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "learning", "quran"],
+  student: ["home", "lessons", "games", "student-quizzes", "student-leaderboard", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "learning", "quran"],
   teacher: ["home", "live", "learning", "quran", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "quran", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
@@ -84,8 +85,8 @@ export default function Dashboard() {
     <p>استلمنا طلبك للانضمام كمعلم. ستظهر لك أدوات المعلم بعد اعتماد إدارة المنصة لحسابك. سجّل الدخول لاحقًا للتحقق.</p>
     <button className="btn" onClick={logout}>تسجيل الخروج</button></section></main>);
   const staff = role === "admin" || role === "teacher";
-  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? (({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", quran: "القرآن الكريم", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي", "student-quizzes": "اختبارات الصف" } as Record<string, string>)[id] ?? ALL[id][1]) : ALL[id][1] }));
-  if (role === "student") nav.push({ id: "student-leaderboard", icon: "🏆", label: "لوحة المتصدرين", disabled: true, badge: "قريبًا" }, { id: "student-chat", icon: "💬", label: "محادثة المعلم", disabled: true, badge: "قريبًا" });
+  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? (({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", quran: "القرآن الكريم", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي", "student-quizzes": "اختبارات الصف", "student-leaderboard": "لوحة المتصدرين" } as Record<string, string>)[id] ?? ALL[id][1]) : ALL[id][1] }));
+  if (role === "student") nav.push({ id: "student-chat", icon: "💬", label: "محادثة المعلم", disabled: true, badge: "قريبًا" });
   const adminNav: import("./Shell").NavItem[] = [
     { id: "users", icon: "👥", label: "إدارة المستخدمين" },
     { id: "manage", icon: "📚", label: "إدارة المحتوى والصفوف" },
@@ -127,6 +128,7 @@ export default function Dashboard() {
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}
       {view === "quizzes" && staff && <QuizBuilder />}
       {view === "student-quizzes" && role === "student" && <StudentQuizzes />}
+      {view === "student-leaderboard" && role === "student" && <StudentLeaderboard />}
       {view === "users" && <Users />}
       {view === "teachers" && role === "admin" && <Teachers />}
       {view === "site" && <SiteContent />}

@@ -36,7 +36,7 @@ const NAV: Partial<Record<Role, View[]>> = {
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
 
-function useStats(role: Role, uid: string): [string, number][] {
+function useStats(role: Role, uid: string, classIds: string[] = []): [string, number][] {
   const [n, setN] = useState<Record<string, number>>({});
   useEffect(() => {
     const un: (() => void)[] = [], e = () => {}, put = (k: string, v: number) => setN(p => ({ ...p, [k]: v }));
@@ -47,14 +47,23 @@ function useStats(role: Role, uid: string): [string, number][] {
       un.push(onSnapshot(query(collection(db, "submissions"), where("uid", "==", uid)), s => put("subs", s.docs.length), e));
     }
     if (role === "parent") un.push(onSnapshot(query(collection(db, "parentLinks"), where("parentUid", "==", uid)), s => put("kids", s.docs.length), e));
-    if (role === "teacher" || role === "admin") {
+    if (role === "admin") {
       un.push(onSnapshot(collection(db, "lessons"), s => put("lessons", s.docs.length), e));
       un.push(onSnapshot(collection(db, "assignments"), s => put("assigns", s.docs.length), e));
       un.push(onSnapshot(collection(db, "submissions"), s => put("subs", s.docs.length), e));
+      un.push(onSnapshot(collection(db, "users"), s => { put("users", s.docs.length); put("pending", s.docs.filter(d => d.data().role === "pending").length); }, e));
     }
-    if (role === "admin") un.push(onSnapshot(collection(db, "users"), s => { put("users", s.docs.length); put("pending", s.docs.filter(d => d.data().role === "pending").length); }, e));
+    if (role === "teacher") {
+      const ids = classIds.slice(0, 30);
+      const scoped = (name: string) => ids.length
+        ? query(collection(db, name), where("classId", "in", ids))
+        : query(collection(db, name), where("classId", "==", "__none__"));
+      un.push(onSnapshot(scoped("lessons"), s => put("lessons", s.docs.length), e));
+      un.push(onSnapshot(scoped("assignments"), s => put("assigns", s.docs.length), e));
+      un.push(onSnapshot(scoped("submissions"), s => put("subs", s.docs.length), e));
+    }
     return () => un.forEach(f => f());
-  }, [role, uid]);
+  }, [role, uid, classIds.join("|")]);
   const g = (k: string) => n[k] ?? 0;
   if (role === "student") return [["دروس مكتملة", g("done")], ["نقاطي", g("pts")], ["شهاداتي", g("certs")], ["واجبات مسلّمة", g("subs")]];
   if (role === "parent") return [["الأبناء المرتبطون", g("kids")]];
@@ -67,7 +76,7 @@ export default function Dashboard() {
   const { profile, logout } = useAuth();
   const [view, setView] = useState<View>(profile?.role === "admin" ? "admin" : "home");
   const { c } = useSite();
-  const role = profile?.role ?? "pending", stats = useStats(role, profile?.uid ?? "");
+  const role = profile?.role ?? "pending", stats = useStats(role, profile?.uid ?? "", profile?.classIds ?? []);
   if (!profile) return null;
   if (role === "pending") return (<main className="wrap"><section className="panel"><h2>أهلًا {profile.name} 👋</h2>
     <p>استلمنا طلبك للانضمام كمعلم. ستظهر لك أدوات المعلم بعد اعتماد إدارة المنصة لحسابك. سجّل الدخول لاحقًا للتحقق.</p>

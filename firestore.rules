@@ -71,6 +71,7 @@ service cloud.firestore {
           && (lesson.published == true || canManageClass(lesson.classId));
       }
       allow read: if signedIn() && (isAdmin()
+        || id.matches('^' + request.auth.uid + '_.*')
         || (resource.data.uid == request.auth.uid)
         || linked(resource.data.uid)
         || teacherHasClass(resource.data.classId));

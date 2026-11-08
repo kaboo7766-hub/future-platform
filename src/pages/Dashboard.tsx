@@ -30,8 +30,8 @@ const ALL: Record<View, [string, string]> = {
   manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "games", "learning", "live", "assignments", "certs"], parent: ["home", "learning", "games"],
-  teacher: ["home", "live", "learning", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
+  student: ["home", "lessons", "games", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "learning", "quran", "games"],
+  teacher: ["home", "live", "learning", "quran", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "quran", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -98,6 +98,7 @@ export default function Dashboard() {
     { id: "games", icon: "🎮", label: "الألعاب التعليمية" },
     { id: "quizzes", icon: "📝", label: "الاختبارات" },
     { id: "learning", icon: "📖", label: "المكتبة التفاعلية" },
+    { id: "quran", icon: "📗", label: "القرآن الكريم والتفسير" },
     { id: "live", icon: "🎥", label: "الفصول المباشرة" }
   ] : nav;
   const links = contactLinks(c);

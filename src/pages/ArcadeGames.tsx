@@ -3,11 +3,11 @@ import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, where } fr
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
-type ArcadeId = "billiards" | "basketball" | "memory" | "maze" | "bubbles" | "racing";
+type ArcadeId = "eightball" | "basketball" | "memory" | "maze" | "bubbles" | "racing";
 type Arcade = { id: ArcadeId; title: string; icon: string; description: string };
 type Session = { id: string; classId: string; gameId: ArcadeId; title: string; active: boolean; selectedStudentUids: string[] };
 const ARCADES: Arcade[] = [
- { id:"billiards", title:"البلياردو", icon:"🎱", description:"وجّه العصا وصوّب الكرة نحو الجيوب" },
+ { id:"eightball", title:"8 Ball Pool", icon:"🎱", description:"لعبة بلياردو تفاعلية: وجّه العصا واضبط القوة وأسقط الكرات في الجيوب" },
  { id:"basketball", title:"تحدي السلة", icon:"🏀", description:"اختر قوة التصويب وحاول تسجيل أكبر عدد" },
  { id:"memory", title:"تحدي الذاكرة", icon:"🧠", description:"اكشف البطاقات وطابق الصور المتشابهة" },
  { id:"maze", title:"المتاهة", icon:"🧩", description:"اعثر على الطريق الصحيح إلى الكنز" },
@@ -15,6 +15,73 @@ const ARCADES: Arcade[] = [
  { id:"racing", title:"سباق النجوم", icon:"🏎️", description:"تفادَ العقبات واجمع النجوم" }
 ];
 const shuffle = <T,>(a:T[]) => [...a].sort(()=>Math.random()-.5);
+type PoolBall = { id:number; x:number; y:number; vx:number; vy:number; color:string; label:string; stripe?:boolean };
+const POOL_COLORS=["#f5d547","#2877d4","#d93434","#7b3fa1","#ed8c25","#299b62","#8c2433","#171717","#f5d547","#2877d4","#d93434","#7b3fa1","#ed8c25","#299b62","#8c2433"];
+function EightBallPool(){
+ const makeRack=():PoolBall[]=>{
+  const colors=POOL_COLORS, balls:PoolBall[]=[{id:0,x:205,y:250,vx:0,vy:0,color:"#fff",label:"",stripe:false}];
+  const spots=[[0,0],[1,-18],[1,18],[2,-36],[2,0],[2,36],[3,-54],[3,-18],[3,18],[3,54],[4,-72],[4,-36],[4,0],[4,36],[4,72]];
+  spots.forEach(([col,dy],i)=>balls.push({id:i+1,x:600+col*31,y:250+dy,vx:0,vy:0,color:i===7?"#111":colors[i],label:String(i+1),stripe:i>=8}));
+  return balls;
+ };
+ const ballsRef=useRef<PoolBall[]>(makeRack()),frameRef=useRef<number|null>(null);
+ const [balls,setBalls]=useState<PoolBall[]>(ballsRef.current),[angle,setAngle]=useState(0),[power,setPower]=useState(55),[moving,setMoving]=useState(false),[message,setMessage]=useState("وجّه العصا واضبط القوة ثم اضغط «اضرب»."),[score,setScore]=useState(0),[turn,setTurn]=useState(1),[won,setWon]=useState(false);
+ const pockets=[[35,35],[450,30],[865,35],[35,465],[450,470],[865,465]];
+ const reset=()=>{ballsRef.current=makeRack();setBalls(ballsRef.current);setScore(0);setTurn(1);setWon(false);setMoving(false);setMessage("جولة جديدة! وجّه العصا واضبط القوة.");};
+ useEffect(()=>{
+  let alive=true;
+  const tick=()=>{
+   if(!alive)return;
+   let active=false, pocketed=0;
+   const next=ballsRef.current.map(b=>({...b}));
+   for(let i=0;i<next.length;i++){
+    const b=next[i]; if(Math.hypot(b.vx,b.vy)>.08)active=true;
+    b.x+=b.vx;b.y+=b.vy;b.vx*=.986;b.vy*=.986;
+    if(b.x<54||b.x>846){b.x=Math.max(54,Math.min(846,b.x));b.vx*=-.82;}
+    if(b.y<54||b.y>446){b.y=Math.max(54,Math.min(446,b.y));b.vy*=-.82;}
+    for(let j=i+1;j<next.length;j++){
+     const o=next[j],dx=o.x-b.x,dy=o.y-b.y,dist=Math.hypot(dx,dy),min=22;
+     if(dist>0&&dist<min){const nx=dx/dist,ny=dy/dist,overlap=(min-dist)/2;b.x-=nx*overlap;b.y-=ny*overlap;o.x+=nx*overlap;o.y+=ny*overlap;const rel=(b.vx-o.vx)*nx+(b.vy-o.vy)*ny;if(rel>0){b.vx-=rel*nx;b.vy-=rel*ny;o.vx+=rel*nx;o.vy+=rel*ny;}}
+    }
+   }
+   const remaining=next.filter(b=>{
+    const pocket=pockets.some(([x,y])=>Math.hypot(b.x-x,b.y-y)<23);
+    if(pocket){if(b.id!==0)pocketed++;return false;}return true;
+   });
+   if(pocketed){setScore(v=>v+pocketed*10);setMessage(pocketed+" كرة دخلت الجيب! أحسنت 🎉");if(remaining.some(b=>b.id===8)===false){setWon(true);setMessage("🎱 أدخلت الكرة السوداء! فزت بالجولة.");}}
+   ballsRef.current=remaining;
+   if(alive){setBalls(remaining);if(active){frameRef.current=requestAnimationFrame(tick);}else{setMoving(false);}}
+  };
+  if(moving)frameRef.current=requestAnimationFrame(tick);
+  return ()=>{alive=false;if(frameRef.current!==null)cancelAnimationFrame(frameRef.current);};
+ },[moving]);
+ const shoot=()=>{
+  if(moving||won)return;
+  const cue=ballsRef.current.find(b=>b.id===0);if(!cue){reset();return;}
+  const radians=angle*Math.PI/180,speed=power*.19;
+  ballsRef.current=ballsRef.current.map(b=>b.id===0?{...b,vx:Math.cos(radians)*speed,vy:Math.sin(radians)*speed}:b);
+  setTurn(v=>v+1);setMessage("الكرات تتحرك...");setMoving(true);
+ };
+ const cue=balls.find(b=>b.id===0);
+ return <div className="pool-game" dir="rtl">
+  <div className="pool-game-stats"><b>🎱 8 Ball Pool</b><span>⭐ {score}</span><span>الدور {turn}</span></div>
+  <svg viewBox="0 0 900 500" role="img" aria-label="طاولة 8 Ball Pool تفاعلية" className="pool-board">
+   <rect x="8" y="8" width="884" height="484" rx="32" fill="#633b24"/><rect x="30" y="30" width="840" height="440" rx="18" fill="#08784d" stroke="#d7b477" strokeWidth="10"/>
+   {pockets.map(([x,y],i)=><circle key={i} cx={x} cy={y} r="24" fill="#101010" stroke="#b58a52" strokeWidth="5"/>)}
+   {cue&&<line x1={cue.x-Math.cos(angle*Math.PI/180)*105} y1={cue.y-Math.sin(angle*Math.PI/180)*105} x2={cue.x- Math.cos(angle*Math.PI/180)*25} y2={cue.y-Math.sin(angle*Math.PI/180)*25} stroke="#e5c18b" strokeWidth="7" strokeLinecap="round"/>}
+   {balls.map(b=><g key={b.id}><circle cx={b.x} cy={b.y} r="11" fill={b.stripe?"#fff":b.color} stroke="#222" strokeWidth="1.5"/>{b.stripe&&<path d={`M ${b.x-9} ${b.y-4} Q ${b.x} ${b.y-8} ${b.x+9} ${b.y-4} L ${b.x+9} ${b.y+4} Q ${b.x} ${b.y+8} ${b.x-9} ${b.y+4} Z`} fill={b.color}/ >}{b.label&&<text x={b.x} y={b.y+3.5} textAnchor="middle" fontSize="9" fontWeight="bold" fill={b.id===8?"white":"#111"}>{b.label}</text>}</g>)}
+  </svg>
+  <p className="pool-message" aria-live="polite">{message}</p>
+  <div className="pool-controls">
+   <label>زاوية التصويب: {angle}°<input type="range" min="-75" max="75" value={angle} disabled={moving||won} onChange={e=>setAngle(Number(e.target.value))}/></label>
+   <label>قوة الضربة: {power}%<input type="range" min="10" max="100" value={power} disabled={moving||won} onChange={e=>setPower(Number(e.target.value))}/></label>
+   <button className="btn" disabled={moving||won||!cue} onClick={shoot}>اضرب الكرة 🎱</button>
+   <button className="link" onClick={reset}>إعادة اللعبة</button>
+  </div>
+  <small>الهدف: وجّه الكرة البيضاء نحو الكرات الملوّنة وأسقطها في الجيوب. أدخل الكرة السوداء للفوز.</small>
+ </div>;
+}
+
 function PlayArcade({game,onExit}:{game:Arcade;onExit:()=>void}) {
  const [score,setScore]=useState(0),[round,setRound]=useState(0),[message,setMessage]=useState("ابدأ اللعب واجمع النقاط!");
  const [cards,setCards]=useState(()=>shuffle(["🍎","🚀","🐱","⭐","🍎","🚀","🐱","⭐"]));
@@ -31,8 +98,7 @@ function PlayArcade({game,onExit}:{game:Arcade;onExit:()=>void}) {
  return <section className="arcade-play" dir="rtl">
   <div className="arcade-play-head"><button className="link" onClick={onExit}>← العودة للألعاب</button><b>{game.icon} {game.title}</b><strong>⭐ {score}</strong></div>
   <p className="arcade-instruction">{message}</p>
-  {game.id==="billiards"&&<div className="arcade-table"><div className="pool-pocket p1"/><div className="pool-pocket p2"/><div className="pool-pocket p3"/><div className="pool-pocket p4"/><div className="pool-pocket p5"/><div className="pool-pocket p6"/><span className="pool-ball white" style={{left:"28%",top:"52%"}}>⚪</span><span className="pool-ball" style={{left:"66%",top:"42%"}}>🎱</span><span className="pool-ball" style={{left:"72%",top:"60%"}}>🟡</span><span className="pool-ball" style={{left:"62%",top:"66%"}}>🔴</span></div>}
-  {game.id==="billiards"&&<div className="arcade-controls"><label>زاوية التصويب <input type="range" min="0" max="100" value={power} onChange={e=>setPower(Number(e.target.value))}/></label><button className="btn" onClick={()=>action(Math.random()<(power>35&&power<85?.72:.35),15)}>اضرب الكرة 🎱</button></div>}
+  {game.id==="eightball"&&<EightBallPool/>}
   {game.id==="basketball"&&<div className="basket-court"><div className="basket-hoop">🏀<span>🧺</span></div><div className="basket-player">🏃</div><div className="basket-ball">🏀</div></div>}
   {game.id==="basketball"&&<div className="arcade-controls"><label>قوة الرمية <input type="range" min="1" max="100" value={power} onChange={e=>setPower(Number(e.target.value))}/><b>{power}%</b></label><button className="btn" onClick={()=>action(Math.abs(power-68)<24,20)}>صوّب نحو السلة 🏀</button></div>}
   {game.id==="memory"&&<div className="arcade-memory">{cards.map((c,i)=><button key={i} className="arcade-memory-card" disabled={matched.includes(i)} onClick={()=>memoryPick(i)}>{opened.includes(i)||matched.includes(i)?c:"❔"}</button>)}</div>}

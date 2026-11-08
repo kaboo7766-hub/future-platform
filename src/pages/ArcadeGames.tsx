@@ -32,7 +32,7 @@ function EightBallPool(){
   let alive=true;
   const tick=()=>{
    if(!alive)return;
-   let active=false, pocketed=0;
+   let active=false, pocketed=0, scratched=false;
    const next=ballsRef.current.map(b=>({...b}));
    for(let i=0;i<next.length;i++){
     const b=next[i]; if(Math.hypot(b.vx,b.vy)>.08)active=true;
@@ -45,10 +45,10 @@ function EightBallPool(){
     }
    }
    const remaining=next.filter(b=>{
-    const pocket=pockets.some(([x,y])=>Math.hypot(b.x-x,b.y-y)<23);
-    if(pocket){if(b.id!==0)pocketed++;return false;}return true;
+    const pocket=pockets.some(([x,y])=>Math.hypot(b.x-x,b.y-y)<32);
+    if(pocket){if(b.id!==0)pocketed++;else scratched=true;return false;}return true;
    });
-   if(pocketed){setScore(v=>v+pocketed*10);setMessage(pocketed+" كرة دخلت الجيب! أحسنت 🎉");if(remaining.some(b=>b.id===8)===false){setWon(true);setMessage("🎱 أدخلت الكرة السوداء! فزت بالجولة.");}}
+   if(scratched){remaining.push({id:0,x:205,y:250,vx:0,vy:0,color:"#fff",label:""});setMessage("⚠️ دخلت الكرة البيضاء؛ أُعيدت إلى مكان البداية.");}\n   if(pocketed){setScore(v=>v+pocketed*10);setMessage(pocketed+" كرة دخلت الجيب! أحسنت 🎉");if(remaining.some(b=>b.id===8)===false){setWon(true);setMessage("🎱 أدخلت الكرة السوداء! فزت بالجولة.");}}
    ballsRef.current=remaining;
    if(alive){setBalls(remaining);if(active){frameRef.current=requestAnimationFrame(tick);}else{setMoving(false);}}
   };
@@ -65,16 +65,16 @@ function EightBallPool(){
  const cue=balls.find(b=>b.id===0);
  return <div className="pool-game" dir="rtl">
   <div className="pool-game-stats"><b>🎱 8 Ball Pool</b><span>⭐ {score}</span><span>الدور {turn}</span></div>
-  <svg viewBox="0 0 900 500" role="img" aria-label="طاولة 8 Ball Pool تفاعلية" className="pool-board">
+  <svg viewBox="0 0 900 500" role="img" aria-label="طاولة 8 Ball Pool تفاعلية" className="pool-board" width="100%" style={{display:"block",maxWidth:900,margin:"0 auto"}}>
    <rect x="8" y="8" width="884" height="484" rx="32" fill="#633b24"/><rect x="30" y="30" width="840" height="440" rx="18" fill="#08784d" stroke="#d7b477" strokeWidth="10"/>
    {pockets.map(([x,y],i)=><circle key={i} cx={x} cy={y} r="24" fill="#101010" stroke="#b58a52" strokeWidth="5"/>)}
    {cue&&<line x1={cue.x-Math.cos(angle*Math.PI/180)*105} y1={cue.y-Math.sin(angle*Math.PI/180)*105} x2={cue.x- Math.cos(angle*Math.PI/180)*25} y2={cue.y-Math.sin(angle*Math.PI/180)*25} stroke="#e5c18b" strokeWidth="7" strokeLinecap="round"/>}
    {balls.map(b=><g key={b.id}><circle cx={b.x} cy={b.y} r="11" fill={b.stripe?"#fff":b.color} stroke="#222" strokeWidth="1.5"/>{b.stripe&&<path d={`M ${b.x-9} ${b.y-4} Q ${b.x} ${b.y-8} ${b.x+9} ${b.y-4} L ${b.x+9} ${b.y+4} Q ${b.x} ${b.y+8} ${b.x-9} ${b.y+4} Z`} fill={b.color}/>}{b.label&&<text x={b.x} y={b.y+3.5} textAnchor="middle" fontSize="9" fontWeight="bold" fill={b.id===8?"white":"#111"}>{b.label}</text>}</g>)}
   </svg>
   <p className="pool-message" aria-live="polite">{message}</p>
-  <div className="pool-controls">
-   <label>زاوية التصويب: {angle}°<input type="range" min="-75" max="75" value={angle} disabled={moving||won} onChange={e=>setAngle(Number(e.target.value))}/></label>
-   <label>قوة الضربة: {power}%<input type="range" min="10" max="100" value={power} disabled={moving||won} onChange={e=>setPower(Number(e.target.value))}/></label>
+  <div className="pool-controls" style={{display:"grid",gap:12,maxWidth:520,margin:"12px auto"}}>
+   <label style={{display:"grid",gap:6}}>زاوية التصويب: {angle}°<input type="range" min="-75" max="75" value={angle} disabled={moving||won} onChange={e=>setAngle(Number(e.target.value))}/></label>
+   <label style={{display:"grid",gap:6}}>قوة الضربة: {power}%<input type="range" min="10" max="100" value={power} disabled={moving||won} onChange={e=>setPower(Number(e.target.value))}/></label>
    <button className="btn" disabled={moving||won||!cue} onClick={shoot}>اضرب الكرة 🎱</button>
    <button className="link" onClick={reset}>إعادة اللعبة</button>
   </div>

@@ -132,7 +132,7 @@ export default function LessonGames() {
         openedAt: !isActive ? serverTimestamp() : null,
         updatedAt: serverTimestamp()
       }, { merge: true });
-      setNotice(isActive ? "تم إغلاق اللعبة عن الطلاب." : `تم فتح اللعبة لـ ${chosen.length} طالبًا محددًا.`);
+      setNotice(isActive ? "تم إيقاف المشاركة." : `تم فتح اللعبة لـ ${chosen.length} طالبًا محددًا.`);
     } catch (error) {
       console.error("Could not change lesson game availability", error);
       setNotice("لم نتمكن من تغيير حالة اللعبة. تأكد من نشر قواعد Firestore الجديدة.");
@@ -210,8 +210,8 @@ export default function LessonGames() {
           <div className="lesson-game-card-icon">📚🎮</div><h4>{lesson.title}</h4><p>{lesson.description || "لعبة وأسئلة تفاعلية من محتوى الدرس"}</p>
           <div className="lesson-game-meta"><span>🧩 {lesson.gameWords?.length ?? 0} كلمة</span><span>✏️ 5 أنماط أسئلة</span></div>
           {isStudent ? <button className="btn" onClick={() => start(lesson, openLevel)}>ابدأ اللعبة مع المعلم 🚀</button> :
-            <div className="lesson-game-manager-controls">
-              <div className="lesson-game-actions"><span>{activeSessionIds.includes(lesson.id) ? "🟢 اللعبة مفتوحة للطلاب المحددين" : "🔒 اللعبة مغلقة"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : activeSessionIds.includes(lesson.id) ? "إغلاق اللعبة عن الطلاب" : "فتح اللعبة للطلاب المحددين 🎮"}</button></div>
+            <div className="lesson-game-manager-controls">\n              <button className="btn" onClick={() => start(lesson, openLevel)}>تشغيل اللعبة ▶️</button>
+              <div className="lesson-game-actions"><span>{activeSessionIds.includes(lesson.id) ? "🟢 تمت مشاركة اللعبة" : "🔒 غير مشاركة مع الطلاب"}</span><button className="btn" disabled={busyLesson === lesson.id} onClick={() => toggleGame(lesson)}>{busyLesson === lesson.id ? "جارٍ التنفيذ..." : activeSessionIds.includes(lesson.id) ? "إغلاق اللعبة عن الطلاب" : "مشاركة مع الطلاب 🎮"}</button></div>
               {!activeSessionIds.includes(lesson.id) && <div className="lesson-game-student-picker"><div className="lesson-game-picker-heading"><b>اختر الطلاب المسموح لهم باللعب</b><span>{(selectedStudents[lesson.id] ?? []).length} محدد</span></div>
                 <div className="lesson-game-picker-actions"><button type="button" className="link" onClick={() => setSelectedStudents(old => ({ ...old, [lesson.id]: (studentsByClass[lesson.classId] ?? []).map(student => student.uid) }))}>تحديد الكل</button><button type="button" className="link" onClick={() => setSelectedStudents(old => ({ ...old, [lesson.id]: [] }))}>إلغاء التحديد</button></div>
                 <div className="lesson-game-student-list">{(studentsByClass[lesson.classId] ?? []).map(student => <label key={student.uid}><input type="checkbox" checked={(selectedStudents[lesson.id] ?? []).includes(student.uid)} onChange={e => setSelectedStudents(old => ({ ...old, [lesson.id]: e.target.checked ? [...(old[lesson.id] ?? []), student.uid] : (old[lesson.id] ?? []).filter(uid => uid !== student.uid) }))} /><span>{student.name}</span></label>)}

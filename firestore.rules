@@ -52,6 +52,27 @@ service cloud.firestore {
             && request.resource.data.imageData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')));
       allow delete: if isAdmin();
     }
+    match /arcadeGameSessions/{sessionId} {
+      allow read: if signedIn() && (
+        isAdmin() || teacherHasClass(resource.data.classId)
+        || (me().role == 'student' && resource.data.active == true
+          && resource.data.classId == me().classId
+          && resource.data.selectedStudentUids is list
+          && request.auth.uid in resource.data.selectedStudentUids)
+      );
+      allow create, update: if signedIn()
+        && canManageClass(request.resource.data.classId)
+        && sessionId == request.resource.data.classId + '_' + request.resource.data.gameId
+        && request.resource.data.gameId in ['billiards','basketball','memory','maze','bubbles','racing']
+        && request.resource.data.active is bool
+        && request.resource.data.title is string
+        && request.resource.data.selectedStudentUids is list
+        && request.resource.data.selectedStudentUids.size() > 0
+        && request.resource.data.selectedStudentUids.size() <= 200
+        && request.resource.data.openedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
     match /lessonGameSessions/{lessonId} {
       allow read: if signedIn() && (
         isAdmin()

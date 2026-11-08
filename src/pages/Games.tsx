@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { doc, increment, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, increment, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 import LessonGames from "./LessonGames";
 import FoundationGames from "./FoundationGames";
 import ArcadeGames from "./ArcadeGames";
+import GameAccessManager from "./GameAccessManager";
 
 interface Q { prompt: string; options: string[]; answer: string; say?: { text: string; lang: string }; visual?: string }
 type GameKey = "arLetters" | "enLetters" | "arNumbers" | "enNumbers" | "count" | "math" | "memory";
@@ -57,13 +58,28 @@ const games:{id:GameKey;icon:string;title:string;desc:string}[]=[
 export default function Games() {
  const {profile}=useAuth();const uid=profile!.uid;
  const [pts,setPts]=useState(0),[grade,setGrade]=useState(1),[game,setGame]=useState<GameKey|null>(null),[res,setRes]=useState(""),[err,setErr]=useState("");
+ const [gamesAuthorized,setGamesAuthorized]=useState<boolean|null>(profile?.role==="student"?null:true);
+ useEffect(()=>{
+  if(profile?.role!=="student"){setGamesAuthorized(true);return;}
+  if(!profile.classId){setGamesAuthorized(false);return;}
+  const accessQuery=query(collection(db,"arcadeGameSessions"),
+   where("classId","==",profile.classId),
+   where("active","==",true),
+   where("selectedStudentUids","array-contains",profile.uid));
+  return onSnapshot(accessQuery,s=>{
+   setGamesAuthorized(s.docs.some(d=>d.id===profile.classId+"_foundation"&&d.data().gameId==="foundation"));
+  },()=>setGamesAuthorized(false));
+ },[profile?.uid,profile?.role,profile?.classId]);
  useEffect(()=>onSnapshot(doc(db,"points",uid),s=>setPts(s.data()?.total??0),()=>{}),[uid]);
  const finish=async(n:number)=>{setGame(null);setRes(`انتهت اللعبة! ربحت ${n} نقطة 🎉`);setErr("");if(n>0)try{await setDoc(doc(db,"points",uid),{uid,total:increment(n),updatedAt:serverTimestamp()},{merge:true});}catch{setErr("تعذّر حفظ النقاط");}};
  const badges=[{min:50,t:"🥉 نجم صاعد"},{min:200,t:"🥈 بطل صغير"},{min:500,t:"🥇 خبير المستقبل"}];
  const make=()=>game==="arLetters"?letterQ(true):game==="enLetters"?letterQ(false):game==="arNumbers"?numberQ(grade,true):game==="enNumbers"?numberQ(grade,false):mathQ(grade);
+ if(profile?.role==="parent")return <section className="panel games-hub" dir="rtl"><h2>🎮 الألعاب التعليمية</h2><p className="note">الألعاب مخصصة للطلاب، ويفتحها المعلم أو المدير للطلاب المحددين أثناء الدرس.</p></section>;
+ if(profile?.role==="student"&&gamesAuthorized!==true)return <section className="panel games-hub" dir="rtl"><h2>🎮 الألعاب التعليمية</h2>{gamesAuthorized===null?<p role="status">جارٍ التحقق من صلاحية الألعاب…</p>:<p className="note">الألعاب مغلقة حاليًا 🔒<br/>ستظهر الألعاب هنا عندما يفتحها المعلم أو مدير المدرسة ويختار اسمك ضمن الطلاب المسموح لهم.</p>}</section>;
  return <section className="panel games-hub"><div className="games-heading"><div><span className="games-kicker">نتعلّم ونلعب</span><h2>🎮 ألعاب التأسيس التفاعلية</h2><p>اختار صفّك وابدأ مغامرة الحروف والأرقام والحساب</p></div><div className="games-score">⭐ <b>{pts}</b><small>نقاطك</small></div></div>
  <label className="grade-picker">اختر الصف الدراسي<select value={grade} onChange={e=>{setGrade(Number(e.target.value));setGame(null);setRes("");}}>{[1,2,3,4,5,6].map(n=><option key={n} value={n}>الصف {n} الابتدائي</option>)}</select></label>
  <div className="badge-row">{badges.filter(b=>pts>=b.min).map(b=><span className="chip" key={b.min}>{b.t}</span>)}</div>
+ {(profile?.role==="admin"||profile?.role==="teacher")&&<GameAccessManager />}
  <FoundationGames grade={grade} />
  <LessonGames />
  <ArcadeGames />

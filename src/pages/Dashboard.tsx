@@ -30,7 +30,7 @@ const ALL: Record<View, [string, string]> = {
   manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "live", "assignments", "learning", "games", "certs"], parent: ["home", "learning", "games"],
+  student: ["home", "lessons", "games", "learning", "live", "assignments", "certs"], parent: ["home", "learning", "games"],
   teacher: ["home", "live", "learning", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
@@ -82,17 +82,34 @@ export default function Dashboard() {
     <p>استلمنا طلبك للانضمام كمعلم. ستظهر لك أدوات المعلم بعد اعتماد إدارة المنصة لحسابك. سجّل الدخول لاحقًا للتحقق.</p>
     <button className="btn" onClick={logout}>تسجيل الخروج</button></section></main>);
   const staff = role === "admin" || role === "teacher";
-  const nav = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: ALL[id][1] }));
+  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? ({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي" }[id] ?? ALL[id][1]) : ALL[id][1] }));
+  if (role === "student") nav.splice(3, 0, { id: "student-quizzes", icon: "📝", label: "الاختبارات", disabled: true, badge: "قريبًا" }, { id: "student-leaderboard", icon: "🏆", label: "لوحة المتصدرين", disabled: true, badge: "قريبًا" }, { id: "student-chat", icon: "💬", label: "محادثة المعلم", disabled: true, badge: "قريبًا" });
+  const adminNav: import("./Shell").NavItem[] = [
+    { id: "users", icon: "👥", label: "إدارة المستخدمين" },
+    { id: "manage", icon: "📚", label: "إدارة المحتوى والصفوف" },
+    { id: "admin", icon: "📊", label: "التحليلات والتقارير" },
+    { id: "manage", icon: "✏️", label: "إنشاء الدورات" },
+    { id: "admin-finance", icon: "💳", label: "الاشتراكات والمالية", disabled: true, badge: "غير مفعّل" },
+    { id: "theme", icon: "⚙️", label: "إعدادات النظام" }
+  ];
+  const rightNav = role === "admin" ? [
+    { id: "home", icon: "🏠", label: "الرئيسية" },
+    { id: "lessons", icon: "📚", label: "مقرراتي" },
+    { id: "games", icon: "🎮", label: "الألعاب التعليمية" },
+    { id: "quizzes", icon: "📝", label: "الاختبارات" },
+    { id: "learning", icon: "📖", label: "المكتبة التفاعلية" },
+    { id: "live", icon: "🎥", label: "الفصول المباشرة" }
+  ] : nav;
   const links = contactLinks(c);
   return (<>
     <Suspense fallback={<section className="panel" role="status">جارٍ تحميل القسم…</section>}>
     {!profile.onboarded && <Onboarding />}
-    <Shell name={profile.name} roleLabel={ROLE[role]} nav={nav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
+    <Shell name={profile.name} role={role} roleLabel={ROLE[role]} nav={rightNav ?? nav} adminNav={adminNav} view={view} onView={id => setView(id as View)} stats={stats} onLogout={logout}>
       {view === "admin" && role === "admin" && <AdminOverview onNavigate={id => setView(id as View)} />}
       {view === "home" && <div className="social-layout">
         <aside className="social-left"><section className="panel social-shortcuts"><h3>اختصاراتك</h3>{nav.filter(n => n.id !== "home").map((n, i) => (
           <button key={n.id} className={`tile ${TILE[i % 4]}`} onClick={() => setView(n.id as View)}><span>{n.icon}</span>{n.label}</button>))}
-          {nav.length === 1 && <p className="note">لا توجد اختصارات إضافية لهذا الحساب.</p>}</section><Notifications />{role === "parent" && <Parent />}</aside>
+          {nav.length === 1 && <p className="note">لا توجد اختصارات إضافية لهذا الحساب.</p>}</section>{role === "parent" && <Parent />}</aside>
         <div className="social-center"><SocialFeed /></div>
         <aside className="social-right">{links.length > 0 && <section className="panel"><h3>تواصل مع المنصة</h3><div className="contact">{links.map(l => (
           <a key={l.href} className="btn" href={l.href} {...(l.href.startsWith("https") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{l.label}</a>))}</div></section>}<section className="panel social-welcome"><span>✨</span><b>مساحة آمنة للتعلّم</b><p>شارك التفاعل الإيجابي، وشجّع أصدقاءك على التقدّم.</p></section></aside>

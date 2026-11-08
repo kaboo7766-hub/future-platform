@@ -19,14 +19,15 @@ const AdminOverview = lazy(() => import("./AdminOverview"));
 const Attendance = lazy(() => import("./Attendance"));
 const LiveClasses = lazy(() => import("./LiveClasses"));
 const LearningTables = lazy(() => import("./LearningTables"));
+const QuranReader = lazy(() => import("./QuranReader"));
 const ThemeSettings = lazy(() => import("./ThemeSettings"));
 import { useSite, contactLinks } from "./HomeExtras";
 import SocialFeed from "./SocialFeed";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
-  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], theme: ["🎨", "تخصيص ألوان المنصة"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "games", "learning", "live", "assignments", "certs"], parent: ["home", "learning", "games"],
@@ -81,7 +82,7 @@ export default function Dashboard() {
     <p>استلمنا طلبك للانضمام كمعلم. ستظهر لك أدوات المعلم بعد اعتماد إدارة المنصة لحسابك. سجّل الدخول لاحقًا للتحقق.</p>
     <button className="btn" onClick={logout}>تسجيل الخروج</button></section></main>);
   const staff = role === "admin" || role === "teacher";
-  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? (({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي" } as Record<string, string>)[id] ?? ALL[id][1]) : ALL[id][1] }));
+  const nav: import("./Shell").NavItem[] = (NAV[role] ?? ["home"]).map(id => ({ id, icon: ALL[id][0], label: role === "student" ? (({ home: "الرئيسية", lessons: "مقرراتي", games: "الألعاب التعليمية", learning: "المكتبة التفاعلية", quran: "القرآن الكريم", live: "الفصول المباشرة", assignments: "الواجبات", certs: "شهاداتي" } as Record<string, string>)[id] ?? ALL[id][1]) : ALL[id][1] }));
   if (role === "student") nav.splice(3, 0, { id: "student-quizzes", icon: "📝", label: "الاختبارات", disabled: true, badge: "قريبًا" }, { id: "student-leaderboard", icon: "🏆", label: "لوحة المتصدرين", disabled: true, badge: "قريبًا" }, { id: "student-chat", icon: "💬", label: "محادثة المعلم", disabled: true, badge: "قريبًا" });
   const adminNav: import("./Shell").NavItem[] = [
     { id: "users", icon: "👥", label: "إدارة المستخدمين" },
@@ -116,7 +117,7 @@ export default function Dashboard() {
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}
-      {view === "learning" && <LearningTables />}
+      {view === "learning" && <LearningTables />}\n      {view === "quran" && <QuranReader />}
       {view === "theme" && role === "admin" && <ThemeSettings />}
       {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}

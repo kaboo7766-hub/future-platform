@@ -63,7 +63,7 @@ service cloud.firestore {
       allow create, update: if signedIn()
         && canManageClass(request.resource.data.classId)
         && sessionId == request.resource.data.classId + '_' + request.resource.data.gameId
-        && request.resource.data.gameId in ['foundation','foundation-letters-ar','foundation-letters-en','foundation-multiply','foundation-divide','foundation-add','foundation-subtract','foundation-count','billiards','basketball','memory','maze','bubbles','racing']
+        && request.resource.data.gameId in ['foundation','foundation-letters-ar','foundation-letters-en','foundation-multiply','foundation-divide','foundation-add','foundation-subtract','foundation-count','eightball','basketball','memory','maze','bubbles','racing']
         && request.resource.data.active is bool
         && request.resource.data.title is string
         && request.resource.data.selectedStudentUids is list

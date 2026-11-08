@@ -496,3 +496,41 @@ input:focus, select:focus, textarea:focus {
  .dashboard-layout .admin-stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.dashboard-layout .side button{transition:none!important}}
+
+
+/* Dedicated Quran and per-ayah tafsir section */
+.quran-reader{padding:clamp(.8rem,2vw,1.5rem);background:#fffefa;border:1px solid #eadfbd;box-shadow:0 8px 0 #eee4c8,0 16px 28px #80652b12}
+.quran-hero{padding:1.35rem;border-radius:20px;text-align:center;color:#fff;background:radial-gradient(circle at 15% 20%,#4d9b79 0,transparent 28%),linear-gradient(130deg,#174f42,#27745c 60%,#43866c)}
+.quran-kicker{display:inline-block;padding:.25rem .8rem;border-radius:99px;background:#ffffff22;font-size:.82rem;font-weight:800}
+.quran-hero h2{margin:.5rem 0;font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.55rem,4vw,2.3rem)}
+.quran-hero p{margin:.25rem auto;max-width:620px;line-height:1.8;color:#f2fff6}
+.quran-stats{display:flex;justify-content:center;flex-wrap:wrap;gap:.5rem;margin-top:.85rem}
+.quran-stats span{padding:.3rem .7rem;border:1px solid #ffffff50;border-radius:99px;background:#ffffff18;font-size:.78rem}
+.quran-tools{margin:1rem 0;padding:1rem;border:1px solid #e8dfc7;border-radius:17px;background:#fffdf6}
+.quran-surah-label{display:block;margin-bottom:.35rem;font-weight:800;color:#315c4a}
+.quran-tools input{width:100%;padding:.7rem .8rem;border:1px solid #d9cfb2;border-radius:12px;background:#fff;color:#273d34;font:inherit}
+.quran-surah-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:.45rem;max-height:230px;overflow:auto;margin-top:.7rem;padding:.15rem}
+.quran-surah-grid button{display:flex;align-items:center;gap:.45rem;min-width:0;padding:.55rem;border:1px solid #e7dfca;border-radius:11px;background:#fff;color:#344b3d;text-align:right;font:inherit;cursor:pointer}
+.quran-surah-grid button span{width:25px;height:25px;flex:none;display:grid;place-items:center;border-radius:8px;background:#f2eedf;color:#866d31;font-size:.72rem;font-weight:800}
+.quran-surah-grid button b{font-size:.82rem}
+.quran-surah-grid button.active{border-color:#4b9471;background:#eaf5ed;color:#17543b;box-shadow:0 3px 0 #c5dfca}
+.quran-current-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem .25rem;border-bottom:1px solid #e9e1ce}
+.quran-current-heading small{color:#7d8c7e}.quran-current-heading h3{margin:.1rem 0;color:#205b42;font-size:1.55rem;font-family:Georgia,"Times New Roman",serif}
+.quran-current-heading>span{padding:.35rem .65rem;border-radius:99px;background:#f3f0e4;color:#6d603f;font-size:.78rem}
+.quran-loading,.quran-error{padding:1rem;text-align:center;color:#526b5c}
+.quran-error{color:#9b3030}
+.quran-ayah-list{display:grid;gap:.65rem;margin-top:.8rem}
+.quran-ayah{padding:1rem;border:1px solid #e9e1ce;border-radius:16px;background:linear-gradient(140deg,#fff,#fffdf7);transition:border-color .2s,box-shadow .2s}
+.quran-ayah.selected{border-color:#70a98a;box-shadow:0 0 0 3px #70a98a20}
+.quran-ayah-number{width:32px;height:32px;display:grid;place-items:center;border-radius:50%;background:#eaf3e8;color:#356b4b;font-size:.8rem;font-weight:900}
+.quran-ayah-text{margin:.6rem 0 1rem;color:#263d30;font-family:"Amiri","Noto Naskh Arabic","Traditional Arabic",serif;font-size:clamp(1.45rem,3vw,2rem);line-height:2.1;text-align:justify}
+.quran-ayah-actions{display:flex;align-items:center;justify-content:space-between;gap:.7rem;color:#8a826b;font-size:.75rem}
+.quran-tafsir-button{padding:.45rem .8rem;border:1px solid #4f906b;border-radius:10px;background:#edf6ee;color:#22583c;font:inherit;font-weight:800;cursor:pointer}
+.quran-tafsir-button:hover{background:#dcefe0}
+.quran-tafsir-panel{margin-top:.85rem;padding:.8rem;border:1px solid #d9e8d8;border-radius:13px;background:#f8fcf7}
+.quran-tafsir-panel h4{margin:.1rem 0;color:#245b40}.quran-tafsir-panel p{font-size:.82rem;color:#64766a}
+.quran-tafsir-panel iframe{display:block;width:100%;min-height:430px;border:1px solid #dfe8dd;border-radius:10px;background:#fff}
+.quran-tafsir-panel>a{display:inline-block;margin-top:.6rem;color:#236b49;font-weight:700}
+.quran-source{margin-top:1rem;padding:.8rem;border-radius:12px;background:#f5f1e5;color:#776c52;font-size:.78rem;line-height:1.8}
+.quran-source a{color:#256b4a;font-weight:800}
+@media(max-width:560px){.quran-surah-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:250px}.quran-ayah{padding:.75rem}.quran-ayah-text{font-size:1.45rem;line-height:2}.quran-tafsir-panel iframe{min-height:520px}.quran-hero{padding:1rem}}

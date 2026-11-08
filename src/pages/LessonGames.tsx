@@ -200,7 +200,7 @@ export default function LessonGames() {
   if (profile?.role === "student" && lessons.length === 0 && !selected) return null;
 
   return <section className="lesson-games">
-    <div className="lesson-games-heading"><div><span>🎯 ألعاب من دروسك</span><h3>{profile?.role === "student" ? "لعبة الحصة التعليمية" : "التحكم في ألعاب الحصص"}</h3><p>{profile?.role === "student" ? "اللعبة تظهر هنا فقط عندما يفتحها المعلم أو مدير المدرسة أثناء الدرس." : "افتح اللعبة وقت الحصة لطلاب الدرس، وأغلقها عندما تنتهي فقرة الترفيه."}</p></div><div className="lesson-games-character" aria-hidden="true">🦄</div></div>
+    <div className="lesson-games-heading"><div><span>🎯 ألعاب من دروسك</span><h3>{profile?.role === "student" ? "لعبة الحصة التعليمية" : "التحكم في ألعاب الحصص"}</h3><p>{profile?.role === "student" ? "اللعبة تظهر هنا فقط عندما يفتحها المعلم أو مدير المدرسة أثناء الدرس." : "شغّل اللعبة بنفسك أو شاركها مع الطلاب الذين تختارهم أثناء الحصة."}</p></div><div className="lesson-games-character" aria-hidden="true">🦄</div></div>
     {notice && <p className="note" role="status">{notice}</p>}
     {!lessons.length ? <p className="note">{profile?.role === "student" ? "لا توجد لعبة مفتوحة الآن. انتظر حتى يفتح المعلم لعبة الدرس أثناء الحصة 😊" : "لا توجد دروس تحتوي على كلمات ألعاب. أضف كلمات الدرس أولًا من صفحة إدارة الدروس."}</p> :
       <div className="lesson-games-grid">{lessons.map(lesson => {

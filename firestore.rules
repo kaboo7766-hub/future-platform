@@ -285,4 +285,34 @@ service cloud.firestore {
       allow update, delete: if false;
     }
   }
+
+    match /socialComments/{commentId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','text','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    match /socialReactions/{reactionId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && reactionId == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
 }

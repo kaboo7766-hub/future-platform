@@ -1,32 +1,62 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
 interface LessonGame { id: string; title: string; description?: string; classId: string; published?: boolean; gameWords?: string[] }
-type Question = { type: "fill" | "tf"; prompt: string; answer: string; shown: string; options: string[]; emoji: string };
+type QuestionType = "fill" | "tf" | "choice" | "first" | "scramble";
+type Question = { type: QuestionType; prompt: string; answer: string; shown: string; options: string[]; emoji: string };
 const shuffle = <T,>(items: T[]) => [...items].sort(() => Math.random() - 0.5);
 const stages = Array.from({ length: 10 }, (_, i) => i + 1);
 const mascots = ["🐼", "🦊", "🐸", "🦄", "🦁", "🐯"];
 const scenes = ["🌈", "☀️", "⭐", "🎈", "🪁", "🦋", "🌻", "🚀", "🍭", "🎨"];
 const normalize = (value: string) => value.trim().toLocaleLowerCase("ar").replace(/[ًٌٍَُِّْـ]/g, "").replace(/[أإآ]/g, "ا").replace(/ة/g, "ه");
+const uniqueWords = (words: string[], answer: string) => {
+  const others = words.filter(w => normalize(w) !== normalize(answer));
+  return shuffle([answer, ...shuffle(others).slice(0, 3)]);
+};
+const scramble = (word: string) => {
+  const chars = Array.from(word).filter(ch => ch.trim());
+  if (chars.length < 2) return chars.join(" ");
+  let mixed = shuffle(chars);
+  if (mixed.join("") === chars.join("")) mixed = [...mixed.slice(1), mixed[0]];
+  return mixed.join("  ");
+};
 
 function makeQuestion(lesson: LessonGame, stage: number, index: number): Question {
   const words = (lesson.gameWords ?? []).map(w => w.trim()).filter(Boolean).slice(0, 100);
   const bank = words.length ? words : [lesson.title];
   const answer = bank[(stage * 7 + index) % bank.length];
   const emoji = scenes[(stage + index) % scenes.length];
-  if (index % 2 === 0) {
+  const kind = (index + stage - 1) % 5;
+
+  if (kind === 0) {
     const chars = Array.from(answer);
-    const hiddenIndex = Math.min(chars.length - 1, Math.max(0, Math.floor(chars.length / (stage < 4 ? 2 : 3))));
+    const hiddenIndex = chars.findIndex(ch => ch.trim());
+    const target = hiddenIndex < 0 ? 0 : Math.min(chars.length - 1, Math.max(0, Math.floor(chars.length / (stage < 4 ? 2 : 3))));
     const clue = [...chars];
-    if (chars.length > 1) clue[hiddenIndex] = "ـ";
-    return { type: "fill", prompt: "أكمل الكلمة الناقصة", answer, shown: clue.join(" "), options: shuffle([answer, ...shuffle(bank.filter(w => normalize(w) !== normalize(answer))).slice(0, 3)]), emoji };
+    if (chars.length > 1) clue[target] = "ـ";
+    return { type: "fill", prompt: "أكمل الحروف الناقصة لتكوين كلمة من الدرس", answer, shown: clue.join(" "), options: [], emoji };
   }
-  const isTrue = (stage + index) % 3 !== 0 || bank.length < 2;
-  const other = bank.find(w => normalize(w) !== normalize(answer)) ?? answer;
-  const statement = isTrue ? answer : other;
-  return { type: "tf", prompt: "هل الكلمة المعروضة هي الكلمة المطلوبة؟", answer: isTrue ? "صح" : "خطأ", shown: `الكلمة المطلوبة: ${answer}   |   المعروضة: ${statement}`, options: ["صح", "خطأ"], emoji };
+
+  if (kind === 1) {
+    const other = bank.find(w => normalize(w) !== normalize(answer)) ?? answer;
+    const isTrue = bank.length < 2 || (stage + index) % 2 === 0;
+    return { type: "tf", prompt: "هل الكلمتان متطابقتان؟", answer: isTrue ? "صح" : "خطأ", shown: `الكلمة المطلوبة: ${answer}   |   الكلمة المعروضة: ${isTrue ? answer : other}`, options: ["صح", "خطأ"], emoji };
+  }
+
+  if (kind === 2) {
+    return { type: "choice", prompt: "فك الحروف واختر الكلمة الصحيحة", answer, shown: scramble(answer), options: uniqueWords(bank, answer), emoji };
+  }
+
+  if (kind === 3) {
+    const first = Array.from(answer).find(ch => ch.trim()) ?? answer[0];
+    const letters = Array.from(new Set(bank.map(w => Array.from(w).find(ch => ch.trim()) ?? w[0]).filter(Boolean)));
+    const options = shuffle([first, ...shuffle(letters.filter(ch => ch !== first)).slice(0, 3)]);
+    return { type: "first", prompt: "اختر الحرف الذي تبدأ به الكلمة", answer: first, shown: answer, options, emoji };
+  }
+
+  return { type: "scramble", prompt: "رتّب الحروف واكتب الكلمة كما وردت في الدرس", answer, shown: scramble(answer), options: [], emoji };
 }
 
 export default function LessonGames() {
@@ -69,13 +99,19 @@ export default function LessonGames() {
   };
   const submitAnswer = () => {
     if (!selected || !question || picked) return;
-    const value = question.type === "fill" ? typed : picked;
+    const value = question.type === "fill" || question.type === "scramble" ? typed : picked;
     if (!value.trim()) return;
-    const correct = question.type === "fill" ? normalize(value) === normalize(question.answer) : value === question.answer;
-    const nextScore = score + (correct ? 1 : 0);
-    setScore(nextScore);
+    const correct = normalize(value) === normalize(question.answer);
+    setScore(s => s + (correct ? 1 : 0));
     setPicked(value);
     setFeedback(correct ? "أحسنت! إجابة رائعة 🎉" : `الإجابة الصحيحة: ${question.answer}`);
+  };
+  const chooseOption = (option: string) => {
+    if (!question || picked) return;
+    const correct = normalize(option) === normalize(question.answer);
+    setPicked(option);
+    setScore(s => s + (correct ? 1 : 0));
+    setFeedback(correct ? "إجابة صحيحة! برافو 🎉" : `الإجابة الصحيحة: ${question.answer}`);
   };
   const nextQuestion = () => {
     if (!selected) return;
@@ -104,35 +140,37 @@ export default function LessonGames() {
     </div>
   </section>;
 
-  if (selected && question) return <section className="lesson-game-panel lesson-adventure" dir="rtl">
-    <div className="lesson-game-top"><button className="link" onClick={closeGame}>← رجوع للدروس</button><b>المرحلة {stage} من 10</b><b>⭐ {score}</b></div>
-    <div className="lesson-adventure-scene" aria-hidden="true"><span className="lesson-adventure-sun">☀️</span><span className="lesson-adventure-mascot">{mascots[(stage - 1) % mascots.length]}</span><span className="lesson-adventure-star">✨</span></div>
-    <div className="lesson-adventure-progress"><i style={{ width: `${(questionIndex + 1) * 10}%` }} /></div>
-    <div className="lesson-adventure-meta"><span>{classNames[selected.classId] || "مرحلتك التعليمية"}</span><span>{selected.title}</span><span>السؤال {questionIndex + 1} / 10</span></div>
-    <h3>{question.prompt}</h3>
-    <div className="lesson-adventure-clue"><span className="lesson-adventure-emoji">{question.emoji}</span><strong>{question.shown}</strong></div>
-    {question.type === "fill" ? <div className="lesson-fill-area">
-      <label htmlFor="lesson-game-answer">اكتب الكلمة الصحيحة</label>
-      <input id="lesson-game-answer" autoComplete="off" value={typed} disabled={!!picked} onChange={e => setTyped(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !picked) submitAnswer(); }} placeholder="اكتب إجابتك هنا..." />
-      {!picked && <div className="lesson-word-choices">{question.options.map((word, i) => <button type="button" key={i} onClick={() => setTyped(word)}>{word}</button>)}</div>}
-    </div> : <div className="lesson-game-options lesson-true-false">
-      {question.options.map((option, i) => <button type="button" key={option} disabled={!!picked} className={picked ? option === question.answer ? "correct" : option === picked ? "wrong" : "" : ""} onClick={() => { if (!picked) { setPicked(option); const correct = option === question.answer; setScore(s => s + (correct ? 1 : 0)); setFeedback(correct ? "إجابة صحيحة! برافو 🎉" : `الإجابة الصحيحة: ${question.answer}`); } }}>{option === "صح" ? "✅ صح" : "❌ خطأ"}</button>)}
-    </div>}
-    {question.type === "fill" && !picked && <button type="button" className="btn lesson-submit-answer" disabled={!typed.trim()} onClick={submitAnswer}>تحقق من الإجابة ✨</button>}
-    {feedback && <div className={feedback.startsWith("أحسنت") || feedback.startsWith("إجابة صحيحة") ? "lesson-game-feedback success" : "lesson-game-feedback"} role="status">{feedback}</div>}
-    {picked && <button type="button" className="btn lesson-next-question" onClick={nextQuestion}>{questionIndex === 9 ? "عرض النتيجة 🏆" : "السؤال التالي ←"}</button>}
-    <div className="lesson-adventure-footer" aria-hidden="true">🌈 ⭐ 🦋 🎈 ⭐ 🌈</div>
-  </section>;
+  if (selected && question) {
+    const textEntry = question.type === "fill" || question.type === "scramble";
+    return <section className="lesson-game-panel lesson-adventure" dir="rtl">
+      <div className="lesson-game-top"><button className="link" onClick={closeGame}>← رجوع للدروس</button><b>المرحلة {stage} من 10</b><b>⭐ {score}</b></div>
+      <div className="lesson-adventure-scene" aria-hidden="true"><span className="lesson-adventure-sun">☀️</span><span className="lesson-adventure-mascot">{mascots[(stage - 1) % mascots.length]}</span><span className="lesson-adventure-star">✨</span></div>
+      <div className="lesson-adventure-progress"><i style={{ width: `${(questionIndex + 1) * 10}%` }} /></div>
+      <div className="lesson-adventure-meta"><span>{classNames[selected.classId] || "مرحلتك التعليمية"}</span><span>{selected.title}</span><span>السؤال {questionIndex + 1} / 10</span></div>
+      <h3>{question.prompt}</h3>
+      <div className="lesson-adventure-clue"><span className="lesson-adventure-emoji">{question.emoji}</span><strong>{question.shown}</strong></div>
+      {textEntry ? <div className="lesson-fill-area">
+        <label htmlFor="lesson-game-answer">{question.type === "fill" ? "اكتب الكلمة بعد إكمال الحروف" : "اكتب الكلمة بعد ترتيب الحروف"}</label>
+        <input id="lesson-game-answer" autoComplete="off" value={typed} disabled={!!picked} onChange={e => setTyped(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !picked) submitAnswer(); }} placeholder="اكتب إجابتك هنا..." />
+      </div> : <div className="lesson-game-options lesson-true-false">
+        {question.options.map((option, i) => <button type="button" key={`${option}-${i}`} disabled={!!picked} className={picked ? normalize(option) === normalize(question.answer) ? "correct" : normalize(option) === normalize(picked) ? "wrong" : "" : ""} onClick={() => chooseOption(option)}>{option === "صح" ? "✅ صح" : option === "خطأ" ? "❌ خطأ" : option}</button>)}
+      </div>}
+      {textEntry && !picked && <button type="button" className="btn lesson-submit-answer" disabled={!typed.trim()} onClick={submitAnswer}>تحقق من الإجابة ✨</button>}
+      {feedback && <div className={feedback.startsWith("أحسنت") || feedback.startsWith("إجابة صحيحة") ? "lesson-game-feedback success" : "lesson-game-feedback"} role="status">{feedback}</div>}
+      {picked && <button type="button" className="btn lesson-next-question" onClick={nextQuestion}>{questionIndex === 9 ? "عرض النتيجة 🏆" : "السؤال التالي ←"}</button>}
+      <div className="lesson-adventure-footer" aria-hidden="true">🌈 ⭐ 🦋 🎈 ⭐ 🌈</div>
+    </section>;
+  }
 
   return <section className="lesson-games">
-    <div className="lesson-games-heading"><div><span>🎯 ألعاب من دروسك</span><h3>حوّل كل درس إلى مغامرة تعليمية!</h3><p>أسئلة أكمل وصح أو خطأ مرتبطة بكلمات الدرس، برسومات كرتونية ومراحل تتدرج حسب الصف.</p></div><div className="lesson-games-character" aria-hidden="true">🦄</div></div>
+    <div className="lesson-games-heading"><div><span>🎯 ألعاب من دروسك</span><h3>حوّل كل درس إلى مغامرة تعليمية!</h3><p>خمسة أنماط متنوعة من الأسئلة مرتبطة بكلمات الدرس، برسومات كرتونية ومراحل تتدرج حسب الصف.</p></div><div className="lesson-games-character" aria-hidden="true">🦄</div></div>
     {!lessons.length ? <p className="note">لا توجد ألعاب دروس بعد. على المعلم إضافة كلمات الدرس من «الدروس والصفوف» (حتى 100 كلمة)، وستظهر اللعبة هنا تلقائيًا بعد حفظ الدرس ونشره للطلاب.</p> :
       <div className="lesson-games-grid">{lessons.map(lesson => {
         const count = Math.min(100, lesson.gameWords?.length ?? 0);
         const openLevel = unlocked[lesson.id] ?? 1;
         return <article className="lesson-game-card" key={lesson.id}>
           <div className="lesson-game-card-icon">📚🎮</div><h4>{lesson.title}</h4><p>{lesson.description || "لعبة وأسئلة تفاعلية من محتوى الدرس"}</p>
-          <div className="lesson-game-meta"><span>🧩 {count} كلمة</span><span>🏁 10 مراحل</span><span>✏️ أكمل وصح/خطأ</span></div>
+          <div className="lesson-game-meta"><span>🧩 {count} كلمة</span><span>🏁 10 مراحل</span><span>✏️ 5 أنماط أسئلة</span></div>
           <div className="lesson-stage-row">{stages.map(n => <span key={n} className={n <= openLevel ? "stage-open" : "stage-locked"}>{n <= openLevel ? "⭐" : "🔒"} {n}</span>)}</div>
           <button className="btn" onClick={() => start(lesson, Math.min(openLevel, 10))}>ابدأ المغامرة 🚀</button>
         </article>;

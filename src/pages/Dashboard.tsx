@@ -118,7 +118,8 @@ export default function Dashboard() {
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}
-      {view === "learning" && <LearningTables />}\n      {view === "quran" && <QuranReader />}
+      {view === "learning" && <LearningTables />}
+      {view === "quran" && <QuranReader />}
       {view === "theme" && role === "admin" && <ThemeSettings />}
       {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}

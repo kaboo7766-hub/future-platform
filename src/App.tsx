@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate, Link, useLocation } from "react-router-dom";
 import { useAuth } from "./auth/AuthContext";
 import { useLanguage } from "./i18n";
+import { useSite } from "./pages/HomeExtras";
 
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
@@ -15,10 +16,11 @@ export default function App() {
   const { profile, loading, logout } = useAuth();
   const { pathname } = useLocation();
   const { language, toggleLanguage } = useLanguage();
+  const { banners } = useSite();
   if (loading) return <PageLoader />;
   return (<>
     {pathname !== "/dashboard" && <header className="bar">
-      <Link to="/" className="brand">🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
+      <Link to="/" className="brand brand-with-photo" style={banners.length ? { backgroundImage: banners.slice(0,2).map(banner => `url("${banner.imageData}")`).join(", ") } : undefined}>🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
       <nav className="bar-actions">
         <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
         {profile

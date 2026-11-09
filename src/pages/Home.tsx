@@ -18,7 +18,7 @@ const faqs = [
 export default function Home() {
   const { t, r, c, banners } = useSite();
   return (<main>
-    <section className="hero2"><div className="hero2-in">
+    <section className="hero2" style={banners.length ? { backgroundImage: banners.slice(0,2).map((banner,index) => index === 0 ? `linear-gradient(90deg,rgba(242,251,255,.92),rgba(242,251,255,.72)),url("${banner.imageData}")` : `url("${banner.imageData}")`).join(", "), backgroundSize: "cover,cover", backgroundPosition: "center,center" } : undefined}><div className="hero2-in">
       <div>
         <span className="badge">منصة عربية صُنعت من أجلك</span>
         <h1 className="h-title">منصة <span>المستقبل</span> التعليمية</h1>

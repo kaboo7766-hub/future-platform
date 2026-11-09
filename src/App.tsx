@@ -20,7 +20,7 @@ export default function App() {
   if (loading) return <PageLoader />;
   return (<>
     {pathname !== "/dashboard" && <header className="bar">
-      <Link to="/" className="brand brand-with-photo" style={banners.length ? { backgroundImage: banners.slice(0,2).map(banner => `url("${banner.imageData}")`).join(", ") } : undefined}>🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
+      <Link to="/" className="brand brand-with-photo" style={banners.length ? { backgroundImage: `linear-gradient(120deg,rgba(9,30,55,.78),rgba(9,30,55,.38)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}>🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
       <nav className="bar-actions">
         <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
         {profile

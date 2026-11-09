@@ -598,3 +598,15 @@ input:focus, select:focus, textarea:focus {
 .hero2-in{position:relative;z-index:1}
 .hero2 .h-title,.hero2 .h-sub,.hero2 .badge{text-shadow:0 1px 3px rgba(255,255,255,.7)}
 @media(max-width:600px){.brand-with-photo{font-size:.95rem;min-height:44px;padding:.2rem .55rem}.hero2{background-position:center,center}}
+
+/* Two classroom photos: responsive hero and readable brand title */
+.brand-with-photo{display:inline-flex;align-items:center;justify-content:center;min-height:58px;max-width:min(54vw,420px);padding:.55rem 1rem;border-radius:16px;background-color:#23445a;background-repeat:no-repeat;background-position:center;background-size:cover;color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.8);box-shadow:0 4px 16px rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.55)}
+.hero2{background-repeat:no-repeat;min-height:340px;display:flex;align-items:center}
+.hero2-in{width:100%;position:relative;z-index:1}
+.hero2 .h-title,.hero2 .h-sub,.hero2 .badge{ text-shadow:0 1px 5px rgba(255,255,255,.8)}
+.home-banners{padding-top:1.5rem;padding-bottom:1.5rem}
+.home-banner-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1rem}
+.home-banner{position:relative;overflow:hidden;border-radius:22px;background:var(--panel);border:1px solid var(--line);box-shadow:0 8px 24px rgba(20,40,80,.12);min-width:0}
+.home-banner img{display:block;width:100%;height:clamp(180px,28vw,330px);object-fit:cover}
+.home-banner h3{margin:0;padding:.65rem 1rem;text-align:center;color:var(--ink)}
+@media(max-width:640px){.bar{gap:.5rem;padding:.6rem .7rem}.brand-with-photo{font-size:.92rem;max-width:48vw;min-height:48px;padding:.4rem .55rem}.bar nav{gap:.35rem;font-size:.82rem}.hero2{min-height:390px;padding:1.5rem .8rem}.home-banner-grid{grid-template-columns:1fr}.home-banner img{height:230px}}

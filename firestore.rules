@@ -322,6 +322,42 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 500;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
+    // Curriculum definitions are written only by the trusted admin import API.
+    // Students can read only items explicitly published by an administrator.
+    match /curriculumGrades/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumSubjects/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumUnits/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumLessons/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumAssessments/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /studentLearningProgress/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      // Scores and unlock states must be written by a trusted server after answer validation.
+      allow write: if false;
+    }
+    match /studentBadges/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      allow write: if false;
+    }
+
     match /socialReactions/{reactionId} {
       allow read: if signedIn();
       allow create, update: if signedIn()

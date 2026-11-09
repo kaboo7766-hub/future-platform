@@ -30,3 +30,6 @@ body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 :root[data-icon-theme="minimal"] .dashboard-layout .side button .nav-icon{background:transparent;box-shadow:none;filter:grayscale(.35);border-radius:0}
 :root[data-icon-theme="large"] .dashboard-layout .side button .nav-icon{font-size:1.8rem;min-width:2.8rem;min-height:2.8rem;border-radius:14px;background:color-mix(in srgb,var(--accent) 15%,var(--panel))}
 @media(max-width:680px){.theme-upload-grid,.theme-style-controls{grid-template-columns:1fr}.theme-upload-card{padding:.8rem}}
+
+/* Keep the translucent page artwork above the body color and below all app content. */
+body::before{z-index:0!important}body>#root{position:relative;z-index:1;min-height:100vh}

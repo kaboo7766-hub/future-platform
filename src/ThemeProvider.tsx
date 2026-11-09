@@ -13,6 +13,13 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
         const value = values[key];
         root.style.setProperty("--" + key, typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value) ? value : fallback);
       });
+      const fontFamilies = ["Cairo, system-ui, sans-serif", "Tahoma, Arial, sans-serif", "Arial, sans-serif", "Georgia, serif", "system-ui, sans-serif"];
+      const fontFamily = typeof values.fontFamily === "string" && fontFamilies.includes(values.fontFamily) ? values.fontFamily : "Cairo, system-ui, sans-serif";
+      const fontScale = [0.95, 1, 1.08, 1.15].includes(Number(values.fontScale)) ? Number(values.fontScale) : 1;
+      const iconTheme = ["colorful", "soft", "minimal", "large"].includes(String(values.iconTheme)) ? String(values.iconTheme) : "colorful";
+      root.style.setProperty("--platform-font-family", fontFamily);
+      root.style.setProperty("--platform-font-scale", String(fontScale));
+      root.dataset.iconTheme = iconTheme;
       const background = safeImage(values.backgroundImageData);
       const brand = safeImage(values.brandImageData);
       root.style.setProperty("--platform-bg-image", background ? `url("${background}")` : "none");

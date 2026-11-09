@@ -645,3 +645,27 @@ input:focus, select:focus, textarea:focus {
 .curriculum-progress progress{width:100%;height:12px;accent-color:var(--accent)}
 .curriculum-message{padding:.7rem 1rem;border-radius:12px;background:var(--panel);border:1px solid var(--line)}
 @media(max-width:560px){.curriculum-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.curriculum-controls{grid-template-columns:1fr}.curriculum-selection{grid-column:auto}.curriculum-heading{align-items:flex-start}.curriculum-icon{font-size:2.2rem}}
+
+
+/* Official 2026-2027 primary textbook sources */
+.curriculum-source-panel {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.curriculum-source-panel h3 { margin: 0 0 .5rem; }
+.curriculum-source-panel p { margin: .35rem 0; line-height: 1.8; }
+.curriculum-source-links {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+.curriculum-source-links a { text-decoration: none; }
+@media (max-width: 640px) {
+  .curriculum-source-panel { display: block; }
+  .curriculum-source-links { margin-top: .75rem; }
+}

@@ -3,7 +3,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "./firebase";
 
 const defaults = { navy: "#18267a", navy2: "#2b44c9", bg: "#f3f6ff", ink: "#14213d", panel: "#ffffff", line: "#d9e1f5", accent: "#2446c8" };
-const safeImage = (value: unknown) => typeof value === "string" && /^data:image\\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value) ? value : "";
+const safeImage = (value: unknown) => typeof value === "string" && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(value) ? value : "";
 
 export default function ThemeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {

@@ -93,7 +93,7 @@ export default function Dashboard() {
     { id: "admin", icon: "📊", label: "التحليلات والتقارير" },
     { id: "manage", icon: "✏️", label: "إنشاء الدورات" },
     { id: "admin-finance", icon: "💳", label: "الاشتراكات والمالية", disabled: true, badge: "غير مفعّل" },
-    { id: "theme", icon: "⚙️", label: "إعدادات النظام" }
+    { id: "theme", icon: "🎨", label: "إدارة الخلفيات والألوان" }
   ];
   const rightNav = role === "admin" ? [
     { id: "home", icon: "🏠", label: "الرئيسية" },

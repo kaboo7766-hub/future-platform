@@ -13,7 +13,7 @@ root.dataset.iconTheme=["colorful","soft","minimal","large"].includes(String(v.i
 root.dataset.themeId=typeof v.themeId==="string"&&/^(ocean|garden|candy|violet|sun|night|mint|rose|space|classic)$/.test(v.themeId)?v.themeId:"ocean";
 const bg=safeImage(v.backgroundImageData),brand=safeImage(v.brandImageData),kids=safeImage(v.kidsImageData);
 root.style.setProperty("--platform-bg-image",bg?'url("'+bg+'")':"none");root.style.setProperty("--brand-bg-image",brand?'url("'+brand+'")':"none");root.style.setProperty("--kids-bg-image",kids?'url("'+kids+'")':"none");
-root.style.setProperty("--platform-bg-opacity",String(opacity(v.backgroundOpacity,.25)));root.style.setProperty("--brand-bg-opacity",String(opacity(v.brandOpacity,.3)));root.style.setProperty("--kids-bg-opacity",String(opacity(v.kidsOpacity,.3)));
+root.style.setProperty("--platform-bg-opacity",String(opacity(v.backgroundOpacity,.25)));root.style.setProperty("--brand-bg-opacity",String(opacity(v.brandOpacity,.3)));root.style.setProperty("--platform-bg-size",String(Math.min(200,Math.max(25,Number(v.backgroundWidth)||100)))+"% "+String(Math.min(200,Math.max(25,Number(v.backgroundHeight)||100)))+"%");root.style.setProperty("--brand-bg-size",String(Math.min(200,Math.max(25,Number(v.brandWidth)||100)))+"% "+String(Math.min(200,Math.max(25,Number(v.brandHeight)||100)))+"%");
 };apply(defaults);return onSnapshot(doc(db,"themeSettings","global"),s=>apply(s.exists()?s.data():defaults),()=>apply(defaults));},[]);
 return <>{children}</>;
 }

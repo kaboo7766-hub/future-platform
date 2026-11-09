@@ -18,7 +18,7 @@ const faqs = [
 export default function Home() {
   const { t, r, c, banners } = useSite();
   return (<main>
-    <section className="hero2" style={banners.length ? { backgroundImage: banners.slice(0,2).map((banner,index) => index === 0 ? `linear-gradient(90deg,rgba(242,251,255,.92),rgba(242,251,255,.72)),url("${banner.imageData}")` : `url("${banner.imageData}")`).join(", "), backgroundSize: "cover,cover", backgroundPosition: "center,center" } : undefined}><div className="hero2-in">
+    <section className="hero2" style={banners.length ? { backgroundImage: `linear-gradient(90deg,rgba(12,35,55,.40),rgba(12,35,55,.12)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}><div className="hero2-in">
       <div>
         <span className="badge">منصة عربية صُنعت من أجلك</span>
         <h1 className="h-title">منصة <span>المستقبل</span> التعليمية</h1>
@@ -36,7 +36,7 @@ export default function Home() {
     </div></section>
       {banners.length > 0 && <section className="home-banners wrap" aria-label="صور المنصة للأطفال">
         <h2 className="sec">عالم من المرح والتعلّم</h2>
-        <div className="home-banner-grid">{banners.map((banner) => <article className="home-banner" key={banner.id}>
+        <div className="home-banner-grid">{banners.slice(0,2).map((banner) => <article className="home-banner" key={banner.id}>
           <img src={banner.imageData} alt={banner.title || "صورة تعليمية للأطفال"} />
           {banner.title && <h3>{banner.title}</h3>}
         </article>)}</div>

@@ -7,7 +7,7 @@ type Lesson = { lessonId: string; order: number; title: string; microGoal: strin
 type Unit = { unitId: string; subjectId: string; gradeId: string; order: number; title: string; lessons: Lesson[]; checkpoint: Record<string, unknown>; unitQuiz: Record<string, unknown> };
 type Curriculum = { schemaVersion: string; curriculumContext?: { status?: string; note?: string }; gradeCatalog: Grade[]; subjectCatalog: Subject[]; units: Unit[]; lessonFlow: Array<Record<string, unknown>> };
 type SourceGrade = { gradeId: string; gradeName: string; officialBookCount: number; catalogUrl: string; availability: string; subjects: string[]; note: string };
-type SourceCatalog = { schoolYear: string; officialPortal: string; checkedAt: string; grades: SourceGrade[] };
+type SourceCatalog = { schoolYear: string; officialPortal: string; azharPortal?: string; azharBooksPortal?: string; checkedAt: string; grades: SourceGrade[]; azharGrades?: SourceGrade[] };
 
 type ImportRecord = { id: string; data: Record<string, unknown> };
 const COLLECTIONS = ["curriculumGrades", "curriculumSubjects", "curriculumUnits", "curriculumLessons", "curriculumAssessments"] as const;
@@ -208,6 +208,23 @@ export default function CurriculumManager() {
         <div className="curriculum-source-links">
           <a className="btn" href={source.catalogUrl} target="_blank" rel="noreferrer">فتح كتب الصف في الفهرس</a>
           <a href={sourceCatalog.officialPortal} target="_blank" rel="noreferrer">المكتبة الإلكترونية الرسمية للوزارة</a>
+        </div>
+      </section>;
+    })()}
+
+    {sourceCatalog?.azharGrades && (() => {
+      const source = sourceCatalog.azharGrades.find(item => item.gradeId === gradeId);
+      if (!source) return null;
+      return <section className="panel curriculum-source-panel">
+        <div><h3>مصادر كتب التعليم الأزهري — {sourceCatalog.schoolYear}</h3>
+          <p>{source.gradeName}: {source.officialBookCount} كتب مدرجة في فهرس العام الدراسي. تاريخ مراجعة الفهرس: {sourceCatalog.checkedAt}.</p>
+          <p><b>الكتب والمواد الظاهرة في الفهرس:</b> {source.subjects.join("، ")}</p>
+          <p className="note">هذا فهرس استرشادي للروابط، وليس حصرًا نهائيًا لكل مقررات الأزهر. يجب مطابقة كل كتاب وخطة توزيع مع المصدر الرسمي قبل اعتماد الدروس أو الاختبارات.</p>
+        </div>
+        <div className="curriculum-source-links">
+          <a className="btn" href={source.catalogUrl} target="_blank" rel="noreferrer">فتح كتب الصف الأزهري</a>
+          <a href={sourceCatalog.azharPortal} target="_blank" rel="noreferrer">ركن الطالب — قطاع المعاهد الأزهرية</a>
+          <a href={sourceCatalog.azharBooksPortal} target="_blank" rel="noreferrer">مكتبة كتب الأزهر الرسمية</a>
         </div>
       </section>;
     })()}

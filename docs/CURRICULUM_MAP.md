@@ -9,7 +9,7 @@ This is a platform sequencing framework, not a verbatim transcription of Ministr
 The grade/subject catalog follows the broad Egyptian primary structure: Arabic, English, and mathematics across the grades; religious education as the appropriate Islamic or Christian track; science and social studies in Grades 4–6; and age-appropriate physical/health, arts, technology, and school activity strands. KG includes readiness strands and Discover themes. Some activity strands are marked enrichment rather than compulsory subjects because their implementation may vary by school.
 
 ## Data model
-The JSON is deliberately normalized for import into Firestore. Do **not** store the entire 1 MB JSON file as one Firestore document. Recommended collections:
+The JSON is deliberately normalized for import into Firestore. Do **not** store the entire JSON file as one Firestore document. Import it by splitting grade, subject, unit, lesson, and assessment records into their respective collections; Firestore document and batch limits must be respected. Recommended collections:
 
 | Collection | Document ID | Content |
 |---|---|---|

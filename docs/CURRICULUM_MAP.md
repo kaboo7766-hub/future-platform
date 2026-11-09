@@ -53,3 +53,15 @@ The JSON is deliberately normalized for import into Firestore. Do **not** store 
 
 ## Current implementation status
 The curriculum JSON and this architecture document are added to the existing feature branch. They are not yet wired to the student/teacher interface, imported into Firestore, or published. The next engineering step is an admin curriculum manager plus a validated import routine and server-side progress/unlock enforcement.
+
+## Admin interface and safe import
+- Admin navigation includes **إدارة المناهج والمسارات**.
+- `src/pages/CurriculumManager.tsx` previews the grade → subject → unit → lesson hierarchy from the public JSON asset.
+- `public/curriculum-map.json` is the browser-readable source used by the preview screen.
+- `api/admin/import-curriculum.ts` verifies the Firebase ID token and the user's Firestore role before writing anything.
+- The importer accepts only the five curriculum definition collections, limits each request to 50 records, uses deterministic document IDs, and writes all records with `published: false`.
+- Import is idempotent: retrying a partially completed import updates the same document IDs rather than creating duplicates.
+- Firestore rules deny direct client writes to curriculum definitions and student progress/badge collections. Only published curriculum documents are readable by students.
+
+## Release and activation notes
+The UI and API are part of the feature branch / pull request. Firestore rules must be deployed to the Firebase project before the imported curriculum is used. Importing creates drafts only; it does not publish content or automatically expose it to students. Lesson unlock enforcement, teacher publishing controls, and server-validated curriculum quiz grading are separate next steps and must be completed before using this as a live graded course.

@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Almarai:wght@400;700;800&family=Amiri:wght@400;700&family=Alexandria:wght@400;600;700;800&family=Cairo:wght@400;600;700;800;900&family=Changa:wght@400;600;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Noto+Naskh+Arabic:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap");
 /* Ten child-friendly themes, independent image opacity and Quran-reading artwork background */
 body{font-family:var(--platform-font-family,Cairo,Tahoma,sans-serif)!important;background:var(--bg)!important;position:relative}
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--platform-bg-image,none);background-position:center;background-size:var(--platform-bg-size,cover);background-repeat:no-repeat;opacity:var(--platform-bg-opacity,.25)}
@@ -94,3 +95,7 @@ body{background-color:var(--bg)!important;background-attachment:fixed}
 .theme-banner-live-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border:2px solid var(--line);border-radius:18px;background-position:center;background-size:cover;background-repeat:no-repeat;color:#fff;text-align:center;text-shadow:0 2px 7px #0008;overflow:hidden}
 .theme-banner-live-preview small{font-size:.85rem}
 @media(max-width:600px){.theme-banner-controls{grid-template-columns:1fr}.dashboard-layout .cover-info-centered{min-height:calc(var(--platform-banner-height,230px) - 45px)}}
+
+.dashboard-layout .cover-title-wrap{align-self:var(--platform-title-align,center);transform:translateY(var(--platform-title-offset-y,0px))}
+.theme-banner-live-preview{align-items:stretch;position:relative}
+.theme-banner-live-preview strong{width:100%;text-align:var(--platform-title-align,center)}

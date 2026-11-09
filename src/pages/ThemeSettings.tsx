@@ -3,218 +3,55 @@ import { doc, onSnapshot, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
-type Colors = { navy: string; navy2: string; bg: string; ink: string; panel: string; line: string; accent: string };
-const defaults: Colors = { navy: "#18267a", navy2: "#2b44c9", bg: "#f3f6ff", ink: "#14213d", panel: "#ffffff", line: "#d9e1f5", accent: "#2446c8" };
-const presets: { name: string; colors: Colors }[] = [
-  { name: "أزرق تعليمي", colors: defaults },
-  { name: "أخضر هادئ", colors: { navy: "#14532d", navy2: "#15803d", bg: "#f0fdf4", ink: "#173326", panel: "#ffffff", line: "#bbf7d0", accent: "#16a34a" } },
-  { name: "بنفسجي", colors: { navy: "#4c1d95", navy2: "#7c3aed", bg: "#f5f3ff", ink: "#2e1065", panel: "#ffffff", line: "#ddd6fe", accent: "#7c3aed" } },
-  { name: "وردي للأطفال", colors: { navy: "#9d174d", navy2: "#db2777", bg: "#fff1f7", ink: "#500724", panel: "#ffffff", line: "#fbcfe8", accent: "#db2777" } },
-  { name: "سماوي", colors: { navy: "#075985", navy2: "#0284c7", bg: "#ecfeff", ink: "#164e63", panel: "#ffffff", line: "#a5f3fc", accent: "#0891b2" } },
-  { name: "داكن", colors: { navy: "#111827", navy2: "#374151", bg: "#111827", ink: "#f9fafb", panel: "#1f2937", line: "#4b5563", accent: "#60a5fa" } },
-];
-const fields: [keyof Colors, string][] = [
-  ["navy", "لون الشريط الرئيسي"], ["navy2", "لون الأزرار"], ["accent", "لون الروابط والتأكيد"],
-  ["bg", "لون خلفية المنصة"], ["panel", "لون البطاقات"], ["ink", "لون الكتابة"], ["line", "لون الحدود"],
-];
+type Colors={navy:string;navy2:string;bg:string;ink:string;panel:string;line:string;accent:string};
+type Theme={id:string;name:string;emoji:string;colors:Colors;font:string;icons:string};
+const base:Colors={navy:"#087eaa",navy2:"#16a8d5",bg:"#f1fbff",ink:"#14213d",panel:"#fff",line:"#ccecf7",accent:"#079bc8"};
+const fonts=[["Cairo, Tahoma, sans-serif","Cairo"],["Tahoma, Arial, sans-serif","Tahoma"],["Arial, sans-serif","Arial"],["Georgia, serif","Georgia"],["'Trebuchet MS', sans-serif","Trebuchet"],["Verdana, sans-serif","Verdana"],["'Segoe UI', Tahoma, sans-serif","Segoe UI"],["'Times New Roman', serif","Times"],["system-ui, sans-serif","خط الجهاز"],["'Courier New', monospace","Courier"]] as const;
+const themes:Theme[]=[
+{id:"ocean",name:"بحر المرح",emoji:"🌊",colors:base,font:fonts[0][0],icons:"colorful"},
+{id:"garden",name:"حديقة المعرفة",emoji:"🌿",colors:{navy:"#14532d",navy2:"#16a34a",bg:"#f0fdf4",ink:"#173326",panel:"#fff",line:"#bbf7d0",accent:"#15803d"},font:fonts[1][0],icons:"soft"},
+{id:"candy",name:"حلوى الأطفال",emoji:"🍭",colors:{navy:"#9d174d",navy2:"#ec4899",bg:"#fff1f7",ink:"#500724",panel:"#fff",line:"#fbcfe8",accent:"#db2777"},font:fonts[4][0],icons:"colorful"},
+{id:"violet",name:"عالم البنفسج",emoji:"🦄",colors:{navy:"#4c1d95",navy2:"#7c3aed",bg:"#f5f3ff",ink:"#2e1065",panel:"#fff",line:"#ddd6fe",accent:"#7c3aed"},font:fonts[3][0],icons:"minimal"},
+{id:"sun",name:"شمس التفوق",emoji:"☀️",colors:{navy:"#854d0e",navy2:"#eab308",bg:"#fefce8",ink:"#422006",panel:"#fffef5",line:"#fde68a",accent:"#ca8a04"},font:fonts[5][0],icons:"large"},
+{id:"night",name:"نجوم الليل",emoji:"🌙",colors:{navy:"#111827",navy2:"#374151",bg:"#111827",ink:"#f9fafb",panel:"#1f2937",line:"#4b5563",accent:"#60a5fa"},font:fonts[2][0],icons:"minimal"},
+{id:"mint",name:"نعناع هادئ",emoji:"🍃",colors:{navy:"#115e59",navy2:"#0d9488",bg:"#f0fdfa",ink:"#134e4a",panel:"#fff",line:"#99f6e4",accent:"#0f766e"},font:fonts[6][0],icons:"soft"},
+{id:"rose",name:"ورود جميلة",emoji:"🌸",colors:{navy:"#881337",navy2:"#e11d48",bg:"#fff1f2",ink:"#4c0519",panel:"#fff",line:"#fecdd3",accent:"#e11d48"},font:fonts[4][0],icons:"colorful"},
+{id:"space",name:"مغامرة الفضاء",emoji:"🚀",colors:{navy:"#1e3a8a",navy2:"#2563eb",bg:"#eff6ff",ink:"#172554",panel:"#fff",line:"#bfdbfe",accent:"#2563eb"},font:fonts[2][0],icons:"large"},
+{id:"classic",name:"القراءة الكلاسيكية",emoji:"📚",colors:{navy:"#78350f",navy2:"#a16207",bg:"#fffbeb",ink:"#422006",panel:"#fffefa",line:"#f5deb3",accent:"#a16207"},font:fonts[7][0],icons:"minimal"}];
+const colorFields:[keyof Colors,string][]=[["navy","الشريط الرئيسي"],["navy2","الأزرار"],["accent","الروابط"],["bg","خلفية الصفحات"],["panel","البطاقات"],["ink","لون الكتابة"],["line","الحدود"]];
+const clamp=(v:unknown,d:number)=>Math.min(1,Math.max(0,Number.isFinite(Number(v))?Number(v):d));
+function compressImage(file:File):Promise<string>{return new Promise((resolve,reject)=>{
+if(!["image/jpeg","image/png","image/webp"].includes(file.type))return reject(new Error("اختر صورة JPG أو PNG أو WEBP."));
+if(file.size>12*1024*1024)return reject(new Error("اختر صورة أقل من 12 ميجابايت."));
+const reader=new FileReader();reader.onerror=()=>reject(new Error("تعذرت قراءة الصورة."));
+reader.onload=()=>{const img=new Image();img.onerror=()=>reject(new Error("ملف الصورة غير صالح."));
+img.onload=()=>{let scale=Math.min(1,1400/Math.max(img.width,img.height)),quality=.76,data="";
+for(let i=0;i<14;i++){const c=document.createElement("canvas");c.width=Math.max(1,Math.round(img.width*scale));c.height=Math.max(1,Math.round(img.height*scale));const x=c.getContext("2d");if(!x)return reject(new Error("تعذر تجهيز الصورة."));x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);data=c.toDataURL("image/jpeg",quality);if(data.length<=245000)return resolve(data);if(quality>.48)quality-=.07;else{scale*=.82;quality=.56;}}
+if(data.length<=245000)resolve(data);else reject(new Error("الصورة كبيرة بعد الضغط؛ اختر صورة أصغر."));};img.src=String(reader.result);};reader.readAsDataURL(file);});}
 
-function compressImage(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return reject(new Error("اختر صورة JPG أو PNG أو WEBP."));
-    if (file.size > 12 * 1024 * 1024) return reject(new Error("حجم الصورة الأصلي كبير جدًا؛ اختر صورة أقل من 12 ميجابايت."));
-    const reader = new FileReader();
-    reader.onerror = () => reject(new Error("تعذرت قراءة الصورة من الجهاز."));
-    reader.onload = () => {
-      const image = new Image();
-      image.onerror = () => reject(new Error("ملف الصورة غير صالح."));
-      image.onload = () => {
-        let scale = Math.min(1, 1400 / Math.max(image.width, image.height));
-        let quality = 0.76;
-        let data = "";
-        for (let attempt = 0; attempt < 12; attempt++) {
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.max(1, Math.round(image.width * scale));
-          canvas.height = Math.max(1, Math.round(image.height * scale));
-          const context = canvas.getContext("2d");
-          if (!context) return reject(new Error("تعذر تجهيز الصورة."));
-          context.fillStyle = "#ffffff";
-          context.fillRect(0, 0, canvas.width, canvas.height);
-          context.drawImage(image, 0, 0, canvas.width, canvas.height);
-          data = canvas.toDataURL("image/jpeg", quality);
-          if (data.length <= 245000) return resolve(data);
-          if (quality > 0.48) quality -= 0.08;
-          else { scale *= 0.82; quality = 0.58; }
-        }
-        if (data.length <= 245000) resolve(data);
-        else reject(new Error("الصورة ما زالت كبيرة بعد الضغط. اختر صورة أصغر أو بدقة أقل."));
-      };
-      image.src = String(reader.result);
-    };
-    reader.readAsDataURL(file);
-  });
-}
+export default function ThemeSettings(){
+const {profile}=useAuth();const [colors,setColors]=useState<Colors>(base);const [themeId,setThemeId]=useState("ocean");
+const [fontFamily,setFontFamily]=useState<string>(fonts[0][0]);const [iconTheme,setIconTheme]=useState("colorful");
+const [backgroundImage,setBackgroundImage]=useState("");const [brandImage,setBrandImage]=useState("");const [kidsImage,setKidsImage]=useState("");
+const [backgroundOpacity,setBackgroundOpacity]=useState(.25);const [brandOpacity,setBrandOpacity]=useState(.3);const [kidsOpacity,setKidsOpacity]=useState(.3);
+const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [uploading,setUploading]=useState("");const [message,setMessage]=useState("");
+useEffect(()=>onSnapshot(doc(db,"themeSettings","global"),s=>{if(s.exists()){const d=s.data();setColors(Object.fromEntries(colorFields.map(([k])=>[k,String(d[k]??base[k])])) as Colors);
+setThemeId(themes.some(t=>t.id===d.themeId)?String(d.themeId):"ocean");setFontFamily(fonts.some(f=>f[0]===d.fontFamily)?String(d.fontFamily):fonts[0][0]);setIconTheme(["colorful","soft","minimal","large"].includes(String(d.iconTheme))?String(d.iconTheme):"colorful");
+setBackgroundImage(typeof d.backgroundImageData==="string"?d.backgroundImageData:"");setBrandImage(typeof d.brandImageData==="string"?d.brandImageData:"");setKidsImage(typeof d.kidsImageData==="string"?d.kidsImageData:"");
+setBackgroundOpacity(clamp(d.backgroundOpacity,.25));setBrandOpacity(clamp(d.brandOpacity,.3));setKidsOpacity(clamp(d.kidsOpacity,.3));}setLoading(false);},()=>{setLoading(false);setMessage("تعذر تحميل إعدادات الثيمات.");}),[]);
+if(profile?.role!=="admin")return <section className="panel"><h2>غير مسموح</h2><p>هذا القسم متاح لمدير المنصة فقط.</p></section>;
+const choose=(t:Theme)=>{setThemeId(t.id);setColors(t.colors);setFontFamily(t.font);setIconTheme(t.icons);setMessage("تم اختيار الثيم بخطه وأيقوناته. اضغط حفظ وتطبيق.");};
+const handleImage=async(e:ChangeEvent<HTMLInputElement>,kind:string)=>{const file=e.target.files?.[0];if(!file)return;setUploading(kind);setMessage("");try{const data=await compressImage(file);if(kind==="background")setBackgroundImage(data);else if(kind==="brand")setBrandImage(data);else setKidsImage(data);setMessage("تم تجهيز الصورة للمعاينة. اضغط حفظ وتطبيق.");}catch(err){setMessage(err instanceof Error?err.message:"تعذر تجهيز الصورة.");e.target.value="";}finally{setUploading("");}};
+const save=async()=>{setSaving(true);setMessage("");try{await setDoc(doc(db,"themeSettings","global"),{...colors,themeId,fontFamily,iconTheme,backgroundImageData:backgroundImage||null,brandImageData:brandImage||null,kidsImageData:kidsImage||null,backgroundOpacity,brandOpacity,kidsOpacity,updatedAt:new Date().toISOString(),updatedBy:profile.uid});setMessage("تم حفظ الثيم والصور والشفافية وتطبيقها لجميع المستخدمين.");}catch{setMessage("تعذر الحفظ. تحقق من اتصال الإنترنت وصلاحيات Firestore.");}finally{setSaving(false);}};
+const imageCard=(title:string,desc:string,kind:string,value:string,opacity:number,setOpacity:(n:number)=>void,preview:string)=> <article className="theme-upload-card" key={kind}><h4>{title}</h4><p>{desc}</p><label className="theme-upload-button">📷 اختر صورة من الجهاز<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e=>void handleImage(e,kind)}/></label>{uploading===kind&&<small>جارٍ ضغط الصورة…</small>}<label className="theme-opacity-control">شفافية الصورة <b>{Math.round(opacity*100)}%</b><input type="range" min="0" max="1" step=".05" value={opacity} onChange={e=>setOpacity(Number(e.target.value))}/></label><div className={preview} style={{backgroundImage:value?"linear-gradient(rgba(255,255,255,"+(1-opacity)+"),rgba(255,255,255,"+(1-opacity)+")),url("+JSON.stringify(value)+")":undefined,backgroundColor:colors.bg}}>{kind==="brand"?"منصة المستقبل التعليمية":kind==="kids"?"📖 الطفل والطفلة يقرآن القرآن":"معاينة خلفية المنصة"}</div>{value&&<button type="button" className="btn ghost" onClick={()=>kind==="background"?setBackgroundImage(""):kind==="brand"?setBrandImage(""):setKidsImage("")}>إزالة الصورة</button>}</article>;
+return <section className="panel theme-settings"><h2>🎨 استوديو الثيمات والخلفيات</h2><p>10 ثيمات جاهزة، وكل ثيم يغير الألوان والخط والأيقونات معًا. ويمكنك تخصيص الصور والشفافية.</p>{loading&&<p>جارٍ تحميل الإعدادات…</p>}
+<h3>1. اختر واحدًا من 10 ثيمات</h3><div className="theme-presets theme-presets-ten">{themes.map(t=><button type="button" key={t.id} className={themeId===t.id?"theme-preset active":"theme-preset"} onClick={()=>choose(t)}><span>{t.emoji} {t.name}</span><div className="theme-swatch-row"><i style={{background:t.colors.navy}}/><i style={{background:t.colors.navy2}}/><i style={{background:t.colors.bg}}/></div><small>{fonts.find(f=>f[0]===t.font)?.[1]} · {t.icons==="colorful"?"ملونة":t.icons==="soft"?"ناعمة":t.icons==="large"?"كبيرة":"بسيطة"}</small></button>)}</div>
+<h3>2. تخصيص الخط والأيقونات</h3><div className="theme-style-controls"><label className="theme-style-field">نوع الخط<select value={fontFamily} onChange={e=>{setFontFamily(e.target.value);setThemeId("custom");}}>{fonts.map(([v,n])=><option key={v} value={v}>{n}</option>)}</select></label><label className="theme-style-field">شكل الأيقونات<select value={iconTheme} onChange={e=>{setIconTheme(e.target.value);setThemeId("custom");}}><option value="colorful">🎨 ملونة للأطفال</option><option value="soft">🫧 ناعمة ومستديرة</option><option value="minimal">✦ بسيطة</option><option value="large">⭐ كبيرة وواضحة</option></select></label></div>
+<div className="theme-typography-preview" style={{fontFamily}}><strong>منصة المستقبل التعليمية</strong><p>نتعلم القرآن والعلوم بالمرح واللعب.</p><small>معاينة مباشرة للخط المختار.</small></div>
+<h3>3. تعديل الألوان</h3><div className="theme-fields">{colorFields.map(([key,label])=><label className="theme-color-field" key={key}><span>{label}</span><input type="color" value={colors[key]} onChange={e=>{setColors(old=>({...old,[key]:e.target.value}));setThemeId("custom");}}/><code>{colors[key]}</code></label>)}</div>
+<h3>4. الصور والتحكم في الشفافية</h3><p>صورة خلف المنصة، وصورة خلف اسمها، وصورة خلف رسم الطفل والطفلة قارئي القرآن.</p><div className="theme-upload-grid">
 
-export default function ThemeSettings() {
-  const { profile } = useAuth();
-  const [colors, setColors] = useState<Colors>(defaults);
-  const [backgroundImage, setBackgroundImage] = useState("");
-  const [brandImage, setBrandImage] = useState("");
-  const [fontFamily, setFontFamily] = useState("Cairo, system-ui, sans-serif");
-  const [fontScale, setFontScale] = useState("1");
-  const [iconTheme, setIconTheme] = useState("colorful");
-  const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState<"background" | "brand" | "">("");
-  const [message, setMessage] = useState("");
-
-  useEffect(() => onSnapshot(doc(db, "themeSettings", "global"), snapshot => {
-    if (snapshot.exists()) {
-      const saved = snapshot.data();
-      setColors({
-        navy: String(saved.navy ?? defaults.navy), navy2: String(saved.navy2 ?? defaults.navy2),
-        bg: String(saved.bg ?? defaults.bg), ink: String(saved.ink ?? defaults.ink),
-        panel: String(saved.panel ?? defaults.panel), line: String(saved.line ?? defaults.line),
-        accent: String(saved.accent ?? defaults.accent),
-      });
-      setBackgroundImage(typeof saved.backgroundImageData === "string" ? saved.backgroundImageData : "");
-      setBrandImage(typeof saved.brandImageData === "string" ? saved.brandImageData : "");
-      setFontFamily(typeof saved.fontFamily === "string" ? saved.fontFamily : "Cairo, system-ui, sans-serif");
-      setFontScale(["0.95", "1", "1.08", "1.15"].includes(String(saved.fontScale)) ? String(saved.fontScale) : "1");
-      setIconTheme(["colorful", "soft", "minimal", "large"].includes(String(saved.iconTheme)) ? String(saved.iconTheme) : "colorful");
-    }
-    setLoading(false);
-  }, () => { setLoading(false); setMessage("تعذر تحميل إعدادات الخلفيات. تحقق من الاتصال."); }), []);
-
-  if (profile?.role !== "admin") return <section className="panel"><h2>غير مسموح</h2><p>هذا القسم متاح لمدير المنصة فقط.</p></section>;
-
-  const handleImage = async (event: ChangeEvent<HTMLInputElement>, kind: "background" | "brand") => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setUploading(kind);
-    setMessage("");
-    try {
-      const data = await compressImage(file);
-      if (kind === "background") setBackgroundImage(data);
-      else setBrandImage(data);
-      setMessage("تم تجهيز الصورة ومعاينتها. اضغط حفظ وتطبيق لتظهر للجميع.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "تعذر تجهيز الصورة.");
-      event.target.value = "";
-    } finally { setUploading(""); }
-  };
-
-  const save = async () => {
-    setSaving(true);
-    setMessage("");
-    try {
-      await setDoc(doc(db, "themeSettings", "global"), {
-        ...colors,
-        backgroundImageData: backgroundImage || null,
-        brandImageData: brandImage || null,
-        fontFamily, fontScale: Number(fontScale), iconTheme,
-        updatedAt: new Date().toISOString(),
-        updatedBy: profile.uid,
-      });
-      setMessage("تم حفظ الخلفيات والألوان وتطبيقها على المنصة لجميع المستخدمين.");
-    } catch {
-      setMessage("تعذر الحفظ. تأكد من اتصال الإنترنت وأن قواعد Firestore تسمح للمدير بتعديل إعدادات الخلفية.");
-    } finally { setSaving(false); }
-  };
-
-  const colorInput = (key: keyof Colors, label: string) => (
-    <label key={key} className="theme-color-field">
-      <span>{label}</span><input aria-label={label} type="color" value={colors[key]} onChange={event => setColors(old => ({ ...old, [key]: event.target.value }))} />
-      <code>{colors[key]}</code>
-    </label>
-  );
-
-  return <section className="panel theme-settings">
-    <h2>🎨 إدارة الثيمات والخلفيات</h2>
-    <p>هذا القسم خاص بالمدير فقط. غيّر الألوان والخطوط والأيقونات والخلفيات، ثم احفظ لتظهر التغييرات عند جميع المستخدمين.</p>
-    {loading && <p role="status">جارٍ تحميل الإعدادات المحفوظة…</p>}
-
-    <h3>1. الألوان الأساسية</h3>
-    <div className="theme-presets">
-      {presets.map(p => <button type="button" key={p.name} className="theme-preset" onClick={() => setColors(p.colors)}>
-        <span>{p.name}</span><i style={{ background: p.colors.navy }} /><i style={{ background: p.colors.navy2 }} /><i style={{ background: p.colors.bg, border: "1px solid #bbb" }} />
-      </button>)}
-    </div>
-    <h3>تعديل كل لون يدويًا</h3>
-    <div className="theme-fields">{fields.map(([key, label]) => colorInput(key, label))}</div>
-
-    <h3>2. ثيمات الخطوط وطريقة الكتابة</h3>
-    <div className="theme-style-controls">
-      <label className="theme-style-field">نوع الخط
-        <select value={fontFamily} onChange={event => setFontFamily(event.target.value)}>
-          <option value="Cairo, system-ui, sans-serif">القاهرة (Cairo)</option>
-          <option value="Tahoma, Arial, sans-serif">Tahoma</option>
-          <option value="Arial, sans-serif">Arial</option>
-          <option value="Georgia, serif">Georgia</option>
-          <option value="system-ui, sans-serif">خط الجهاز الافتراضي</option>
-        </select>
-      </label>
-      <label className="theme-style-field">حجم الكتابة
-        <select value={fontScale} onChange={event => setFontScale(event.target.value)}>
-          <option value="0.95">صغير</option><option value="1">متوسط</option>
-          <option value="1.08">كبير</option><option value="1.15">كبير جدًا</option>
-        </select>
-      </label>
-    </div>
-    <div className="theme-typography-preview" style={{ fontFamily, fontSize: `calc(1rem * ${fontScale})` }}>
-      <strong>منصة المستقبل التعليمية</strong><p>نتعلم ونبدع ونحقق النجاح معًا.</p><small>معاينة شكل العناوين والنصوص داخل المنصة</small>
-    </div>
-
-    <h3>3. ثيمات الأيقونات</h3>
-    <div className="theme-icon-options">
-      {[
-        { id: "colorful", name: "ملونة للأطفال", icon: "🌈" },
-        { id: "soft", name: "ناعمة ومستديرة", icon: "🫧" },
-        { id: "minimal", name: "بسيطة وهادئة", icon: "✦" },
-        { id: "large", name: "كبيرة وواضحة", icon: "⭐" },
-      ].map(option => <button type="button" key={option.id} className={iconTheme === option.id ? "theme-icon-choice selected" : "theme-icon-choice"} onClick={() => setIconTheme(option.id)}>
-        <span>{option.icon}</span><b>{option.name}</b><small>{iconTheme === option.id ? "الثيم المختار" : "اختيار الثيم"}</small>
-      </button>)}
-    </div>
-
-    <div className="theme-upload-grid">
-      <article className="theme-upload-card">
-        <h3>4. خلفية المنصة بالكامل</h3>
-        <p>تظهر خلف صفحات المنصة والأقسام.</p>
-        <label className="theme-upload-button">📷 اختر صورة الخلفية من الجهاز
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void handleImage(event, "background")} />
-        </label>
-        {uploading === "background" && <p role="status">جارٍ ضغط الصورة…</p>}
-        <div className="theme-image-preview theme-background-preview" style={{ backgroundColor: colors.bg, backgroundImage: backgroundImage ? `linear-gradient(rgba(10,25,50,.12),rgba(10,25,50,.12)),url("${backgroundImage}")` : undefined }}>
-          {!backgroundImage && <span>معاينة خلفية المنصة</span>}
-        </div>
-        {backgroundImage && <button type="button" className="btn ghost" onClick={() => setBackgroundImage("")}>إزالة صورة الخلفية</button>}
-      </article>
-
-      <article className="theme-upload-card">
-        <h3>5. الصورة خلف اسم المنصة</h3>
-        <p>تظهر خلف اسم «منصة المستقبل التعليمية» في الشريط العلوي.</p>
-        <label className="theme-upload-button">🖼️ اختر صورة اسم المنصة من الجهاز
-          <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void handleImage(event, "brand")} />
-        </label>
-        {uploading === "brand" && <p role="status">جارٍ ضغط الصورة…</p>}
-        <div className="theme-brand-preview" style={{ backgroundImage: brandImage ? `linear-gradient(120deg,rgba(9,30,55,.72),rgba(9,30,55,.35)),url("${brandImage}")` : undefined }}>
-          <strong>منصة المستقبل التعليمية</strong>
-        </div>
-        {brandImage && <button type="button" className="btn ghost" onClick={() => setBrandImage("")}>إزالة صورة الاسم</button>}
-      </article>
-    </div>
-
-    <div className="theme-preview" style={{ background: colors.bg, color: colors.ink, borderColor: colors.line }}>
-      <strong>معاينة الألوان</strong><div className="theme-preview-bar" style={{ background: colors.navy }}>منصة المستقبل التعليمية</div>
-      <div className="theme-preview-card" style={{ background: colors.panel, borderColor: colors.line }}>
-        مثال على بطاقة داخل المنصة <button type="button" style={{ background: colors.navy2 }}>زر تجريبي</button><a style={{ color: colors.accent }}>رابط تجريبي</a>
-      </div>
-    </div>
-    <div className="theme-actions">
-      <button className="btn" type="button" disabled={saving || loading || !!uploading} onClick={() => void save()}>{saving ? "جارٍ الحفظ…" : "💾 حفظ وتطبيق على المنصة"}</button>
-      <button className="btn ghost" type="button" disabled={saving} onClick={() => { setColors(defaults); setBackgroundImage(""); setBrandImage(""); setFontFamily("Cairo, system-ui, sans-serif"); setFontScale("1"); setIconTheme("colorful"); }}>استعادة الشكل الافتراضي</button>
-    </div>
-    {message && <p role="status" className="theme-message">{message}</p>}
-    <p className="note">ملاحظة: لتجنب Firebase Storage المدفوع، يتم ضغط الصور وحفظها داخل إعدادات Firestore. احتفظ بصور صغيرة الحجم؛ الحد الأقصى بعد الضغط 245 كيلوبايت لكل صورة.</p>
-  </section>;
+</div>
+<div className="theme-preview" style={{background:colors.bg,color:colors.ink,borderColor:colors.line,fontFamily}}><strong>منصة المستقبل التعليمية</strong><div className="theme-preview-bar" style={{background:colors.navy}}>رحلتي التعليمية</div><div className="theme-preview-card" style={{background:colors.panel,borderColor:colors.line}}>📚 درس اليوم <button type="button" style={{background:colors.navy2}}>ابدأ التعلم</button><a style={{color:colors.accent}}>المزيد</a></div></div>
+<div className="theme-actions"><button className="btn" type="button" disabled={saving||loading||!!uploading} onClick={()=>void save()}>{saving?"جارٍ الحفظ…":"💾 حفظ وتطبيق الثيم على الجميع"}</button><button className="btn ghost" type="button" disabled={saving} onClick={()=>choose(themes[0])}>العودة لثيم بحر المرح</button></div>{message&&<p role="status" className="theme-message">{message}</p>}<p className="note">يتم ضغط الصور وحفظها في Firestore دون Firebase Storage. الحد الأقصى 245 كيلوبايت لكل صورة.</p></section>;
 }

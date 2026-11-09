@@ -13,7 +13,6 @@ const grades = [
 export default function BookLibrary() {
   const [system, setSystem] = useState<System>("general");
   const [grade, setGrade] = useState(1);
-  const [term, setTerm] = useState("first");
   const selected = useMemo(() => grades.find(item => item.id === grade)!, [grade]);
   const catalogUrl = system === "azhar"
     ? `https://miskeg.app/books/azhar-primary-${grade}/`
@@ -38,17 +37,10 @@ export default function BookLibrary() {
           {grades.map(item => <option key={item.id} value={item.id}>{item.label}</option>)}
         </select>
       </label>
-      <label>الفصل الدراسي
-        <select value={term} onChange={event => setTerm(event.target.value)}>
-          <option value="first">الفصل الدراسي الأول</option>
-          <option value="second">الفصل الدراسي الثاني</option>
-          <option value="full">العام الدراسي كاملًا</option>
-        </select>
-      </label>
     </div>
     <article className="card c0" style={{ marginTop: 16 }}>
       <h3>{selected.label} — {system === "general" ? "التعليم العام" : "التعليم الأزهري"}</h3>
-      <p>الكتب المعروضة من فهرس روابط الكتب، والملفات تفتح من المصدر الذي يستضيفها. قد يختلف توفر كتب الترم الثاني حسب نشر الجهة التعليمية.</p>
+      <p>الكتب المعروضة من فهرس روابط الكتب، والملفات تفتح من المصدر الذي يستضيفها. بعض الفهارس تعرض كتب الترم الأول، بينما فهارس الأزهر قد تعرض كتب العام كاملًا.</p>
       <div className="row" style={{ flexWrap: "wrap", gap: 10 }}>
         <a className="btn" href={catalogUrl} target="_blank" rel="noopener noreferrer">📖 تصفح كتب الصف</a>
         <a className="btn" href={officialUrl} target="_blank" rel="noopener noreferrer">🏛️ المكتبة الرسمية للجهة التعليمية</a>

@@ -6,6 +6,8 @@ type Subject = { subjectId: string; gradeId: string; subjectCode: string; name: 
 type Lesson = { lessonId: string; order: number; title: string; microGoal: string };
 type Unit = { unitId: string; subjectId: string; gradeId: string; order: number; title: string; lessons: Lesson[]; checkpoint: Record<string, unknown>; unitQuiz: Record<string, unknown> };
 type Curriculum = { schemaVersion: string; gradeCatalog: Grade[]; subjectCatalog: Subject[]; units: Unit[]; lessonFlow: Array<Record<string, unknown>> };
+type SourceGrade = { gradeId: string; gradeName: string; officialBookCount: number; catalogUrl: string; availability: string; subjects: string[]; note: string };
+type SourceCatalog = { schoolYear: string; officialPortal: string; checkedAt: string; grades: SourceGrade[] };
 
 type ImportRecord = { id: string; data: Record<string, unknown> };
 const COLLECTIONS = ["curriculumGrades", "curriculumSubjects", "curriculumUnits", "curriculumLessons", "curriculumAssessments"] as const;
@@ -56,6 +58,7 @@ function buildImportRecords(map: Curriculum): Array<{ collection: typeof COLLECT
 
 export default function CurriculumManager() {
   const [map, setMap] = useState<Curriculum | null>(null);
+  const [sourceCatalog, setSourceCatalog] = useState<SourceCatalog | null>(null);
   const [gradeId, setGradeId] = useState("kg1");
   const [subjectId, setSubjectId] = useState("");
   const [loading, setLoading] = useState(true);
@@ -65,19 +68,26 @@ export default function CurriculumManager() {
 
   useEffect(() => {
     let active = true;
-    fetch("/curriculum-map.json", { cache: "no-store" })
-      .then(response => {
+    Promise.all([
+      fetch("/curriculum-map.json", { cache: "no-store" }).then(response => {
         if (!response.ok) throw new Error("تعذّر تحميل ملف خريطة المنهج.");
-        return response.json();
-      })
-      .then((data: Curriculum) => {
+        return response.json() as Promise<Curriculum>;
+      }),
+      fetch("/primary-curriculum-sources-2026-2027.json", { cache: "no-store" }).then(response => {
+        if (!response.ok) throw new Error("تعذّر تحميل فهرس مصادر الكتب الرسمية.");
+        return response.json() as Promise<SourceCatalog>;
+      }),
+    ])
+      .then(([data, sources]) => {
         if (!data.gradeCatalog || !data.subjectCatalog || !data.units || !data.lessonFlow) {
           throw new Error("ملف المنهج لا يحتوي على البنية المطلوبة.");
         }
         if (!active) return;
         setMap(data);
-        setGradeId(data.gradeCatalog[0]?.gradeId ?? "");
-        setSubjectId(data.subjectCatalog.find(s => s.gradeId === data.gradeCatalog[0]?.gradeId)?.subjectId ?? "");
+        setSourceCatalog(sources);
+        const firstPrimary = data.gradeCatalog.find(grade => grade.gradeId === "g1") ?? data.gradeCatalog[0];
+        setGradeId(firstPrimary?.gradeId ?? "");
+        setSubjectId(data.subjectCatalog.find(s => s.gradeId === firstPrimary?.gradeId)?.subjectId ?? "");
       })
       .catch(error => { if (active) setMessage({ ok: false, text: error instanceof Error ? error.message : "تعذّر تحميل المنهج." }); })
       .finally(() => { if (active) setLoading(false); });
@@ -184,6 +194,22 @@ export default function CurriculumManager() {
       </article>)}
       {!units.length && <p className="note">لا توجد وحدات لهذه المادة في هذا الصف.</p>}
     </div>
+
+    {sourceCatalog && (() => {
+      const source = sourceCatalog.grades.find(item => item.gradeId === gradeId);
+      if (!source) return null;
+      return <section className="panel curriculum-source-panel">
+        <div><h3>مصادر الكتب الرسمية للعام {sourceCatalog.schoolYear}</h3>
+          <p>{source.gradeName}: {source.officialBookCount} كتابًا مدرسيًا مسجلًا في فهرس الترم الأول. تاريخ مراجعة الفهرس: {sourceCatalog.checkedAt}.</p>
+          <p><b>المواد:</b> {source.subjects.join("، ")}</p>
+          <p className="note">تنبيه: روابط الفهرس تفتح الكتب من خوادم الوزارة. فهرس الوحدات والدروس التفصيلي والامتحانات المرتبطة بها لا يُعتمد إلا بعد مراجعة ملف كل كتاب.</p>
+        </div>
+        <div className="curriculum-source-links">
+          <a className="btn" href={source.catalogUrl} target="_blank" rel="noreferrer">فتح كتب الصف في الفهرس</a>
+          <a href={sourceCatalog.officialPortal} target="_blank" rel="noreferrer">المكتبة الإلكترونية الرسمية للوزارة</a>
+        </div>
+      </section>;
+    })()}
 
     <section className="panel curriculum-import">
       <div><h3>استيراد المنهج إلى قاعدة البيانات</h3>

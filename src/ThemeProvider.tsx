@@ -7,7 +7,7 @@ const opacity=(v:unknown,d:number)=>Math.min(1,Math.max(0,Number.isFinite(Number
 export default function ThemeProvider({children}:{children:ReactNode}){
 useEffect(()=>{const root=document.documentElement;const apply=(v:Record<string,unknown>)=>{
 Object.entries(defaults).forEach(([k,f])=>{const x=v[k];root.style.setProperty("--"+k,typeof x==="string"&&/^#[0-9a-fA-F]{6}$/.test(x)?x:f);});
-const fonts=["Cairo, Tahoma, sans-serif","Tahoma, Arial, sans-serif","Arial, sans-serif","Georgia, serif","'Trebuchet MS', sans-serif","Verdana, sans-serif","'Segoe UI', Tahoma, sans-serif","'Times New Roman', serif","system-ui, sans-serif","'Courier New', monospace"];
+const fonts=["Cairo, Tahoma, sans-serif","Tajawal, Tahoma, sans-serif","Almarai, Tahoma, sans-serif","'IBM Plex Sans Arabic', Tahoma, sans-serif","Alexandria, Tahoma, sans-serif","Changa, Tahoma, sans-serif","'Noto Naskh Arabic', serif","Amiri, serif","Tahoma, Arial, sans-serif","Arial, sans-serif","Georgia, serif","'Trebuchet MS', sans-serif","Verdana, sans-serif","'Segoe UI', Tahoma, sans-serif","'Times New Roman', serif","system-ui, sans-serif"];
 root.style.setProperty("--platform-font-family",typeof v.fontFamily==="string"&&fonts.includes(v.fontFamily)?v.fontFamily:fonts[0]);
 root.dataset.iconTheme=["colorful","soft","minimal","large"].includes(String(v.iconTheme))?String(v.iconTheme):"colorful";
 root.dataset.themeId=typeof v.themeId==="string"&&/^(ocean|garden|candy|violet|sun|night|mint|rose|space|classic)$/.test(v.themeId)?v.themeId:"ocean";

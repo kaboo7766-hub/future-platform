@@ -78,3 +78,19 @@ body{background-color:var(--bg)!important;background-attachment:fixed}
 /* User-requested removal of the Quran-reading child illustrations and their image layer. */
 .dashboard-layout .cover-kids{display:none!important}
 .dashboard-layout .cover-info-centered::before{display:none!important;background-image:none!important}
+
+/* Full dashboard banner controls: background image/color, height and title typography. */
+.dashboard-layout .cover{position:relative;isolation:isolate;min-height:var(--platform-banner-height,230px);background-color:var(--platform-banner-color,#087eaa)!important;background-image:none!important;overflow:hidden}
+.dashboard-layout .cover::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;background-image:var(--platform-banner-image,none);background-size:cover;background-position:center;background-repeat:no-repeat;opacity:var(--platform-banner-opacity,1)}
+.dashboard-layout .cover-info-centered{position:relative;z-index:1;min-height:calc(var(--platform-banner-height,230px) - 54px);background:transparent!important;color:var(--platform-title-color,#fff)}
+.dashboard-layout .cover-title-wrap{background:transparent!important;position:relative;z-index:2}
+.dashboard-layout .cover-title-wrap h2{font-family:var(--platform-title-font,var(--platform-font-family,Cairo,Tahoma,sans-serif))!important;font-size:var(--platform-title-size,32px)!important;color:var(--platform-title-color,#fff)!important;background:none!important;-webkit-text-fill-color:var(--platform-title-color,#fff)!important;text-shadow:0 2px 7px rgba(0,0,0,.45)}
+.dashboard-layout .cover-title-wrap p{color:var(--platform-title-color,#fff)!important;text-shadow:0 1px 5px rgba(0,0,0,.45)}
+.dashboard-layout .cover .stats{position:relative;z-index:1;background:rgba(255,255,255,.82);backdrop-filter:blur(8px)}
+.theme-banner-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:1rem 0}
+.theme-banner-controls>label{display:grid;gap:.35rem;align-content:start;font-weight:700;min-width:0}
+.theme-banner-controls input[type=color]{width:56px;height:40px;padding:2px}
+.theme-banner-controls input[type=range],.theme-banner-controls select{width:100%;min-width:0}
+.theme-banner-live-preview{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border:2px solid var(--line);border-radius:18px;background-position:center;background-size:cover;background-repeat:no-repeat;color:#fff;text-align:center;text-shadow:0 2px 7px #0008;overflow:hidden}
+.theme-banner-live-preview small{font-size:.85rem}
+@media(max-width:600px){.theme-banner-controls{grid-template-columns:1fr}.dashboard-layout .cover-info-centered{min-height:calc(var(--platform-banner-height,230px) - 45px)}}

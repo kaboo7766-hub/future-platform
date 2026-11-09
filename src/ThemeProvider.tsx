@@ -10,6 +10,7 @@ Object.entries(defaults).forEach(([k,f])=>{const x=v[k];root.style.setProperty("
 const fonts=["Cairo, Tahoma, sans-serif","Tahoma, Arial, sans-serif","Arial, sans-serif","Georgia, serif","'Trebuchet MS', sans-serif","Verdana, sans-serif","'Segoe UI', Tahoma, sans-serif","'Times New Roman', serif","system-ui, sans-serif","'Courier New', monospace"];
 root.style.setProperty("--platform-font-family",typeof v.fontFamily==="string"&&fonts.includes(v.fontFamily)?v.fontFamily:fonts[0]);
 root.dataset.iconTheme=["colorful","soft","minimal","large"].includes(String(v.iconTheme))?String(v.iconTheme):"colorful";
+root.dataset.themeId=typeof v.themeId==="string"&&/^(ocean|garden|candy|violet|sun|night|mint|rose|space|classic)$/.test(v.themeId)?v.themeId:"ocean";
 const bg=safeImage(v.backgroundImageData),brand=safeImage(v.brandImageData),kids=safeImage(v.kidsImageData);
 root.style.setProperty("--platform-bg-image",bg?'url("'+bg+'")':"none");root.style.setProperty("--brand-bg-image",brand?'url("'+brand+'")':"none");root.style.setProperty("--kids-bg-image",kids?'url("'+kids+'")':"none");
 root.style.setProperty("--platform-bg-opacity",String(opacity(v.backgroundOpacity,.25)));root.style.setProperty("--brand-bg-opacity",String(opacity(v.brandOpacity,.3)));root.style.setProperty("--kids-bg-opacity",String(opacity(v.kidsOpacity,.3)));

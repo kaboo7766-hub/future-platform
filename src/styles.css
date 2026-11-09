@@ -591,3 +591,10 @@ input:focus, select:focus, textarea:focus {
  .quran-tafsir-toggle>strong{font-size:.7rem}
  .quran-tafsir-item iframe{min-height:470px}
 }
+
+/* Classroom artwork supplied by the platform owner */
+.brand-with-photo{display:inline-flex;align-items:center;justify-content:center;min-height:52px;padding:.25rem .85rem;border-radius:16px;background-size:cover,cover;background-position:center,center;background-repeat:no-repeat;background-color:rgba(255,255,255,.88);background-blend-mode:soft-light;color:#12344a;text-shadow:0 1px 2px rgba(255,255,255,.95);box-shadow:0 2px 12px rgba(12,70,95,.12)}
+.hero2{background-size:cover;background-position:center;background-repeat:no-repeat;position:relative;isolation:isolate}
+.hero2-in{position:relative;z-index:1}
+.hero2 .h-title,.hero2 .h-sub,.hero2 .badge{text-shadow:0 1px 3px rgba(255,255,255,.7)}
+@media(max-width:600px){.brand-with-photo{font-size:.95rem;min-height:44px;padding:.2rem .55rem}.hero2{background-position:center,center}}

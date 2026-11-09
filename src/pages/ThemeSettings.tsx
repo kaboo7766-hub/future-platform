@@ -59,6 +59,9 @@ export default function ThemeSettings() {
   const [colors, setColors] = useState<Colors>(defaults);
   const [backgroundImage, setBackgroundImage] = useState("");
   const [brandImage, setBrandImage] = useState("");
+  const [fontFamily, setFontFamily] = useState("Cairo, system-ui, sans-serif");
+  const [fontScale, setFontScale] = useState("1");
+  const [iconTheme, setIconTheme] = useState("colorful");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<"background" | "brand" | "">("");
@@ -75,6 +78,9 @@ export default function ThemeSettings() {
       });
       setBackgroundImage(typeof saved.backgroundImageData === "string" ? saved.backgroundImageData : "");
       setBrandImage(typeof saved.brandImageData === "string" ? saved.brandImageData : "");
+      setFontFamily(typeof saved.fontFamily === "string" ? saved.fontFamily : "Cairo, system-ui, sans-serif");
+      setFontScale(["0.95", "1", "1.08", "1.15"].includes(String(saved.fontScale)) ? String(saved.fontScale) : "1");
+      setIconTheme(["colorful", "soft", "minimal", "large"].includes(String(saved.iconTheme)) ? String(saved.iconTheme) : "colorful");
     }
     setLoading(false);
   }, () => { setLoading(false); setMessage("تعذر تحميل إعدادات الخلفيات. تحقق من الاتصال."); }), []);
@@ -105,6 +111,7 @@ export default function ThemeSettings() {
         ...colors,
         backgroundImageData: backgroundImage || null,
         brandImageData: brandImage || null,
+        fontFamily, fontScale: Number(fontScale), iconTheme,
         updatedAt: new Date().toISOString(),
         updatedBy: profile.uid,
       });
@@ -122,8 +129,8 @@ export default function ThemeSettings() {
   );
 
   return <section className="panel theme-settings">
-    <h2>🎨 إدارة خلفيات وألوان المنصة</h2>
-    <p>هذا القسم خاص بالمدير فقط. اختر لونًا جاهزًا أو ارفع صورًا من جهازك، ثم احفظ لتظهر التغييرات عند الطلاب والمعلمين.</p>
+    <h2>🎨 إدارة الثيمات والخلفيات</h2>
+    <p>هذا القسم خاص بالمدير فقط. غيّر الألوان والخطوط والأيقونات والخلفيات، ثم احفظ لتظهر التغييرات عند جميع المستخدمين.</p>
     {loading && <p role="status">جارٍ تحميل الإعدادات المحفوظة…</p>}
 
     <h3>1. الألوان الأساسية</h3>
@@ -135,9 +142,43 @@ export default function ThemeSettings() {
     <h3>تعديل كل لون يدويًا</h3>
     <div className="theme-fields">{fields.map(([key, label]) => colorInput(key, label))}</div>
 
+    <h3>2. ثيمات الخطوط وطريقة الكتابة</h3>
+    <div className="theme-style-controls">
+      <label className="theme-style-field">نوع الخط
+        <select value={fontFamily} onChange={event => setFontFamily(event.target.value)}>
+          <option value="Cairo, system-ui, sans-serif">القاهرة (Cairo)</option>
+          <option value="Tahoma, Arial, sans-serif">Tahoma</option>
+          <option value="Arial, sans-serif">Arial</option>
+          <option value="Georgia, serif">Georgia</option>
+          <option value="system-ui, sans-serif">خط الجهاز الافتراضي</option>
+        </select>
+      </label>
+      <label className="theme-style-field">حجم الكتابة
+        <select value={fontScale} onChange={event => setFontScale(event.target.value)}>
+          <option value="0.95">صغير</option><option value="1">متوسط</option>
+          <option value="1.08">كبير</option><option value="1.15">كبير جدًا</option>
+        </select>
+      </label>
+    </div>
+    <div className="theme-typography-preview" style={{ fontFamily, fontSize: `calc(1rem * ${fontScale})` }}>
+      <strong>منصة المستقبل التعليمية</strong><p>نتعلم ونبدع ونحقق النجاح معًا.</p><small>معاينة شكل العناوين والنصوص داخل المنصة</small>
+    </div>
+
+    <h3>3. ثيمات الأيقونات</h3>
+    <div className="theme-icon-options">
+      {[
+        { id: "colorful", name: "ملونة للأطفال", icon: "🌈" },
+        { id: "soft", name: "ناعمة ومستديرة", icon: "🫧" },
+        { id: "minimal", name: "بسيطة وهادئة", icon: "✦" },
+        { id: "large", name: "كبيرة وواضحة", icon: "⭐" },
+      ].map(option => <button type="button" key={option.id} className={iconTheme === option.id ? "theme-icon-choice selected" : "theme-icon-choice"} onClick={() => setIconTheme(option.id)}>
+        <span>{option.icon}</span><b>{option.name}</b><small>{iconTheme === option.id ? "الثيم المختار" : "اختيار الثيم"}</small>
+      </button>)}
+    </div>
+
     <div className="theme-upload-grid">
       <article className="theme-upload-card">
-        <h3>2. خلفية المنصة بالكامل</h3>
+        <h3>4. خلفية المنصة بالكامل</h3>
         <p>تظهر خلف صفحات المنصة والأقسام.</p>
         <label className="theme-upload-button">📷 اختر صورة الخلفية من الجهاز
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void handleImage(event, "background")} />
@@ -150,7 +191,7 @@ export default function ThemeSettings() {
       </article>
 
       <article className="theme-upload-card">
-        <h3>3. الصورة خلف اسم المنصة</h3>
+        <h3>5. الصورة خلف اسم المنصة</h3>
         <p>تظهر خلف اسم «منصة المستقبل التعليمية» في الشريط العلوي.</p>
         <label className="theme-upload-button">🖼️ اختر صورة اسم المنصة من الجهاز
           <input type="file" accept="image/jpeg,image/png,image/webp" onChange={event => void handleImage(event, "brand")} />
@@ -171,7 +212,7 @@ export default function ThemeSettings() {
     </div>
     <div className="theme-actions">
       <button className="btn" type="button" disabled={saving || loading || !!uploading} onClick={() => void save()}>{saving ? "جارٍ الحفظ…" : "💾 حفظ وتطبيق على المنصة"}</button>
-      <button className="btn ghost" type="button" disabled={saving} onClick={() => { setColors(defaults); setBackgroundImage(""); setBrandImage(""); }}>استعادة الشكل الافتراضي</button>
+      <button className="btn ghost" type="button" disabled={saving} onClick={() => { setColors(defaults); setBackgroundImage(""); setBrandImage(""); setFontFamily("Cairo, system-ui, sans-serif"); setFontScale("1"); setIconTheme("colorful"); }}>استعادة الشكل الافتراضي</button>
     </div>
     {message && <p role="status" className="theme-message">{message}</p>}
     <p className="note">ملاحظة: لتجنب Firebase Storage المدفوع، يتم ضغط الصور وحفظها داخل إعدادات Firestore. احتفظ بصور صغيرة الحجم؛ الحد الأقصى بعد الضغط 245 كيلوبايت لكل صورة.</p>

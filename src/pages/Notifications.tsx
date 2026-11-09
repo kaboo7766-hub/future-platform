@@ -5,7 +5,7 @@ import { useAuth } from "../auth/AuthContext";
 interface N { id: string; title: string; body: string; ms: number }
 const getSeen = (k: string) => { try { return Number(localStorage.getItem(k) || 0); } catch { return 0; } };
 
-export default function Notifications() {
+export default function Notifications({ compact = false }: { compact?: boolean }) {
   const { profile } = useAuth(); const uid = profile!.uid;
   const staff = profile!.role === "admin" || profile!.role === "teacher";
   const key = `seen_${uid}`;
@@ -26,13 +26,16 @@ export default function Notifications() {
     try { await addDoc(collection(db, "notifications"), { audience: "all", title: f.title.trim(), body: f.body.trim(), at: serverTimestamp(), createdBy: uid }); setF({ title: "", body: "" }); setMsg({ ok: true, t: "تم إرسال الإعلان" }); }
     catch { setMsg({ ok: false, t: "تعذّر الإرسال" }); }
   };
-  return (<section className="panel">
-    <button className="btn" onClick={toggle} aria-expanded={open}>🔔 الإشعارات{unread > 0 && ` (${unread} جديد)`}</button>
-    {open && <div>{items.length === 0 ? <p className="note">لا توجد إشعارات.</p> : items.map(n => <p key={n.id}><b>{n.title}</b><br /><small>{n.body}</small></p>)}</div>}
-    {staff && <details><summary>إرسال إعلان عام</summary>
-      <input placeholder="العنوان" value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <textarea placeholder="نص الإعلان" value={f.body} onChange={e => setF({ ...f, body: e.target.value })} />
-      <button className="btn" onClick={send}>إرسال للجميع</button>
-      {msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</details>}
-  </section>);
+  return <section className={compact ? "notifications-widget notifications-compact" : "panel notifications-widget"}>
+    <button className={compact ? "notification-icon-button" : "btn"} onClick={toggle} aria-expanded={open} aria-label="الإشعارات">
+      {compact ? <>🔔{unread > 0 && <i>{unread > 9 ? "9+" : unread}</i>}</> : <>🔔 الإشعارات{unread > 0 && ` (${unread} جديد)`}</>}
+    </button>
+    {open && <div className="notification-popover">{items.length === 0 ? <p className="note">لا توجد إشعارات.</p> : items.map(n => <article key={n.id}><b>{n.title}</b><small>{n.body}</small></article>)}
+      {staff && <details><summary>إرسال إعلان عام</summary>
+        <input placeholder="العنوان" value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
+        <textarea placeholder="نص الإعلان" value={f.body} onChange={e => setF({ ...f, body: e.target.value })} />
+        <button className="btn" onClick={send}>إرسال للجميع</button>
+        {msg && <p className={msg.ok ? "ok" : "err"} role="alert">{msg.t}</p>}</details>}
+    </div>}
+  </section>;
 }

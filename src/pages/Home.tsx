@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { useSite, Characters, TeachersSection, TestimonialsSection, ContactSection } from "./HomeExtras";
-const chips = [["🖥️", "تعليم تفاعلي بجودة عالية"], ["💬", "متابعة مباشرة من المعلمين"], ["📊", "تقارير دورية لولي الأمر"], ["📝", "أنشطة واختبارات ذكية"]];
+const chips = [["🖥️", "تعليم تفاعلي بجودة عالية"], ["💬", "متابعة مباشرة من المعلمين"], ["📊", "تقارير دورية لولي الأمر"], ["📝", "أنشطة واختبارات ذكية"], ["🎥", "حصص مباشرة عبر الإنترنت"]];
 const features = [
   ["🎬", "دروس تفاعلية", "فيديو وملفات وتدريبات لكل درس"], ["✅", "اختبارات فورية", "تصحيح تلقائي ونتيجة في لحظتها"],
   ["🎮", "ألعاب تعليمية", "حروف وحساب وذاكرة بأصوات تشجيع"], ["👨‍👩‍👧", "متابعة ولي الأمر", "تقدم الأبناء ونقاط القوة والضعف"],
-  ["🏆", "نقاط وشهادات", "شارات إنجاز وشهادة عند إكمال المادة"], ["🔒", "تجربة آمنة", "صلاحيات منفصلة وحماية لبيانات الطلاب"],
+  ["🏆", "نقاط وشهادات", "شارات إنجاز وشهادة عند إكمال المادة"], ["🎥", "حصص مباشرة", "انضم إلى شرح المعلم عبر Zoom أو Google Meet"], ["🔒", "تجربة آمنة", "صلاحيات منفصلة وحماية لبيانات الطلاب"],
 ];
 const stages = ["التأسيس", "الأول", "الثاني", "الثالث", "الرابع", "الخامس", "السادس"];
 const why = [["🚀", "تطوير المهارات"], ["🕒", "تعلّم في أي وقت"], ["📈", "متابعة مستمرة"], ["🛡️", "بيئة تعليمية آمنة"], ["🧩", "محتوى ممتع"], ["🌍", "من أي مكان"]];
@@ -13,11 +13,12 @@ const faqs = [
   ["من يستطيع التسجيل؟", "الطلاب وأولياء الأمور بحساب مباشر، والمعلمون بطلب يعتمده مدير المنصة."],
   ["كيف يتابع ولي الأمر ابنه؟", "تربط الإدارة حساب ولي الأمر بحساب ابنه، فتظهر له الدروس المكتملة ونتائج الاختبارات والواجبات."],
   ["على أي أجهزة تعمل؟", "على الهاتف والجهاز اللوحي والكمبيوتر من المتصفح."],
+  ["كيف يدخل الطالب الحصة المباشرة؟", "يضيف المعلم رابط Zoom أو Google Meet وموعد الحصة، ثم يظهر للطالب زر دخول الحصة داخل حسابه."],
 ];
 export default function Home() {
-  const { t, r, c } = useSite();
+  const { t, r, c, banners } = useSite();
   return (<main>
-    <section className="hero2"><div className="hero2-in">
+    <section className="hero2" style={banners.length ? { backgroundImage: `linear-gradient(90deg,rgba(12,35,55,.40),rgba(12,35,55,.12)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}><div className="hero2-in">
       <div>
         <span className="badge">منصة عربية صُنعت من أجلك</span>
         <h1 className="h-title">منصة <span>المستقبل</span> التعليمية</h1>
@@ -33,6 +34,13 @@ export default function Home() {
         <div className="chips">{chips.map(([i, t]) => <div key={t}><span>{i}</span>{t}</div>)}</div>
       </div>
     </div></section>
+      {banners.length > 0 && <section className="home-banners wrap" aria-label="صور المنصة للأطفال">
+        <h2 className="sec">عالم من المرح والتعلّم</h2>
+        <div className="home-banner-grid">{banners.slice(0,2).map((banner) => <article className="home-banner" key={banner.id}>
+          <img src={banner.imageData} alt={banner.title || "صورة تعليمية للأطفال"} />
+          {banner.title && <h3>{banner.title}</h3>}
+        </article>)}</div>
+      </section>}
     <section className="wrap"><h2 className="sec">منصة تعليمية عربية متكاملة</h2>
       <div className="grid">{features.map(([i, t, d]) => <div className="feat" key={t}><div className="ic">{i}</div><b>{t}</b><p>{d}</p></div>)}</div></section>
     <Characters />

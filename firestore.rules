@@ -5,7 +5,17 @@ service cloud.firestore {
     function me() { return get(/databases/$(db)/documents/users/$(request.auth.uid)).data; }
     function isAdmin() { return signedIn() && me().role == 'admin'; }
     function isStaff() { return signedIn() && me().role in ['admin','teacher']; }
-
+    function teacherHasClass(classId) {
+      return signedIn() && me().role == 'teacher'
+        && classId is string && ('classIds' in me())
+        && me().classIds is list && classId in me().classIds;
+    }
+    function canManageClass(classId) { return isAdmin() || teacherHasClass(classId); }
+    function canManageQuiz(quizId) {
+      let quiz = get(/databases/$(db)/documents/quizzes/$(quizId)).data;
+      let lesson = get(/databases/$(db)/documents/lessons/$(quiz.lessonId)).data;
+      return isAdmin() || teacherHasClass(lesson.classId);
+    }
     function linked(owner) { return signedIn() && exists(/databases/$(db)/documents/parentLinks/$(request.auth.uid + '_' + owner)); }
 
     match /parentLinks/{id} {
@@ -13,7 +23,7 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
     match /users/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid));
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid) || teacherHasClass(resource.data.classId));
       allow create: if signedIn() && request.auth.uid == uid
         && request.resource.data.role in ['student','parent','pending']
         && request.resource.data.keys().hasOnly(['uid','name','email','role','createdAt'])
@@ -26,42 +36,168 @@ service cloud.firestore {
     match /subjects/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
     match /settings/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
     match /lessons/{id} {
-      allow read: if signedIn() && (resource.data.published == true || isStaff());
-      allow create, update: if isStaff() && request.resource.data.url.matches('https://.*')
-        && request.resource.data.title is string && request.resource.data.title.size() < 150;
+      allow read: if signedIn() && (
+        isAdmin() || teacherHasClass(resource.data.classId)
+        || (resource.data.published == true
+          && me().role == 'student'
+          && resource.data.classId == me().classId)
+      );
+      allow create, update: if canManageClass(request.resource.data.classId)
+        && request.resource.data.title is string
+        && request.resource.data.title.size() < 150
+        && ((('url' in request.resource.data) && request.resource.data.url is string && request.resource.data.url.matches('https://.*'))
+          || (request.resource.data.type == 'image' && ('imageData' in request.resource.data)
+            && request.resource.data.imageData is string
+            && request.resource.data.imageData.size() < 650000
+            && request.resource.data.imageData.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')));
+      allow delete: if isAdmin();
+    }
+    match /arcadeGameSessions/{sessionId} {
+      allow read: if signedIn() && (
+        isAdmin() || teacherHasClass(resource.data.classId)
+        || (me().role == 'student' && resource.data.active == true
+          && resource.data.classId == me().classId
+          && resource.data.selectedStudentUids is list
+          && request.auth.uid in resource.data.selectedStudentUids)
+      );
+      allow create, update: if signedIn()
+        && canManageClass(request.resource.data.classId)
+        && sessionId == request.resource.data.classId + '_' + request.resource.data.gameId
+        && request.resource.data.gameId in ['foundation','foundation-letters-ar','foundation-letters-en','foundation-multiply','foundation-divide','foundation-add','foundation-subtract','foundation-count','eightball','basketball','memory','maze','bubbles','racing']
+        && request.resource.data.active is bool
+        && request.resource.data.title is string
+        && request.resource.data.selectedStudentUids is list
+        && request.resource.data.selectedStudentUids.size() > 0
+        && request.resource.data.selectedStudentUids.size() <= 200
+        && request.resource.data.openedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /lessonGameSessions/{lessonId} {
+      allow read: if signedIn() && (
+        isAdmin()
+        || teacherHasClass(resource.data.classId)
+        || (me().role == 'student'
+          && resource.data.active == true
+          && resource.data.classId == me().classId
+          && resource.data.selectedStudentUids is list
+          && request.auth.uid in resource.data.selectedStudentUids)
+      );
+
+      allow create, update: if signedIn()
+        && canManageClass(request.resource.data.classId)
+        && request.resource.data.lessonId == lessonId
+        && get(/databases/$(db)/documents/lessons/$(lessonId)).data.classId == request.resource.data.classId
+        && get(/databases/$(db)/documents/lessons/$(lessonId)).data.published == true
+        && request.resource.data.active is bool
+        && request.resource.data.title is string
+        && request.resource.data.gameWords is list
+        && request.resource.data.gameWords.size() > 0
+        && request.resource.data.gameWords.size() <= 100
+        && request.resource.data.selectedStudentUids is list
+        && request.resource.data.selectedStudentUids.size() > 0
+        && request.resource.data.selectedStudentUids.size() <= 200;
+
+      allow delete: if false;
+    }
+
+    match /attendance/{id} {
+      function validAttendance() {
+        let lesson = get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data;
+        return signedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.role == me().role
+          && request.resource.data.role in ['student','teacher','admin']
+          && request.resource.data.userName is string
+          && request.resource.data.userName.size() <= 100
+          && request.resource.data.lessonId is string
+          && request.resource.data.lessonTitle is string
+          && request.resource.data.lessonTitle.size() <= 150
+          && request.resource.data.dateKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && id == request.auth.uid + '_' + request.resource.data.lessonId + '_' + request.resource.data.dateKey
+          && request.resource.data.keys().hasOnly(['uid','userName','role','lessonId','lessonTitle','classId','subjectId','dateKey','enteredAt'])
+          && request.resource.data.classId == lesson.classId
+          && (lesson.published == true || canManageClass(lesson.classId));
+      }
+      allow read: if signedIn() && (isAdmin()
+        || id.matches('^' + request.auth.uid + '_.*')
+        || (resource.data.uid == request.auth.uid)
+        || linked(resource.data.uid)
+        || teacherHasClass(resource.data.classId));
+      allow create: if validAttendance();
+      allow update: if false;
       allow delete: if isAdmin();
     }
     match /quizzes/{id} {
-      allow read: if signedIn() && (resource.data.published == true || isStaff());
-      allow create, update: if isStaff() && request.resource.data.questions.size() > 0 && request.resource.data.questions.size() <= 50;
+      function lessonClass() {
+        return get(/databases/$(db)/documents/lessons/$(resource.data.lessonId)).data.classId;
+      }
+      allow read: if signedIn() && (isAdmin() || teacherHasClass(resource.data.classId)
+        || (resource.data.published == true
+          && me().role == 'student'
+          && resource.data.classId == me().classId));
+      allow create, update: if canManageClass(
+        get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data.classId
+      ) && request.resource.data.classId ==
+        get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data.classId
+        && request.resource.data.questions.size() > 0 && request.resource.data.questions.size() <= 50;
       allow delete: if isAdmin();
     }
     match /quizResults/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && request.resource.data.score is int && request.resource.data.score <= request.resource.data.total;
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      allow update, delete: if false;
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid)
+        || canManageQuiz(resource.data.quizId));
+      allow create, update, delete: if false;
+    }
+    match /quizAnswerKeys/{quizId} {
+      allow read: if canManageQuiz(quizId);
+      allow create, update: if isAdmin()
+        || teacherHasClass(getAfter(/databases/$(db)/documents/quizzes/$(quizId)).data.classId);
+      allow delete: if isAdmin();
     }
     match /progress/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      allow create, update: if signedIn() && request.resource.data.uid == request.auth.uid && id.matches(request.auth.uid + '_.*');
+      function validStudentProgress() {
+        let lesson = get(/databases/$(db)/documents/lessons/$(request.resource.data.lessonId)).data;
+        let student = get(/databases/$(db)/documents/users/$(request.auth.uid)).data;
+        return signedIn() && student.role == 'student' && request.resource.data.uid == request.auth.uid
+          && request.resource.data.lessonId is string
+          && id == request.auth.uid + '_' + request.resource.data.lessonId
+          && request.resource.data.keys().hasOnly(['uid','lessonId','subjectId','classId','completed','openedAtMs','updatedAt'])
+          && lesson.published == true && lesson.classId == student.classId
+          && request.resource.data.classId == lesson.classId
+          && request.resource.data.subjectId == lesson.subjectId
+          && (!('completed' in request.resource.data) || request.resource.data.completed is bool)
+          && (!('openedAtMs' in request.resource.data) || request.resource.data.openedAtMs is number);
+      }
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin() || linked(resource.data.uid) || teacherHasClass(resource.data.classId));
+      allow create, update: if validStudentProgress();
       allow delete: if false;
     }
     match /assignments/{id} {
-      allow read: if signedIn();
-      allow create, update: if isStaff() && request.resource.data.title is string && request.resource.data.title.size() < 150;
+      allow read: if signedIn() && (isAdmin()
+        || teacherHasClass(resource.data.classId)
+        || (me().role == 'teacher' && resource.data.createdBy == request.auth.uid)
+        || (me().role == 'student' && (!('classId' in resource.data) || resource.data.classId == me().classId)));
+      allow create, update: if canManageClass(request.resource.data.classId)
+        && request.resource.data.title is string && request.resource.data.title.size() < 150;
       allow delete: if isAdmin();
     }
     match /submissions/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
+      function assignmentClass() {
+        return get(/databases/$(db)/documents/assignments/$(resource.data.assignmentId)).data.classId;
+      }
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin()
+        || linked(resource.data.uid) || teacherHasClass(resource.data.classId));
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+        && get(/databases/$(db)/documents/assignments/$(request.resource.data.assignmentId)).data.classId == me().classId
+        && request.resource.data.classId == me().classId
         && id == request.resource.data.assignmentId + '_' + request.auth.uid
-        && request.resource.data.keys().hasOnly(['assignmentId','uid','studentName','text','link','submittedAt'])
+        && request.resource.data.keys().hasOnly(['assignmentId','uid','studentName','classId','text','link','submittedAt'])
         && request.resource.data.text is string && request.resource.data.text.size() <= 2000
         && (!('link' in request.resource.data) || request.resource.data.link == '' || request.resource.data.link.matches('https://.*'));
       allow update: if (signedIn() && resource.data.uid == request.auth.uid && !('grade' in resource.data)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text','link','submittedAt']))
-        || (isStaff() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['grade','feedback','gradedAt'])
+        || ((isAdmin() || teacherHasClass(assignmentClass()))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['grade','feedback','gradedAt'])
           && request.resource.data.grade is number && request.resource.data.grade >= 0 && request.resource.data.grade <= 100);
       allow delete: if isAdmin();
     }
@@ -71,7 +207,7 @@ service cloud.firestore {
       allow update, delete: if false;
     }
     match /points/{uid} {
-      allow read: if signedIn() && (request.auth.uid == uid || isStaff() || linked(uid));
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin() || linked(uid) || teacherHasClass(get(/databases/$(db)/documents/users/$(uid)).data.classId));
       allow create: if signedIn() && request.auth.uid == uid && request.resource.data.keys().hasOnly(['uid','total','updatedAt'])
         && request.resource.data.uid == uid && request.resource.data.total is int
         && request.resource.data.total >= 0 && request.resource.data.total <= 50;
@@ -81,21 +217,122 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     match /certificates/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isStaff() || linked(resource.data.uid));
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
-        && id == request.auth.uid + '_' + request.resource.data.subjectId
-        && request.resource.data.keys().hasOnly(['uid','studentName','subjectId','subjectName','number','issuedAt'])
-        && request.resource.data.number.matches('FM-[0-9A-F]{12}');
-      allow update: if false;
+      function validCertificateCreate() {
+        return request.resource.data.keys().hasOnly([
+          'recipientUid','recipientName','recipientGender','schoolName','recipientRole',
+          'classId','title','reason','number','status','createdBy','createdByName',
+          'createdAt','approvedBy','approvedAt'
+        ])
+        && request.resource.data.recipientUid is string
+        && request.resource.data.recipientName is string
+        && request.resource.data.recipientName.size() > 0
+        && request.resource.data.recipientName.size() <= 80
+        && request.resource.data.recipientGender in ['boy','girl']
+        && request.resource.data.schoolName is string
+        && request.resource.data.schoolName.size() <= 100
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0
+        && request.resource.data.title.size() <= 80
+        && request.resource.data.reason is string
+        && request.resource.data.reason.size() > 0
+        && request.resource.data.reason.size() <= 500
+        && request.resource.data.number is string
+        && request.resource.data.number.matches('^FUT-[0-9A-F]{10}$')
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdByName is string;
+      }
+      allow read: if signedIn() && (isAdmin()
+        || (resource.data.status == 'approved' && resource.data.recipientUid == request.auth.uid)
+        || (me().role == 'teacher' && resource.data.createdBy == request.auth.uid));
+      allow create: if signedIn() && validCertificateCreate() && (
+        (isAdmin()
+          && request.resource.data.recipientRole == 'teacher'
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.role == 'teacher'
+          && request.resource.data.status == 'approved'
+          && request.resource.data.approvedBy == request.auth.uid)
+        || (me().role == 'teacher'
+          && request.resource.data.recipientRole == 'student'
+          && request.resource.data.status == 'pending'
+          && request.resource.data.classId is string
+          && teacherHasClass(request.resource.data.classId)
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.role == 'student'
+          && get(/databases/$(db)/documents/users/$(request.resource.data.recipientUid)).data.classId == request.resource.data.classId)
+      );
+      allow update: if isAdmin()
+        && resource.data.recipientRole == 'student'
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approvedBy','approvedAt'])
+        && request.resource.data.status in ['approved','rejected']
+        && request.resource.data.approvedBy == request.auth.uid;
       allow delete: if isAdmin();
     }
+    match /liveClasses/{id} {
+      function validLiveClass(data) {
+        return data.title is string && data.title.size() > 0 && data.title.size() <= 100
+          && data.classId is string && data.provider in ['zoom','meet']
+          && data.meetingUrl is string && data.meetingUrl.size() <= 500
+          && ((data.provider == 'zoom' && data.meetingUrl.matches('^https://([A-Za-z0-9-]+[.])*zoom[.]us/.*'))
+            || (data.provider == 'meet' && data.meetingUrl.matches('^https://meet[.]google[.]com/.*')))
+          && data.startsAt is string && data.startsAt.size() <= 40
+          && data.durationMinutes is int && data.durationMinutes >= 10 && data.durationMinutes <= 240
+          && data.published is bool;
+      }
+      allow read: if signedIn() && (isAdmin() || teacherHasClass(resource.data.classId)
+        || (me().role == 'student' && resource.data.published == true && resource.data.classId == me().classId));
+      allow create: if signedIn() && validLiveClass(request.resource.data)
+        && (isAdmin() || teacherHasClass(request.resource.data.classId))
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if signedIn() && validLiveClass(request.resource.data)
+        && (isAdmin() || (teacherHasClass(resource.data.classId) && resource.data.createdBy == request.auth.uid
+          && request.resource.data.classId == resource.data.classId && request.resource.data.createdBy == resource.data.createdBy));
+      allow delete: if isAdmin() || (signedIn() && teacherHasClass(resource.data.classId) && resource.data.createdBy == request.auth.uid);
+    }
+    match /themeSettings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteTeachers/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteTestimonials/{id} { allow read: if true; allow write: if isAdmin(); }
     match /siteSettings/{id} { allow read: if true; allow write: if isAdmin(); }
     match /activityLogs/{id} {
-      allow create: if signedIn() && request.resource.data.uid == request.auth.uid;
+      function validLogShape() {
+        return request.resource.data.keys().hasOnly(['uid','action','target','at'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.action is string && request.resource.data.action.size() <= 40
+          && request.resource.data.target is string && request.resource.data.target.size() <= 150
+          && request.resource.data.at == request.time;
+      }
+      allow create: if signedIn() && validLogShape()
+        && ((request.resource.data.action == 'lesson.create' && isStaff())
+          || (request.resource.data.action in ['teacher.approve','user.role','parent.link','parent.unlink'] && isAdmin()));
       allow read: if isAdmin();
       allow update, delete: if false;
+    }
+
+    match /socialComments/{commentId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','text','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.uid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0
+        && request.resource.data.text.size() <= 500;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+    match /socialReactions/{reactionId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && reactionId == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
   }
 }

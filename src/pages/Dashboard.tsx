@@ -24,17 +24,18 @@ const LearningTables = lazy(() => import("./LearningTables"));
 const QuranReader = lazy(() => import("./QuranReader"));
 const ThemeSettings = lazy(() => import("./ThemeSettings"));
 const CurriculumManager = lazy(() => import("./CurriculumManager"));
+const BookLibrary = lazy(() => import("./BookLibrary"));
 import { useSite, contactLinks } from "./HomeExtras";
 import SocialFeed from "./SocialFeed";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "student-leaderboard" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran" | "curriculum";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "student-leaderboard" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran" | "curriculum" | "books";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
   "student-quizzes": ["📝", "اختبارات الصف"], "student-leaderboard": ["🏆", "لوحة المتصدرين"],
-  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"], curriculum: ["🗺️", "إدارة المناهج والمسارات"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"], curriculum: ["🗺️", "إدارة المناهج والمسارات"], books: ["📚", "مكتبة الكتب"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
-  student: ["home", "lessons", "games", "student-quizzes", "student-leaderboard", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "learning", "quran"],
+  student: ["home", "books", "lessons", "games", "student-quizzes", "student-leaderboard", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "books", "learning", "quran"],
   teacher: ["home", "live", "learning", "quran", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "quran", "games", "manage", "curriculum", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
@@ -99,6 +100,7 @@ export default function Dashboard() {
   ];
   const rightNav = role === "admin" ? [
     { id: "home", icon: "🏠", label: "الرئيسية" },
+    { id: "books", icon: "📖", label: "مكتبة الكتب" },
     { id: "lessons", icon: "📚", label: "مقرراتي" },
     { id: "games", icon: "🎮", label: "الألعاب التعليمية" },
     { id: "quizzes", icon: "📝", label: "الاختبارات" },
@@ -120,6 +122,7 @@ export default function Dashboard() {
         <aside className="social-right">{links.length > 0 && <section className="panel"><h3>تواصل مع المنصة</h3><div className="contact">{links.map(l => (
           <a key={l.href} className="btn" href={l.href} {...(l.href.startsWith("https") ? { target: "_blank", rel: "noopener noreferrer" } : {})}>{l.label}</a>))}</div></section>}<section className="panel social-welcome"><span>✨</span><b>مساحة آمنة للتعلّم</b><p>شارك التفاعل الإيجابي، وشجّع أصدقاءك على التقدّم.</p></section></aside>
       </div>}
+      {view === "books" && <BookLibrary />}
       {view === "lessons" && <>{role === "student" && <ClassPicker />}<Lessons staff={staff} /></>}
       {view === "assignments" && <Assignments staff={staff} />}
       {view === "games" && <Games />}

@@ -5,7 +5,7 @@ type Grade = { gradeId: string; name: string; stage: string; order: number };
 type Subject = { subjectId: string; gradeId: string; subjectCode: string; name: string; category: string; order: number };
 type Lesson = { lessonId: string; order: number; title: string; microGoal: string };
 type Unit = { unitId: string; subjectId: string; gradeId: string; order: number; title: string; lessons: Lesson[]; checkpoint: Record<string, unknown>; unitQuiz: Record<string, unknown> };
-type Curriculum = { schemaVersion: string; gradeCatalog: Grade[]; subjectCatalog: Subject[]; units: Unit[]; lessonFlow: Array<Record<string, unknown>> };
+type Curriculum = { schemaVersion: string; curriculumContext?: { status?: string; note?: string }; gradeCatalog: Grade[]; subjectCatalog: Subject[]; units: Unit[]; lessonFlow: Array<Record<string, unknown>> };
 type SourceGrade = { gradeId: string; gradeName: string; officialBookCount: number; catalogUrl: string; availability: string; subjects: string[]; note: string };
 type SourceCatalog = { schoolYear: string; officialPortal: string; checkedAt: string; grades: SourceGrade[] };
 
@@ -99,6 +99,7 @@ export default function CurriculumManager() {
   const units = useMemo(() => (map?.units ?? []).filter(item => item.gradeId === gradeId && item.subjectId === subjectId), [map, gradeId, subjectId]);
   const subject = subjects.find(item => item.subjectId === subjectId);
   const totalLessons = units.reduce((sum, unit) => sum + unit.lessons.length, 0);
+  const curriculumVerified = map?.curriculumContext?.status === "verified";
 
   const importCurriculum = async () => {
     if (!map || busy) return;
@@ -211,11 +212,13 @@ export default function CurriculumManager() {
       </section>;
     })()}
 
+    {!curriculumVerified && <p className="note curriculum-message" role="status">تنبيه مهم: خريطة الدروس الحالية هي هيكل مقترح وليست مطابقة معتمدة لكتب الوزارة 2026–2027. تم إيقاف الاستيراد مؤقتًا حتى يتم توثيق الوحدات والدروس والامتحانات من الكتب الرسمية؛ حتى لا تظهر للطلاب بيانات غير دقيقة.</p>}
+
     <section className="panel curriculum-import">
       <div><h3>استيراد المنهج إلى قاعدة البيانات</h3>
         <p>يتم تقسيم البيانات إلى دفعات صغيرة، مع التحقق من صلاحية المدير. لن يتم نشر أي درس أو اختبار تلقائيًا.</p></div>
-      <button className="btn" type="button" onClick={importCurriculum} disabled={busy || !map}>
-        {busy ? "جارٍ استيراد المنهج…" : "استيراد جميع الصفوف والمواد"}
+      <button className="btn" type="button" onClick={importCurriculum} disabled={busy || !map || !curriculumVerified}>
+        {busy ? "جارٍ استيراد المنهج…" : curriculumVerified ? "استيراد جميع الصفوف والمواد" : "الاستيراد متوقف حتى اعتماد المنهج"}
       </button>
       {busy && <div className="curriculum-progress" role="status">
         <div><span>{progress.label}</span><b>{progress.done} / {progress.total}</b></div>

@@ -100,3 +100,36 @@ body{background-color:var(--bg)!important;background-attachment:fixed}
 .dashboard-layout .cover-title-wrap h2{width:100%;text-align:var(--platform-title-align,center);transform:translateY(var(--platform-title-offset-y,0px))}
 .theme-banner-live-preview{align-items:stretch;position:relative}
 .theme-banner-live-preview strong{width:100%;text-align:var(--platform-title-align,center)}
+
+
+/* Final banner image layout fix: make the image layer span the whole banner.
+   Reset the older decorative pseudo-element dimensions that previously limited it
+   to a small circle, preserve image proportions, and remove the old glow overlay. */
+.dashboard-layout .cover::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  top:0;
+  right:0;
+  bottom:0;
+  left:0;
+  width:auto;
+  height:auto;
+  border-radius:inherit;
+  filter:none;
+  box-shadow:none;
+  z-index:0;
+  pointer-events:none;
+  background-color:var(--platform-banner-color,#087eaa);
+  background-image:var(--platform-banner-image,none);
+  background-position:center center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  opacity:var(--platform-banner-opacity,1);
+}
+.dashboard-layout .cover::after{display:none!important}
+.theme-banner-live-preview{
+  background-position:center center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+}

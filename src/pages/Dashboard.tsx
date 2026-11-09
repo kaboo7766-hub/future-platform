@@ -23,18 +23,19 @@ const LiveClasses = lazy(() => import("./LiveClasses"));
 const LearningTables = lazy(() => import("./LearningTables"));
 const QuranReader = lazy(() => import("./QuranReader"));
 const ThemeSettings = lazy(() => import("./ThemeSettings"));
+const CurriculumManager = lazy(() => import("./CurriculumManager"));
 import { useSite, contactLinks } from "./HomeExtras";
 import SocialFeed from "./SocialFeed";
 
-type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "student-leaderboard" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran";
+type View = "admin" | "home" | "lessons" | "assignments" | "games" | "certs" | "manage" | "teachers" | "quizzes" | "student-quizzes" | "student-leaderboard" | "users" | "site" | "attendance" | "live" | "learning" | "theme" | "quran" | "curriculum";
 const ALL: Record<View, [string, string]> = {
   admin: ["🛡️", "لوحة المدير"], home: ["🏠", "الرئيسية"], lessons: ["📚", "الدروس"], assignments: ["📝", "الواجبات"], games: ["🎮", "الألعاب"], certs: ["🏆", "الشهادات والتكريم"],
   "student-quizzes": ["📝", "اختبارات الصف"], "student-leaderboard": ["🏆", "لوحة المتصدرين"],
-  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"],
+  manage: ["🧩", "الدروس والصفوف"], teachers: ["👩‍🏫", "إدارة المعلمين"], quizzes: ["✅", "الاختبارات"], users: ["👥", "المستخدمون"], site: ["🌐", "محتوى الموقع"], attendance: ["🗓️", "الحضور"], live: ["🎥", "الفصول الافتراضية"], learning: ["🔤", "الحروف وجداول الضرب"], quran: ["📖", "القرآن الكريم والتفسير"], theme: ["🎨", "تخصيص ألوان المنصة"], curriculum: ["🗺️", "إدارة المناهج والمسارات"],
 };
 const NAV: Partial<Record<Role, View[]>> = {
   student: ["home", "lessons", "games", "student-quizzes", "student-leaderboard", "learning", "quran", "live", "assignments", "certs"], parent: ["home", "learning", "quran"],
-  teacher: ["home", "live", "learning", "quran", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "quran", "games", "manage", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
+  teacher: ["home", "live", "learning", "quran", "games", "manage", "certs", "quizzes", "assignments", "attendance"], admin: ["admin", "home", "live", "learning", "quran", "games", "manage", "curriculum", "teachers", "certs", "quizzes", "assignments", "users", "site", "attendance", "theme"],
 };
 const ROLE: Record<Role, string> = { admin: "مدير", teacher: "معلم", student: "طالب", parent: "ولي أمر", pending: "معلم قيد الاعتماد" };
 const TILE = ["c0", "c1", "c2", "c3"];
@@ -90,6 +91,7 @@ export default function Dashboard() {
   const adminNav: import("./Shell").NavItem[] = [
     { id: "users", icon: "👥", label: "إدارة المستخدمين" },
     { id: "manage", icon: "📚", label: "إدارة المحتوى والصفوف" },
+    { id: "curriculum", icon: "🗺️", label: "إدارة المناهج والمسارات" },
     { id: "admin", icon: "📊", label: "التحليلات والتقارير" },
     { id: "manage", icon: "✏️", label: "إنشاء الدورات" },
     { id: "admin-finance", icon: "💳", label: "الاشتراكات والمالية", disabled: true, badge: "غير مفعّل" },
@@ -124,6 +126,7 @@ export default function Dashboard() {
       {view === "learning" && <LearningTables />}
       {view === "quran" && <QuranReader />}
       {view === "theme" && role === "admin" && <ThemeSettings />}
+      {view === "curriculum" && role === "admin" && <CurriculumManager />}
       {view === "certs" && <><Certificates /></>}
       {view === "manage" && <><Manage isAdmin={role === "admin"} /><Lessons staff /></>}
       {view === "quizzes" && staff && <QuizBuilder />}

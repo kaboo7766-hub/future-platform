@@ -1,8 +1,8 @@
 /* Ten child-friendly themes, independent image opacity and Quran-reading artwork background */
 body{font-family:var(--platform-font-family,Cairo,Tahoma,sans-serif)!important;background:var(--bg)!important;position:relative}
-body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--platform-bg-image,none);background-position:center;background-size:cover;background-repeat:no-repeat;opacity:var(--platform-bg-opacity,.25)}
+body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:var(--platform-bg-image,none);background-position:center;background-size:var(--platform-bg-size,cover);background-repeat:no-repeat;opacity:var(--platform-bg-opacity,.25)}
 .topbar-brand{position:relative;isolation:isolate;overflow:hidden;border-radius:13px;padding:.25rem .7rem}
-.topbar-brand::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(120deg,rgba(9,30,55,.76),rgba(9,30,55,.35)),var(--brand-bg-image,none);background-size:cover;background-position:center;opacity:var(--brand-bg-opacity,.3)}
+.topbar-brand::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(120deg,rgba(9,30,55,.76),rgba(9,30,55,.35)),var(--brand-bg-image,none);background-size:var(--brand-bg-size,cover);background-position:center;opacity:var(--brand-bg-opacity,.3)}
 .cover-title-wrap{position:relative;isolation:isolate;overflow:hidden;border-radius:16px;padding:.65rem 1rem}
 .cover-title-wrap::before{content:"";position:absolute;inset:0;z-index:-1;background-image:linear-gradient(120deg,rgba(9,30,55,.76),rgba(9,30,55,.36)),var(--brand-bg-image,none);background-size:cover;background-position:center;opacity:var(--brand-bg-opacity,.3)}
 .cover-title-wrap h2,.cover-title-wrap p{color:#fff!important;text-shadow:0 2px 5px rgba(0,0,0,.75)}
@@ -74,3 +74,7 @@ body{background-color:var(--bg)!important;background-attachment:fixed}
 @keyframes themeFloatIn{from{transform:translateY(8px);opacity:.7}to{transform:translateY(0);opacity:1}}
 @keyframes themeGlow{from{transform:translate3d(0,0,0) scale(.96)}to{transform:translate3d(-14px,10px,0) scale(1.05)}}
 @media(max-width:680px){.dashboard-layout .cover{border-radius:18px}.theme-upload-grid{grid-template-columns:1fr}}
+
+/* User-requested removal of the Quran-reading child illustrations and their image layer. */
+.dashboard-layout .cover-kids{display:none!important}
+.dashboard-layout .cover-info-centered::before{display:none!important;background-image:none!important}

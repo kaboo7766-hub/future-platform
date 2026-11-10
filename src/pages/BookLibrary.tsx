@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { addDoc, collection, deleteDoc, doc, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy, type RenderTask } from "pdfjs-dist";
 import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
@@ -80,7 +80,7 @@ export default function BookLibrary() {
     setTitle(book.title); setSubject(book.subject); setDriveUrl(book.driveUrl);
     setPublished(book.published); setEditingId(book.id); setNotice(""); setError("");
   }
-  async function saveBook(event: React.FormEvent) {
+  async function saveBook(event: FormEvent) {
     event.preventDefault(); setError(""); setNotice("");
     if (!title.trim() || !subject.trim()) return setError("اكتب اسم الكتاب والمادة.");
     if (!driveFileId(driveUrl)) return setError("ضع رابط مشاركة Google Drive صحيحًا للملف، وتأكد أن صلاحية الوصول «أي شخص لديه الرابط». لا تضع رابط مجلد.");

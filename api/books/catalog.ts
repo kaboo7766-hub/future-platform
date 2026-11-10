@@ -1,13 +1,13 @@
 function cleanText(value: string) {
-  return value.replace(/<script[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+  return value.replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
+    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#39;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
-    .replace(/\s+/g, " ").trim();
+    .replace(/&#(\\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
+    .replace(/\\s+/g, " ").trim();
 }
 
 function allowedOfficialPdf(url: URL, system: string) {
@@ -16,7 +16,7 @@ function allowedOfficialPdf(url: URL, system: string) {
   if (system === "general") return host === "moe.gov.eg" || host.endsWith(".moe.gov.eg");
   return host === "azhar.gov.eg" || host.endsWith(".azhar.gov.eg");
 }
-function allowedCatalogRedirect(url: URL) {
+function allowedCatalogPage(url: URL) {
   const host = url.hostname.toLowerCase();
   return url.protocol === "https:" &&
     (host === "miskeg.app" || host.endsWith(".miskeg.app") ||
@@ -24,8 +24,40 @@ function allowedCatalogRedirect(url: URL) {
      host === "azhar.gov.eg" || host.endsWith(".azhar.gov.eg"));
 }
 
+async function verifyPdf(url: URL, system: string): Promise<URL | null> {
+  // Some official document servers reject HEAD requests. Try HEAD first, then a
+  // small ranged GET. The browser receives only the verified official URL.
+  try {
+    const head = await fetch(url.href, {
+      method: "HEAD", redirect: "follow",
+      headers: { "User-Agent": "FuturePlatformBookCatalog/1.1" },
+      signal: AbortSignal.timeout(9000),
+    });
+    const finalUrl = new URL(head.url || url.href);
+    if (head.ok && allowedOfficialPdf(finalUrl, system) &&
+        (head.headers.get("content-type") || "").toLowerCase().includes("application/pdf")) {
+      return finalUrl;
+    }
+  } catch { /* fall through to ranged GET */ }
+
+  try {
+    const response = await fetch(url.href, {
+      method: "GET", redirect: "follow",
+      headers: { "User-Agent": "FuturePlatformBookCatalog/1.1", Range: "bytes=0-7", Accept: "application/pdf,*/*;q=0.8" },
+      signal: AbortSignal.timeout(12000),
+    });
+    const finalUrl = new URL(response.url || url.href);
+    const type = (response.headers.get("content-type") || "").toLowerCase();
+    const bytes = new Uint8Array(await response.arrayBuffer().then(buffer => buffer.slice(0, 8)));
+    const isPdf = type.includes("application/pdf") ||
+      (bytes.length >= 5 && String.fromCharCode(...bytes.slice(0, 5)) === "%PDF-");
+    if (response.body) await response.body.cancel().catch(() => undefined);
+    return response.ok && isPdf && allowedOfficialPdf(finalUrl, system) ? finalUrl : null;
+  } catch { return null; }
+}
+
 export default async function handler(req: any, res: any) {
-  res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
 
@@ -39,55 +71,52 @@ export default async function handler(req: any, res: any) {
     return res.status(404).json({ error: "فهرس هذه السنة غير مضاف أو لم يتم التحقق من كتبه بعد." });
   }
 
+  // Misk is queried server-side only as a discovery index. It is never sent as
+  // a student-facing destination; only verified PDF URLs on official domains
+  // are returned to the in-platform PDF reader.
   const catalogUrl = `https://miskeg.app/books/${system}-primary-${grade}/`;
   try {
     const page = await fetch(catalogUrl, {
-      headers: { "User-Agent": "FuturePlatformBookCatalog/1.0", Accept: "text/html" },
-      signal: AbortSignal.timeout(12000),
+      headers: { "User-Agent": "FuturePlatformBookCatalog/1.1", Accept: "text/html" },
+      redirect: "follow",
+      signal: AbortSignal.timeout(15000),
     });
-    if (!page.ok) return res.status(502).json({ error: "تعذّر الوصول إلى فهرس الكتب حاليًا." });
+    const finalCatalogUrl = new URL(page.url || catalogUrl);
+    if (!page.ok || !allowedCatalogPage(finalCatalogUrl)) {
+      return res.status(502).json({ error: "تعذّر تحميل فهرس الكتب. لم يتم فتح أي موقع خارجي للطالب." });
+    }
     const html = await page.text();
-    const anchors = [...html.matchAll(/<a\b([^>]*)href=["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi)];
+    const anchors = [...html.matchAll(/<a\\b([^>]*)href=["']([^"']+)["']([^>]*)>([\\s\\S]*?)<\\/a>/gi)];
     const books: Array<{ id: string; title: string; url: string }> = [];
     const seen = new Set<string>();
 
     for (const match of anchors) {
       const rawHref = match[2].replace(/&amp;/g, "&");
       let target: URL;
-      try { target = new URL(rawHref, catalogUrl); } catch { continue; }
-      if (!allowedCatalogRedirect(target) || seen.has(target.href)) continue;
+      try { target = new URL(rawHref, finalCatalogUrl.href); } catch { continue; }
+      if (!allowedCatalogPage(target) || seen.has(target.href)) continue;
 
       const surrounding = html.slice(Math.max(0, (match.index ?? 0) - 1800), match.index ?? 0);
-      const headingMatches = [...surrounding.matchAll(/<(?:h[1-6]|strong|b)[^>]*>([\s\S]*?)<\/(?:h[1-6]|strong|b)>/gi)];
+      const headingMatches = [...surrounding.matchAll(/<(?:h[1-6]|strong|b)[^>]*>([\\s\\S]*?)<\\/(?:h[1-6]|strong|b)>/gi)];
       const anchorLabel = cleanText(match[4]);
       const heading = headingMatches.length ? cleanText(headingMatches[headingMatches.length - 1][1]) : "";
       const title = (heading && heading.length < 130 ? heading : anchorLabel) || `كتاب الصف ${grade}`;
 
-      let isPdf = false;
-      try {
-        const head = await fetch(target.href, {
-          method: "HEAD",
-          redirect: "follow",
-          headers: { "User-Agent": "FuturePlatformBookCatalog/1.0", Accept: "application/pdf,*/*;q=0.8" },
-          signal: AbortSignal.timeout(9000),
-        });
-        if (head.url) target = new URL(head.url);
-        isPdf = head.ok && (head.headers.get("content-type") || "").toLowerCase().includes("application/pdf");
-      } catch { /* keep unverified links out of the student library */ }
-      if (!isPdf || !allowedOfficialPdf(target, system)) continue;
-      seen.add(target.href);
-      books.push({ id: `${system}-g${grade}-${books.length + 1}`, title, url: target.href });
+      const verifiedUrl = await verifyPdf(target, system);
+      if (!verifiedUrl || seen.has(verifiedUrl.href)) continue;
+      seen.add(verifiedUrl.href);
+      books.push({ id: `${system}-g${grade}-${books.length + 1}`, title, url: verifiedUrl.href });
       if (books.length >= 40) break;
     }
 
     return res.status(200).json({
-      system, grade, schoolYear,
-      source: catalogUrl, checkedAt: new Date().toISOString(),
-      books,
-      message: books.length ? "" : "لم يتم استخراج روابط PDF مباشرة قابلة للتحقق لهذا الصف. لم نعرض روابط غير مؤكدة.",
+      system, grade, schoolYear, checkedAt: new Date().toISOString(), books,
+      message: books.length
+        ? ""
+        : "لم نعثر على ملفات PDF مباشرة قابلة للتحقق من نطاق الجهة الرسمية لهذا الصف. لن نعرض روابط مِسك أو روابط غير مؤكدة.",
     });
   } catch (error) {
     console.error("Book catalog lookup failed:", error);
-    return res.status(502).json({ error: "تعذّر تحميل الكتب الآن. حاول مرة أخرى لاحقًا." });
+    return res.status(502).json({ error: "تعذّر تحميل فهرس الكتب الآن. حاول مرة أخرى لاحقًا." });
   }
 }

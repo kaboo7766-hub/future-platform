@@ -24,8 +24,12 @@ export default async function handler(req: any, res: any) {
 
   const system = req.query?.system === "azhar" ? "azhar" : req.query?.system === "general" ? "general" : "";
   const grade = Number(req.query?.grade);
+  const schoolYear = typeof req.query?.schoolYear === "string" ? req.query.schoolYear : "2026-2027";
   if (!system || !Number.isInteger(grade) || grade < 1 || grade > 6) {
     return res.status(400).json({ error: "حدد النظام والصف من 1 إلى 6." });
+  }
+  if (schoolYear !== "2026-2027") {
+    return res.status(404).json({ error: "فهرس هذه السنة غير مضاف أو لم يتم التحقق من كتبه بعد." });
   }
 
   const catalogUrl = `https://miskeg.app/books/${system}-primary-${grade}/`;
@@ -67,7 +71,7 @@ export default async function handler(req: any, res: any) {
     }
 
     return res.status(200).json({
-      system, grade, schoolYear: "2026-2027",
+      system, grade, schoolYear,
       source: catalogUrl, checkedAt: new Date().toISOString(),
       books,
       message: books.length ? "" : "لم يتم استخراج روابط PDF مباشرة قابلة للتحقق لهذا الصف. لم نعرض روابط غير مؤكدة.",

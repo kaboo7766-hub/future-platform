@@ -1,4 +1,4 @@
-const OFFICIAL_HOSTS = ["moe.gov.eg", "azhar.gov.eg"];
+const OFFICIAL_HOSTS = ["moe.gov.eg", "azhar.gov.eg"];\nconst DRIVE_INPUT_HOSTS = ["drive.google.com"];\nconst DRIVE_FILE_HOSTS = ["drive.usercontent.google.com"];
 function isAllowed(url: URL) {
   return url.protocol === "https:" && OFFICIAL_HOSTS.some(host =>
     url.hostname === host || url.hostname.endsWith("." + host)

@@ -21,7 +21,7 @@ export default async function handler(req: any, res: any) {
     if (!isAllowed(finalUrl)) return res.status(403).json({ error: "تم رفض تحويل الملف إلى مصدر غير رسمي." });
     if (!upstream.ok) return res.status(502).json({ error: "المصدر الرسمي لم يرسل الكتاب حاليًا." });
     const contentType = (upstream.headers.get("content-type") || "").toLowerCase();
-    if (!contentType.includes("application/pdf") && !/\\.pdf(?:$|[?#])/i.test(finalUrl.href)) {
+    if (!contentType.includes("application/pdf") && !/\.pdf(?:$|[?#])/i.test(finalUrl.href)) {
       return res.status(415).json({ error: "الرابط لا يعيد ملف PDF قابلًا للعرض." });
     }
     const length = Number(upstream.headers.get("content-length") || 0);

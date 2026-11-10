@@ -322,6 +322,124 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 500;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
+    // School book metadata: only admins manage records; students see published books.
+    match /schoolBooks/{bookId} {
+      function validBook(data) {
+        return data.title is string && data.title.size() > 0 && data.title.size() <= 180
+          && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100
+          && data.schoolYear is string && data.schoolYear.matches('^[0-9]{4}-[0-9]{4}
+    // Students can read only items explicitly published by an administrator.
+    match /curriculumGrades/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumSubjects/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumUnits/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumLessons/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumAssessments/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /studentLearningProgress/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      // Scores and unlock states must be written by a trusted server after answer validation.
+      allow write: if false;
+    }
+    match /studentBadges/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      allow write: if false;
+    }
+
+    match /socialReactions/{reactionId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && reactionId == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+  }
+}
+)
+          && data.system in ['general','azhar']
+          && data.grade is int && data.grade >= 1 && data.grade <= 6
+          && data.driveUrl is string && data.driveUrl.matches('^https://drive[.]google[.]com/.*')
+          && data.driveFileId is string && data.driveFileId.matches('^[A-Za-z0-9_-]{10,}
+    // Students can read only items explicitly published by an administrator.
+    match /curriculumGrades/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumSubjects/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumUnits/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumLessons/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /curriculumAssessments/{id} {
+      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
+      allow write: if false;
+    }
+    match /studentLearningProgress/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      // Scores and unlock states must be written by a trusted server after answer validation.
+      allow write: if false;
+    }
+    match /studentBadges/{id} {
+      allow read: if signedIn() && (isAdmin()
+        || resource.data.uid == request.auth.uid
+        || teacherHasClass(resource.data.classId));
+      allow write: if false;
+    }
+
+    match /socialReactions/{reactionId} {
+      allow read: if signedIn();
+      allow create, update: if signedIn()
+        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && reactionId == request.resource.data.postId + '_' + request.auth.uid
+        && request.resource.data.author is string && request.resource.data.author.size() <= 80
+        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
+        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
+        && request.resource.data.createdAt == request.time;
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+  }
+}
+)
+          && data.published is bool;
+      }
+      allow read: if signedIn() && (isAdmin() || resource.data.published == true);
+      allow create: if isAdmin() && validBook(request.resource.data);
+      allow update: if isAdmin() && validBook(request.resource.data);
+      allow delete: if isAdmin();
+    }
+
     // Curriculum definitions are written only by the trusted admin import API.
     // Students can read only items explicitly published by an administrator.
     match /curriculumGrades/{id} {

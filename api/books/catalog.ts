@@ -48,10 +48,12 @@ async function verifyPdf(url: URL, system: string): Promise<URL | null> {
     });
     const finalUrl = new URL(response.url || url.href);
     const type = (response.headers.get("content-type") || "").toLowerCase();
-    const bytes = new Uint8Array(await response.arrayBuffer().then(buffer => buffer.slice(0, 8)));
+    const reader = response.body?.getReader();
+    const first = reader ? await reader.read() : { value: new Uint8Array(), done: true };
+    const bytes = first.value ? first.value.slice(0, 8) : new Uint8Array();
+    if (reader) await reader.cancel().catch(() => undefined);
     const isPdf = type.includes("application/pdf") ||
       (bytes.length >= 5 && String.fromCharCode(...bytes.slice(0, 5)) === "%PDF-");
-    if (response.body) await response.body.cancel().catch(() => undefined);
     return response.ok && isPdf && allowedOfficialPdf(finalUrl, system) ? finalUrl : null;
   } catch { return null; }
 }

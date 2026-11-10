@@ -68,7 +68,7 @@ export default function BookLibrary() {
     () => catalog?.books.find(book => book.id === selectedId) ?? null,
     [catalog, selectedId],
   );
-  const viewerUrl = selected ? `${selected.url}#page=${page}&zoom=${zoom}` : "";
+  const viewerUrl = selected ? `/api/books/pdf?url=${encodeURIComponent(selected.url)}#page=${page}&zoom=${zoom}` : "";
 
   return <section className="panel" dir="rtl">
     <header className="admin-box-heading">
@@ -136,13 +136,13 @@ export default function BookLibrary() {
               allow="fullscreen"
             />
           </div>
-          <p className="note">يعرض القارئ ملف PDF من خادم الجهة التعليمية الرسمي. أزرار الصفحات والتكبير تعتمد على دعم عارض PDF في متصفح الجهاز.</p>
+          <p className="note">يعرض القارئ نسخة الملف عبر مسار آمن تابع للمنصة، دون فتح موقع المصدر في صفحة خارجية. أزرار الصفحات والتكبير تعتمد على دعم عارض PDF في متصفح الجهاز.</p>
         </section>}
       </> : <p className="note">{catalog.message || "لا توجد ملفات PDF مباشرة تم التحقق منها لهذا الصف حاليًا."}</p>}
     </>}
 
     <p className="note" style={{ marginTop: 14 }}>
-      لا تحفظ المنصة نسخًا من الكتب ولا تعيد رفعها؛ يتم عرض الملف من خادم الجهة التعليمية بعد التحقق من أنه PDF وعلى نطاق رسمي. قد لا تسمح بعض الخوادم بعرض الملف داخل إطار؛ عندها لن يظهر الكتاب حتى يتوفر رابط يسمح بالتضمين.
+      لا تُخزّن المنصة الكتب بشكل دائم؛ تمرّر الملف عبر خادم المنصة بعد التحقق من المصدر الرسمي ونوع PDF، حتى يبقى العرض داخل صفحة المكتبة. إذا منع المصدر جلب الملف من الخادم، ستظهر رسالة خطأ بدل تحويل الطالب إلى موقع خارجي.
     </p>
   </section>;
 }

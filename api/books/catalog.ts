@@ -16,6 +16,13 @@ function allowedOfficialPdf(url: URL, system: string) {
   if (system === "general") return host === "moe.gov.eg" || host.endsWith(".moe.gov.eg");
   return host === "azhar.gov.eg" || host.endsWith(".azhar.gov.eg");
 }
+function allowedCatalogRedirect(url: URL) {
+  const host = url.hostname.toLowerCase();
+  return url.protocol === "https:" &&
+    (host === "miskeg.app" || host.endsWith(".miskeg.app") ||
+     host === "moe.gov.eg" || host.endsWith(".moe.gov.eg") ||
+     host === "azhar.gov.eg" || host.endsWith(".azhar.gov.eg"));
+}
 
 export default async function handler(req: any, res: any) {
   res.setHeader("Cache-Control", "s-maxage=3600, stale-while-revalidate=86400");
@@ -48,7 +55,7 @@ export default async function handler(req: any, res: any) {
       const rawHref = match[2].replace(/&amp;/g, "&");
       let target: URL;
       try { target = new URL(rawHref, catalogUrl); } catch { continue; }
-      if (!allowedOfficialPdf(target, system) || seen.has(target.href)) continue;
+      if (!allowedCatalogRedirect(target) || seen.has(target.href)) continue;
 
       const surrounding = html.slice(Math.max(0, (match.index ?? 0) - 1800), match.index ?? 0);
       const headingMatches = [...surrounding.matchAll(/<(?:h[1-6]|strong|b)[^>]*>([\s\S]*?)<\/(?:h[1-6]|strong|b)>/gi)];
@@ -56,14 +63,17 @@ export default async function handler(req: any, res: any) {
       const heading = headingMatches.length ? cleanText(headingMatches[headingMatches.length - 1][1]) : "";
       const title = (heading && heading.length < 130 ? heading : anchorLabel) || `كتاب الصف ${grade}`;
 
-      let isPdf = /\.pdf(?:$|[?#])/i.test(target.href);
-      if (!isPdf) {
-        try {
-          const head = await fetch(target.href, { method: "HEAD", redirect: "follow", signal: AbortSignal.timeout(7000) });
-          isPdf = (head.headers.get("content-type") || "").toLowerCase().includes("application/pdf");
-          if (head.url) target = new URL(head.url);
-        } catch { /* keep unverified links out of the student library */ }
-      }
+      let isPdf = false;
+      try {
+        const head = await fetch(target.href, {
+          method: "HEAD",
+          redirect: "follow",
+          headers: { "User-Agent": "FuturePlatformBookCatalog/1.0", Accept: "application/pdf,*/*;q=0.8" },
+          signal: AbortSignal.timeout(9000),
+        });
+        if (head.url) target = new URL(head.url);
+        isPdf = head.ok && (head.headers.get("content-type") || "").toLowerCase().includes("application/pdf");
+      } catch { /* keep unverified links out of the student library */ }
       if (!isPdf || !allowedOfficialPdf(target, system)) continue;
       seen.add(target.href);
       books.push({ id: `${system}-g${grade}-${books.length + 1}`, title, url: target.href });

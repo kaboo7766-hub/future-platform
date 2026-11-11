@@ -60,7 +60,7 @@ export default function Shell({ name, role, roleLabel, nav, adminNav = [], view,
     <main className="content">
       <section className="cover">
         <div className="cover-info cover-info-centered cover-info-no-characters">
-    </svg>
+
           <div className="cover-title-wrap"><h2>{language === "ar" ? "منصة المستقبل التعليمية" : "Future Learning Platform"}</h2><p>{name} — {roleLabel}</p></div>
         </div>
         {stats.length > 0 && <div className="stats">{stats.map(([label, value]) => <div key={label}><b>{value.toLocaleString("ar-EG")}</b><small>{label}</small></div>)}</div>}

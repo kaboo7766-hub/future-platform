@@ -30,7 +30,7 @@ export default function Home() {
         <div className="mock" aria-hidden="true"><b>🌟 لوحة الطالب</b>
           <div className="row2"><div className="tile c0" /><div className="tile c1" /><div className="tile c2" /></div>
           <div className="pb"><i style={{ width: "75%" }} /></div><div className="pb"><i style={{ width: "45%" }} /></div><div className="pb"><i style={{ width: "60%" }} /></div>
-          <div className="kids">🧒 📚 👧</div></div>
+          </div>
         <div className="chips">{chips.map(([i, t]) => <div key={t}><span>{i}</span>{t}</div>)}</div>
       </div>
     </div></section>

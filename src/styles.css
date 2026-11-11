@@ -685,3 +685,10 @@ input:focus, select:focus, textarea:focus {
 .hero2 .h-title{font-weight:1000;line-height:1.35;text-align:center;text-shadow:0 2px 12px rgba(0,0,0,.45)}
 .hero2 .h-title span{background:none!important;color:inherit!important;-webkit-text-fill-color:currentColor!important;filter:none!important;text-shadow:0 2px 14px rgba(0,0,0,.45)}
 @media(max-width:640px){.hero2{min-height:300px}.hero2-in-banner{min-height:260px}}
+
+
+/* Internal dashboard banner: platform name only, spanning the full banner */
+.dashboard-layout .cover-info.cover-title-only{width:100%;min-height:170px;margin:0!important;padding:1rem!important;display:flex;align-items:center;justify-content:center;text-align:center}
+.dashboard-layout .cover-title-only .cover-title-wrap{width:100%;max-width:none;margin:0!important}
+.dashboard-layout .cover-title-only .cover-title-wrap h2{width:100%;margin:0!important;font-size:clamp(1.7rem,5.2vw,3.2rem)!important;line-height:1.35;font-weight:1000;white-space:normal;text-align:center}
+@media(max-width:520px){.dashboard-layout .cover-info.cover-title-only{min-height:130px;padding:.75rem .5rem!important}.dashboard-layout .cover-title-only .cover-title-wrap h2{font-size:clamp(1.35rem,7vw,2.1rem)!important}}

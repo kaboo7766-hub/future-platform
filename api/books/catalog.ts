@@ -1,13 +1,13 @@
 function cleanText(value: string) {
-  return value.replace(/<script[\\s\\S]*?<\\/script>/gi, " ")
-    .replace(/<style[\\s\\S]*?<\\/style>/gi, " ")
+  return value.replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#39;|&apos;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/&#(\\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
-    .replace(/\\s+/g, " ").trim();
+    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n)))
+    .replace(/\s+/g, " ").trim();
 }
 
 function allowedOfficialPdf(url: URL, system: string) {
@@ -88,7 +88,7 @@ export default async function handler(req: any, res: any) {
       return res.status(502).json({ error: "تعذّر تحميل فهرس الكتب. لم يتم فتح أي موقع خارجي للطالب." });
     }
     const html = await page.text();
-    const anchors = [...html.matchAll(/<a\\b([^>]*)href=["']([^"']+)["']([^>]*)>([\\s\\S]*?)<\\/a>/gi)];
+    const anchors = [...html.matchAll(/<a\b([^>]*)href=["']([^"']+)["']([^>]*)>([\s\S]*?)<\/a>/gi)];
     const books: Array<{ id: string; title: string; url: string }> = [];
     const seen = new Set<string>();
 
@@ -99,7 +99,7 @@ export default async function handler(req: any, res: any) {
       if (!allowedCatalogPage(target) || seen.has(target.href)) continue;
 
       const surrounding = html.slice(Math.max(0, (match.index ?? 0) - 1800), match.index ?? 0);
-      const headingMatches = [...surrounding.matchAll(/<(?:h[1-6]|strong|b)[^>]*>([\\s\\S]*?)<\\/(?:h[1-6]|strong|b)>/gi)];
+      const headingMatches = [...surrounding.matchAll(/<(?:h[1-6]|strong|b)[^>]*>([\s\S]*?)<\/(?:h[1-6]|strong|b)>/gi)];
       const anchorLabel = cleanText(match[4]);
       const heading = headingMatches.length ? cleanText(headingMatches[headingMatches.length - 1][1]) : "";
       const title = (heading && heading.length < 130 ? heading : anchorLabel) || `كتاب الصف ${grade}`;

@@ -227,13 +227,13 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .theme-actions{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}.theme-message{font-weight:700;color:var(--accent)}
 
 
-/* Centered Future Learning Platform identity with reading children illustration */
-.cover-info-centered{margin:0!important;padding:1rem 1rem .9rem!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.25rem;background:linear-gradient(135deg,#e7f8ff 0%,#f4edff 52%,#fff5df 100%);min-height:210px}
-.cover-kids{display:block;width:min(100%,310px);height:132px;filter:drop-shadow(0 7px 8px #243b5320);margin:0 auto}
+/* Centered Future Learning Platform identity without character illustration */
+.cover-info-centered{margin:0!important;padding:1.5rem 1rem!important;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.25rem;background:linear-gradient(135deg,#e7f8ff 0%,#f4edff 52%,#fff5df 100%);min-height:130px}
+.cover-info-no-characters .cover-title-wrap{margin:0 auto}
 .cover-title-wrap h2{margin:.15rem 0!important;font-size:clamp(1.25rem,4vw,1.9rem)!important;font-weight:950;letter-spacing:.2px;background:linear-gradient(90deg,#175b86,#6741a5,#b07824);-webkit-background-clip:text;background-clip:text;color:transparent}
 .cover-title-wrap p{margin:.2rem 0 0!important;color:#526174;font-size:.84rem;font-weight:700}
 .topbar> b{font-weight:900;letter-spacing:.2px}
-@media(max-width:520px){.cover-info-centered{min-height:185px;padding:.7rem .5rem!important}.cover-kids{height:112px;width:min(100%,270px)}}
+@media(max-width:520px){.cover-info-centered{min-height:110px;padding:.8rem .5rem!important}}
 
 
 /* Bright animated lesson adventures: fill-in and true/false */

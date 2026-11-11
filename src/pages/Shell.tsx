@@ -59,9 +59,8 @@ export default function Shell({ name, role, roleLabel, nav, adminNav = [], view,
     {menuOpen && <button className="menu-backdrop" aria-label={language === "ar" ? "إغلاق القائمة" : "Close menu"} onClick={() => setMenuOpen(false)} />}
     <main className="content">
       <section className="cover">
-        <div className="cover-info cover-info-centered cover-info-no-characters">
-
-          <div className="cover-title-wrap"><h2>{language === "ar" ? "منصة المستقبل التعليمية" : "Future Learning Platform"}</h2><p>{name} — {roleLabel}</p></div>
+        <div className="cover-info cover-info-centered cover-info-no-characters cover-title-only">
+          <div className="cover-title-wrap"><h2>{language === "ar" ? "منصة المستقبل التعليمية" : "Future Learning Platform"}</h2></div>
         </div>
         {stats.length > 0 && <div className="stats">{stats.map(([label, value]) => <div key={label}><b>{value.toLocaleString("ar-EG")}</b><small>{label}</small></div>)}</div>}
       </section>

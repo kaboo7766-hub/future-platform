@@ -34,7 +34,6 @@ export default function Home() {
         <div className="chips">{chips.map(([i, t]) => <div key={t}><span>{i}</span>{t}</div>)}</div>
       </div>
     </div></section>
-}
     <section className="wrap"><h2 className="sec">منصة تعليمية عربية متكاملة</h2>
       <div className="grid">{features.map(([i, t, d]) => <div className="feat" key={t}><div className="ic">{i}</div><b>{t}</b><p>{d}</p></div>)}</div></section>
     <section className="band"><h2>من التأسيس إلى السادس الابتدائي</h2><p>بيئة تعليمية تجمع المتعة والمعرفة</p>

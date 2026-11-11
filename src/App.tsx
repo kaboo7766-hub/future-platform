@@ -20,7 +20,7 @@ export default function App() {
   if (loading) return <PageLoader />;
   return (<>
     {pathname !== "/dashboard" && <header className="bar">
-      <Link to="/" className="brand brand-with-photo" style={banners.length ? { backgroundImage: `linear-gradient(120deg,rgba(9,30,55,.78),rgba(9,30,55,.38)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}>🌟 {language === "ar" ? "منصة المستقبل" : "Future Platform"}</Link>
+      <Link to="/" className="brand brand-with-photo" aria-label={language === "ar" ? "منصة المستقبل التعليمية" : "Future Learning Platform"} style={banners.length ? { backgroundImage: `linear-gradient(120deg,rgba(9,30,55,.88),rgba(9,30,55,.62)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}><span className="brand-mark" aria-hidden="true">✦</span><span className="brand-title">{language === "ar" ? "منصة المستقبل التعليمية" : "Future Learning Platform"}</span></Link>
       <nav className="bar-actions">
         <button className="language-switch" type="button" onClick={toggleLanguage} aria-label={language === "ar" ? "Switch to English" : "التبديل إلى العربية"}>{language === "ar" ? "English" : "العربية"} 🌐</button>
         {profile

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useSite, Characters, TeachersSection, TestimonialsSection, ContactSection } from "./HomeExtras";
+import { useSite, TeachersSection, TestimonialsSection, ContactSection } from "./HomeExtras";
 const chips = [["🖥️", "تعليم تفاعلي بجودة عالية"], ["💬", "متابعة مباشرة من المعلمين"], ["📊", "تقارير دورية لولي الأمر"], ["📝", "أنشطة واختبارات ذكية"], ["🎥", "حصص مباشرة عبر الإنترنت"]];
 const features = [
   ["🎬", "دروس تفاعلية", "فيديو وملفات وتدريبات لكل درس"], ["✅", "اختبارات فورية", "تصحيح تلقائي ونتيجة في لحظتها"],
@@ -16,12 +16,12 @@ const faqs = [
   ["كيف يدخل الطالب الحصة المباشرة؟", "يضيف المعلم رابط Zoom أو Google Meet وموعد الحصة، ثم يظهر للطالب زر دخول الحصة داخل حسابه."],
 ];
 export default function Home() {
-  const { t, r, c, banners } = useSite();
+  const { t, r, c, heroBanner } = useSite();
   return (<main>
-    <section className="hero2" style={banners.length ? { backgroundImage: `linear-gradient(90deg,rgba(12,35,55,.40),rgba(12,35,55,.12)), url("${banners[0].imageData}")${banners[1] ? `, url("${banners[1].imageData}")` : ""}`, backgroundSize: banners[1] ? "100% 100%, 50% 100%, 50% 100%" : "100% 100%, cover", backgroundPosition: banners[1] ? "center, left center, right center" : "center, center" } : undefined}><div className="hero2-in">
+    <section className="hero2" style={{backgroundImage:heroBanner.imageData ? `linear-gradient(rgba(8,28,48,${1-heroBanner.opacity}),rgba(8,28,48,${1-heroBanner.opacity})),url("${heroBanner.imageData}")` : undefined,backgroundPosition:heroBanner.position,backgroundSize:"cover"}}><div className="hero2-in hero2-in-banner">
       <div>
         <span className="badge">منصة عربية صُنعت من أجلك</span>
-        <h1 className="h-title">منصة <span>المستقبل</span> التعليمية</h1>
+        <h1 className="h-title" style={{fontFamily:heroBanner.font,fontSize:`clamp(28px,${heroBanner.titleSize/16}vw,${heroBanner.titleSize}px)`,color:heroBanner.titleColor}}><span>منصة المستقبل التعليمية</span></h1>
         <p className="h-sub">تعلّم أينما كنت… وتقدّم بثقة</p>
         <div className="row" style={{ flexWrap: "wrap" }}>
           <Link to="/login" className="btn">ابدأ مجانًا</Link><Link to="/login" className="btn ghost">تسجيل الدخول</Link></div>
@@ -34,16 +34,9 @@ export default function Home() {
         <div className="chips">{chips.map(([i, t]) => <div key={t}><span>{i}</span>{t}</div>)}</div>
       </div>
     </div></section>
-      {banners.length > 0 && <section className="home-banners wrap" aria-label="صور المنصة للأطفال">
-        <h2 className="sec">عالم من المرح والتعلّم</h2>
-        <div className="home-banner-grid">{banners.slice(0,2).map((banner) => <article className="home-banner" key={banner.id}>
-          <img src={banner.imageData} alt={banner.title || "صورة تعليمية للأطفال"} />
-          {banner.title && <h3>{banner.title}</h3>}
-        </article>)}</div>
-      </section>}
+}
     <section className="wrap"><h2 className="sec">منصة تعليمية عربية متكاملة</h2>
       <div className="grid">{features.map(([i, t, d]) => <div className="feat" key={t}><div className="ic">{i}</div><b>{t}</b><p>{d}</p></div>)}</div></section>
-    <Characters />
     <section className="band"><h2>من التأسيس إلى السادس الابتدائي</h2><p>بيئة تعليمية تجمع المتعة والمعرفة</p>
       <div className="stages">{stages.map(s => <div className="stage" key={s}>{s}</div>)}</div></section>
     <TeachersSection items={t} />

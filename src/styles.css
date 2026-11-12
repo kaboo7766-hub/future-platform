@@ -698,3 +698,9 @@ input:focus, select:focus, textarea:focus {
 .dashboard-layout .cover-title-only .cover-title-wrap{width:100%;max-width:none;margin:0!important;display:flex;align-items:center;justify-content:center;}
 .dashboard-layout .cover-title-only .cover-title-wrap h2{width:100%;margin:0!important;font-weight:1000;line-height:1.35;white-space:normal;text-align:center;overflow-wrap:anywhere;}
 @media(max-width:520px){.dashboard-layout .cover-info.cover-title-only{height:185px;min-height:185px;padding:.75rem .5rem!important;}}
+
+/* External games library */
+.arcade-external-manager{margin-top:1.25rem;padding:1.1rem;border:1px solid var(--line);border-radius:18px;background:var(--panel)}
+.arcade-external-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem;align-items:end;padding:1rem;margin:.8rem 0;border:1px dashed var(--line);border-radius:14px}
+.arcade-external-form .arcade-field{display:grid;gap:.3rem;font-weight:700}.arcade-external-form input{width:100%;min-width:0}.arcade-external-check{display:flex;align-items:center;gap:.5rem;font-size:.9rem}.arcade-external-check input{width:auto}
+.arcade-external-play{display:grid;gap:1rem;min-width:0}.arcade-external-play iframe{display:block;max-width:100%}

@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth/AuthContext";
 
 type ArcadeId = "eightball" | "basketball" | "memory" | "maze" | "bubbles" | "racing";
 type Arcade = { id: ArcadeId; title: string; icon: string; description: string };
 type Session = { id: string; classId: string; gameId: ArcadeId; title: string; active: boolean; selectedStudentUids: string[] };
+type ExternalGame = { id: string; title: string; url: string; description?: string; icon?: string; published?: boolean; embed?: boolean };
+type ExternalSession = { id: string; classId: string; gameId: string; title: string; url: string; active: boolean; embed?: boolean; selectedStudentUids: string[] };
 const ARCADES: Arcade[] = [
  { id:"eightball", title:"8 Ball Pool", icon:"🎱", description:"لعبة بلياردو تفاعلية: وجّه العصا واضبط القوة وأسقط الكرات في الجيوب" },
  { id:"basketball", title:"تحدي السلة", icon:"🏀", description:"اختر قوة التصويب وحاول تسجيل أكبر عدد" },
@@ -117,6 +119,9 @@ export default function ArcadeGames(){
  const [students,setStudents]=useState<{uid:string;name:string}[]>([]);
  const [selectedStudents,setSelectedStudents]=useState<string[]>([]);
  const [sessions,setSessions]=useState<Session[]>([]);
+ const [externalGames,setExternalGames]=useState<ExternalGame[]>([]);
+ const [externalSessions,setExternalSessions]=useState<ExternalSession[]>([]);
+ const [externalTitle,setExternalTitle]=useState(""); const [externalUrl,setExternalUrl]=useState(""); const [externalDescription,setExternalDescription]=useState(""); const [externalIcon,setExternalIcon]=useState("🌐"); const [externalEmbed,setExternalEmbed]=useState(false); const [externalBusy,setExternalBusy]=useState(""); const [externalPlaying,setExternalPlaying]=useState<ExternalGame|null>(null);
  const [playing,setPlaying]=useState<Arcade|null>(null);
  const [notice,setNotice]=useState("");
  const [busy,setBusy]=useState("");
@@ -142,6 +147,15 @@ export default function ArcadeGames(){
   const q=query(collection(db,"arcadeGameSessions"),where("classId","==",classId));
   return onSnapshot(q,s=>setSessions(s.docs.map(d=>({id:d.id,...d.data()} as Session))),()=>setSessions([]));
  },[isStaff,classId]);
+ useEffect(()=>{
+  if(!profile)return;
+  const q=profile.role==="student"?query(collection(db,"externalGameSessions"),where("classId","==",profile.classId??"__none__"),where("active","==",true),where("selectedStudentUids","array-contains",profile.uid)):collection(db,"externalGames");
+  return onSnapshot(q,s=>{if(profile.role==="student")setExternalSessions(s.docs.map(d=>({id:d.id,...d.data()} as ExternalSession)));else setExternalGames(s.docs.map(d=>({id:d.id,...d.data()} as ExternalGame)).filter(g=>g.published!==false));},()=>{setExternalGames([]);setExternalSessions([]);});
+ },[profile?.uid,profile?.role,profile?.classId]);
+ useEffect(()=>{if(!isStaff||!classId)return;const q=query(collection(db,"externalGameSessions"),where("classId","==",classId));return onSnapshot(q,s=>setExternalSessions(s.docs.map(d=>({id:d.id,...d.data()} as ExternalSession))),()=>setExternalSessions([]));},[isStaff,classId]);
+ const addExternalGame=async()=>{const title=externalTitle.trim(),url=externalUrl.trim();if(!title||!/^https:\/\//i.test(url)){setNotice("اكتب اسم اللعبة ورابطًا يبدأ بـ https://");return;}if(profile?.role!=="admin")return;setExternalBusy("add");try{const id=doc(collection(db,"externalGames")).id;await setDoc(doc(db,"externalGames",id),{title,url,description:externalDescription.trim().slice(0,300),icon:externalIcon.trim()||"🌐",embed:externalEmbed,published:true,createdBy:profile.uid,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});setExternalTitle("");setExternalUrl("");setExternalDescription("");setExternalIcon("🌐");setExternalEmbed(false);setNotice("تمت إضافة اللعبة إلى المكتبة بنجاح.");}catch(e){console.error(e);setNotice("تعذرت إضافة اللعبة. تحقق من صلاحيات المدير واتصال Firestore.");}finally{setExternalBusy("");}};
+ const removeExternalGame=async(game:ExternalGame)=>{if(profile?.role!=="admin"||!window.confirm("هل تريد حذف اللعبة من مكتبة المنصة؟"))return;setExternalBusy(game.id);try{await deleteDoc(doc(db,"externalGames",game.id));setNotice("تم حذف اللعبة.");}catch(e){console.error(e);setNotice("تعذر حذف اللعبة.");}finally{setExternalBusy("");}};
+ const toggleExternal=async(game:ExternalGame,active:boolean)=>{if(!profile||!classId)return;const id=classId+"_"+game.id,existing=externalSessions.find(s=>s.id===id),recipients=active?(existing?.selectedStudentUids??selectedStudents):selectedStudents;if(!active&&!recipients.length){setNotice("حدد طالبًا واحدًا على الأقل قبل فتح اللعبة.");return;}setExternalBusy(id);try{await setDoc(doc(db,"externalGameSessions",id),{classId,gameId:game.id,title:game.title,url:game.url,embed:game.embed===true,active:!active,selectedStudentUids:recipients,openedBy:profile.uid,updatedAt:serverTimestamp(),...(!active?{openedAt:serverTimestamp()}: {})},{merge:true});setNotice(active?"تم إغلاق اللعبة عن الطلاب.":"تم فتح اللعبة للطلاب المحددين فقط.");}catch(e){console.error(e);setNotice("تعذر مشاركة اللعبة. تحقق من قواعد Firestore.");}finally{setExternalBusy("");}};
  const toggle=async(game:Arcade,active:boolean)=>{
   if(!profile||!classId)return;
   const id=classId+"_"+game.id;
@@ -162,13 +176,17 @@ export default function ArcadeGames(){
   catch{setNotice("تعذر تحديث اللعبة. تحقق من قواعد Firestore الخاصة بالألعاب.");}
   finally{setBusy("");}
  };
+ if(externalPlaying)return <section className="panel arcade-external-play" dir="rtl"><div className="arcade-play-head"><button className="link" onClick={()=>setExternalPlaying(null)}>← العودة للألعاب</button><b>{externalPlaying.icon||"🌐"} {externalPlaying.title}</b><a className="btn" href={externalPlaying.url} target="_blank" rel="noopener noreferrer">فتح اللعبة في نافذة جديدة ↗</a></div>{externalPlaying.embed?<iframe title={externalPlaying.title} src={externalPlaying.url} referrerPolicy="no-referrer" allow="fullscreen; autoplay; gamepad" sandbox="allow-scripts allow-same-origin allow-forms allow-pointer-lock allow-popups" style={{width:"100%",minHeight:"70vh",border:"1px solid var(--line)",borderRadius:16,background:"#fff"}}/>:<p className="note">اللعبة تفتح في نافذة خارجية.</p>}</section>;
  if(playing)return <PlayArcade game={playing} onExit={()=>setPlaying(null)}/>;
- if(profile?.role==="student")return <section className="panel arcade-hub"><h2>🎮 ألعابك المفتوحة</h2><p>الألعاب التي فتحها المعلم أو المدير لك فقط تظهر هنا.</p>{sessions.length===0?<p className="note">لا توجد ألعاب مفتوحة لك الآن. انتظر المعلم 😊</p>:<div className="arcade-cards">{sessions.map(s=>{const game=ARCADES.find(g=>g.id===s.gameId);return game?<article className="arcade-card" key={s.id}><span>{game.icon}</span><h3>{game.title}</h3><p>{game.description}</p><button className="btn" onClick={()=>setPlaying(game)}>ابدأ اللعب 🚀</button></article>:null;})}</div>}</section>;
+ if(profile?.role==="student")return <section className="panel arcade-hub"><h2>🎮 ألعابك المفتوحة</h2><p>الألعاب التي فتحها المعلم أو المدير لك فقط تظهر هنا.</p>{sessions.length===0&&externalSessions.length===0?<p className="note">لا توجد ألعاب مفتوحة لك الآن. انتظر المعلم 😊</p>:<div className="arcade-cards">{sessions.map(s=>{const game=ARCADES.find(g=>g.id===s.gameId);return game?<article className="arcade-card" key={s.id}><span>{game.icon}</span><h3>{game.title}</h3><p>{game.description}</p><button className="btn" onClick={()=>setPlaying(game)}>ابدأ اللعب 🚀</button></article>:null;})}{externalSessions.map(s=><article className="arcade-card" key={s.id}><span>🌐</span><h3>{s.title}</h3><p>لعبة خارجية شاركها المعلم معك</p><button className="btn" onClick={()=>setExternalPlaying({id:s.gameId,title:s.title,url:s.url,embed:s.embed})}>ابدأ اللعب 🚀</button></article>)}</div>}</section>;
  if(!isStaff)return null;
  return <section className="panel arcade-hub"><div className="arcade-heading"><div><span>🎮 مكتبة الألعاب</span><h2>تحكم المعلم والمدير في الألعاب</h2><p>يمكنك تشغيل أي لعبة بنفسك، أو مشاركتها بشكل مستقل مع الطلاب الذين تختارهم أثناء الحصة.</p></div><span>🏆</span></div>
  <label className="arcade-field">الفصل الدراسي<select value={classId} onChange={e=>{setClassId(e.target.value);setSelectedStudents([]);}}>{classes.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
  <div className="arcade-student-picker"><div className="arcade-picker-head"><b>اختر الطلاب عند مشاركة اللعبة</b><span>{selectedStudents.length} محدد</span></div><div className="arcade-picker-actions"><button className="link" onClick={()=>setSelectedStudents(students.map(s=>s.uid))}>تحديد الكل</button><button className="link" onClick={()=>setSelectedStudents([])}>إلغاء التحديد</button></div><div className="arcade-students">{students.map(s=><label key={s.uid}><input type="checkbox" checked={selectedStudents.includes(s.uid)} onChange={e=>setSelectedStudents(old=>e.target.checked?[...old,s.uid]:old.filter(x=>x!==s.uid))}/>{s.name}</label>)}{students.length===0&&<small>لا يوجد طلاب في هذا الفصل.</small>}</div></div>
  {notice&&<p role="status" className="note">{notice}</p>}
  <div className="arcade-cards">{ARCADES.map(g=>{const id=classId+"_"+g.id,active=sessions.some(s=>s.id===id&&s.active);return <article className="arcade-card" key={g.id}><span>{g.icon}</span><h3>{g.title}</h3><p>{g.description}</p><small>{active?"🟢 تمت مشاركة اللعبة":"🔒 غير مشاركة مع الطلاب"}</small><div className="arcade-card-actions"><button className="btn" onClick={()=>setPlaying(g)}>تشغيل اللعبة ▶️</button><button className="btn" disabled={!classId||busy===id} onClick={()=>toggle(g,active)}>{busy===id?"جارٍ الحفظ...":(active?"إيقاف المشاركة":"مشاركة مع الطلاب")}</button></div></article>;})}</div>
- </section>;
+
+ <section className="arcade-external-manager" dir="rtl"><div className="arcade-heading"><div><span>🌐 ألعاب من الإنترنت</span><h2>إضافة لعبة برابط خارجي</h2><p>ألصق رابط اللعبة لتظهر في مكتبة الألعاب، ثم شاركها مع طلاب محددين.</p></div><span>🔗</span></div>
+ {profile?.role==="admin"&&<div className="arcade-external-form"><label className="arcade-field">اسم اللعبة<input value={externalTitle} onChange={e=>setExternalTitle(e.target.value)} maxLength={100} placeholder="اسم اللعبة"/></label><label className="arcade-field">رابط اللعبة<input type="url" dir="ltr" value={externalUrl} onChange={e=>setExternalUrl(e.target.value)} placeholder="https://example.com/game"/></label><label className="arcade-field">وصف مختصر<input value={externalDescription} onChange={e=>setExternalDescription(e.target.value)} maxLength={300}/></label><label className="arcade-field">رمز اللعبة<input value={externalIcon} onChange={e=>setExternalIcon(e.target.value)} maxLength={8}/></label><label><input type="checkbox" checked={externalEmbed} onChange={e=>setExternalEmbed(e.target.checked)}/> عرض داخل المنصة إن كان الموقع يسمح بالتضمين</label><button className="btn" disabled={externalBusy==="add"} onClick={addExternalGame}>{externalBusy==="add"?"جارٍ الإضافة...":"إضافة اللعبة +"}</button></div>}
+ {externalGames.length===0&&<p className="note">لا توجد ألعاب خارجية مضافة بعد.</p>}<div className="arcade-cards">{externalGames.map(g=>{const id=classId+"_"+g.id,active=externalSessions.some(s=>s.id===id&&s.active);return <article className="arcade-card" key={g.id}><span>{g.icon||"🌐"}</span><h3>{g.title}</h3><p>{g.description||"لعبة خارجية"}</p><a href={g.url} target="_blank" rel="noopener noreferrer">معاينة الرابط ↗</a><div className="arcade-card-actions"><button className="btn" onClick={()=>setExternalPlaying(g)}>تجربة اللعبة</button>{isStaff&&<button className="btn" disabled={!classId||externalBusy===id} onClick={()=>toggleExternal(g,active)}>{active?"إغلاق عن الطلاب":"مشاركة مع الطلاب"}</button>}{profile?.role==="admin"&&<button className="link" onClick={()=>removeExternalGame(g)}>حذف</button>}</div></article>;})}</div></section> </section>;
 }

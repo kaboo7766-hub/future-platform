@@ -9,7 +9,6 @@ type Session = { id: string; classId: string; gameId: ArcadeId; title: string; a
 type ExternalGame = { id: string; title: string; url: string; description?: string; icon?: string; published?: boolean; embed?: boolean };
 type ExternalSession = { id: string; classId: string; gameId: string; title: string; url: string; active: boolean; embed?: boolean; selectedStudentUids: string[] };
 const ARCADES: Arcade[] = [
- { id:"eightball", title:"8 Ball Pool", icon:"🎱", description:"لعبة بلياردو تفاعلية: وجّه العصا واضبط القوة وأسقط الكرات في الجيوب" },
  { id:"basketball", title:"تحدي السلة", icon:"🏀", description:"اختر قوة التصويب وحاول تسجيل أكبر عدد" },
  { id:"memory", title:"تحدي الذاكرة", icon:"🧠", description:"اكشف البطاقات وطابق الصور المتشابهة" },
  { id:"maze", title:"المتاهة", icon:"🧩", description:"اعثر على الطريق الصحيح إلى الكنز" },

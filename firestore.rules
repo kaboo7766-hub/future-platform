@@ -322,122 +322,79 @@ service cloud.firestore {
         && request.resource.data.text.size() <= 500;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
-    // School book metadata: only admins manage records; students see published books.
+    // School book metadata: only administrators manage records; published books are readable by signed-in users.
     match /schoolBooks/{bookId} {
       function validBook(data) {
-        return data.title is string && data.title.size() > 0 && data.title.size() <= 180
+        return data.keys().hasOnly([
+          'title','subject','schoolYear','system','grade','driveUrl','driveFileId','published',
+          'createdAt','createdBy','updatedAt','updatedBy'
+        ])
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 180
           && data.subject is string && data.subject.size() > 0 && data.subject.size() <= 100
-          && data.schoolYear is string && data.schoolYear.matches('^[0-9]{4}-[0-9]{4}
-    // Students can read only items explicitly published by an administrator.
-    match /curriculumGrades/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumSubjects/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumUnits/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumLessons/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumAssessments/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /studentLearningProgress/{id} {
-      allow read: if signedIn() && (isAdmin()
-        || resource.data.uid == request.auth.uid
-        || teacherHasClass(resource.data.classId));
-      // Scores and unlock states must be written by a trusted server after answer validation.
-      allow write: if false;
-    }
-    match /studentBadges/{id} {
-      allow read: if signedIn() && (isAdmin()
-        || resource.data.uid == request.auth.uid
-        || teacherHasClass(resource.data.classId));
-      allow write: if false;
-    }
-
-    match /socialReactions/{reactionId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
-        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
-        && request.resource.data.uid == request.auth.uid
-        && reactionId == request.resource.data.postId + '_' + request.auth.uid
-        && request.resource.data.author is string && request.resource.data.author.size() <= 80
-        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
-        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
-        && request.resource.data.createdAt == request.time;
-      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-    }
-  }
-}
-)
+          && data.schoolYear is string && data.schoolYear.matches('^[0-9]{4}-[0-9]{4}$')
           && data.system in ['general','azhar']
           && data.grade is int && data.grade >= 1 && data.grade <= 6
           && data.driveUrl is string && data.driveUrl.matches('^https://drive[.]google[.]com/.*')
-          && data.driveFileId is string && data.driveFileId.matches('^[A-Za-z0-9_-]{10,}
-    // Students can read only items explicitly published by an administrator.
-    match /curriculumGrades/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumSubjects/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumUnits/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumLessons/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /curriculumAssessments/{id} {
-      allow read: if signedIn() && (isAdmin() || me().role == 'teacher' || resource.data.published == true);
-      allow write: if false;
-    }
-    match /studentLearningProgress/{id} {
-      allow read: if signedIn() && (isAdmin()
-        || resource.data.uid == request.auth.uid
-        || teacherHasClass(resource.data.classId));
-      // Scores and unlock states must be written by a trusted server after answer validation.
-      allow write: if false;
-    }
-    match /studentBadges/{id} {
-      allow read: if signedIn() && (isAdmin()
-        || resource.data.uid == request.auth.uid
-        || teacherHasClass(resource.data.classId));
-      allow write: if false;
-    }
-
-    match /socialReactions/{reactionId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn()
-        && request.resource.data.keys().hasOnly(['postId','uid','author','emoji','createdAt'])
-        && request.resource.data.uid == request.auth.uid
-        && reactionId == request.resource.data.postId + '_' + request.auth.uid
-        && request.resource.data.author is string && request.resource.data.author.size() <= 80
-        && request.resource.data.postId is string && request.resource.data.postId.size() <= 180
-        && request.resource.data.emoji in ['👍','❤️','😂','👏','🌟']
-        && request.resource.data.createdAt == request.time;
-      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-    }
-  }
-}
-)
+          && data.driveFileId is string && data.driveFileId.matches('^[A-Za-z0-9_-]{10,}$')
           && data.published is bool;
       }
       allow read: if signedIn() && (isAdmin() || resource.data.published == true);
-      allow create: if isAdmin() && validBook(request.resource.data);
-      allow update: if isAdmin() && validBook(request.resource.data);
+      allow create: if isAdmin() && validBook(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if isAdmin() && validBook(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy;
       allow delete: if isAdmin();
+    }
+
+    // External game catalogue: only admins can add or remove games; staff can view the catalogue.
+    match /externalGames/{gameId} {
+      function validExternalGame(data) {
+        return data.keys().hasOnly([
+          'title','url','description','icon','embed','published','createdBy','createdAt','updatedAt'
+        ])
+          && data.title is string && data.title.size() > 0 && data.title.size() <= 100
+          && data.url is string && data.url.matches('^https://.*')
+          && data.description is string && data.description.size() <= 300
+          && data.icon is string && data.icon.size() <= 8
+          && data.embed is bool && data.published is bool
+          && data.createdBy == request.auth.uid;
+      }
+      allow read: if isStaff();
+      allow create: if isAdmin() && validExternalGame(request.resource.data);
+      allow update: if isAdmin() && validExternalGame(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy;
+      allow delete: if isAdmin();
+    }
+
+    // A student can read only an active game session explicitly assigned to their UID.
+    match /externalGameSessions/{sessionId} {
+      function validExternalSession(data) {
+        let game = get(/databases/$(db)/documents/externalGames/$(data.gameId)).data;
+        return data.keys().hasOnly([
+          'classId','gameId','title','url','embed','active','selectedStudentUids',
+          'openedBy','openedAt','updatedAt'
+        ])
+          && data.classId is string && data.gameId is string
+          && sessionId == data.classId + '_' + data.gameId
+          && exists(/databases/$(db)/documents/externalGames/$(data.gameId))
+          && data.title == game.title && data.url == game.url && data.embed == game.embed
+          && game.published == true
+          && data.active is bool
+          && data.selectedStudentUids is list
+          && data.selectedStudentUids.size() > 0 && data.selectedStudentUids.size() <= 200
+          && data.openedBy == request.auth.uid;
+      }
+      allow read: if signedIn() && (
+        isAdmin() || teacherHasClass(resource.data.classId)
+        || (me().role == 'student' && resource.data.active == true
+          && resource.data.classId == me().classId
+          && resource.data.selectedStudentUids is list
+          && request.auth.uid in resource.data.selectedStudentUids)
+      );
+      allow create, update: if signedIn()
+        && canManageClass(request.resource.data.classId)
+        && validExternalSession(request.resource.data);
+      allow delete: if isAdmin() || (signedIn() && teacherHasClass(resource.data.classId));
     }
 
     // Curriculum definitions are written only by the trusted admin import API.
@@ -488,5 +445,7 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
+  }
+}
   }
 }
